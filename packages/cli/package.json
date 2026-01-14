@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "@omaikit/cli",
   "version": "0.1.0",
   "description": "CLI interface for Omaikit - multi-agent development toolkit",
@@ -8,7 +9,7 @@
     "omaikit": "dist/bin/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest"

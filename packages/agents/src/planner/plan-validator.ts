@@ -1,5 +1,5 @@
-import { Plan, Milestone, Task } from '@omaikit/models';
-import { PlanSchema } from '@omaikit/models/src/validators';
+import { Milestone, Task } from '@omaikit/models';
+import { PlanSchema } from '@omaikit/models';
 
 export interface ValidationResult {
   valid: boolean;

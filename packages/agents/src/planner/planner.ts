@@ -1,7 +1,7 @@
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { AgentInput, AgentOutput } from '../types';
-import { PlanInput, Plan, PlanOutput } from '@omaikit/models';
+import { PlanOutput } from '@omaikit/models';
 import { createProvider } from '../ai-provider/factory';
 import { PromptTemplates } from './prompt-templates';
 import { PlanParser } from './plan-parser';

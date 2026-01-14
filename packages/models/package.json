@@ -1,11 +1,12 @@
 {
+  "type": "module",
   "name": "@omaikit/models",
   "version": "0.1.0",
   "description": "Core data models and types for Omaikit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit"
   },
