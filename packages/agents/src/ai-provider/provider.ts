@@ -1,4 +1,5 @@
 export interface AIProviderOptions {
+  model?: string;
   stream?: boolean;
   maxTokens?: number;
   temperature?: number;

@@ -50,10 +50,8 @@ export class Planner extends Agent {
     try {
       await this.beforeExecute(input);
       
-      // Only try to initialize provider if we're not in test mode
-      if (!process.env.NODE_ENV?.includes('test')) {
-        await this.init();
-      }
+      // Always initialize provider (will use real API if key is available)
+      await this.init();
 
       // Validate input
       if (!planInput.description || planInput.description.trim().length === 0) {
@@ -71,8 +69,29 @@ export class Planner extends Agent {
         `Generating plan for: ${planInput.description.substring(0, 50)}...`
       );
 
-      // Always use mock mode for now (tests don't have API keys)
-      let llmResponse = this.generateMockPlan(planInput);
+      // Call AI provider to generate plan
+      this.emit('progress', { status: 'generating', message: 'Calling AI provider' });
+      
+      // In test mode, use mock generation for speed
+      let llmResponse: string;
+      if (process.env.VITEST !== undefined) {
+        // We're in vitest - use mock generation
+        this.logger.info('Using mock plan generation (test mode)');
+        llmResponse = this.generateMockPlan(planInput);
+      } else {
+        // Production mode - use real API
+        if (!this.provider) {
+          throw new Error('AI provider not initialized');
+        }
+        
+        llmResponse = await this.provider.generate(prompt);
+        
+        // If we're in echo mode (no API key), generate a mock plan
+        if (llmResponse.startsWith('OPENAI_ECHO') || llmResponse.startsWith('ANTHROPIC_ECHO')) {
+          this.logger.warn('Using mock plan generation (no API key configured)');
+          llmResponse = this.generateMockPlan(planInput);
+        }
+      }
 
       this.emit('progress', { status: 'parsing', message: 'Parsing LLM response' });
 
@@ -166,7 +185,7 @@ export class Planner extends Agent {
   }
 
   private generateMockPlan(input: any): string {
-    // Mock response for testing
+    // Fallback mock response when no API key is available
     const mockPlan = {
       title: `Plan for: ${input.description.substring(0, 30)}`,
       description: input.description,
