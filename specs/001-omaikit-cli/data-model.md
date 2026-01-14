@@ -30,24 +30,24 @@ interface Project {
 interface Module {
   name: string;
   path: string;
-  type: "core" | "feature" | "library" | "test" | "config";
+  type: 'core' | 'feature' | 'library' | 'test' | 'config';
   description?: string;
   exports: ExportedAPI[];
   dependencies: ModuleDependency[];
   estimatedLOC: number;
-  riskLevel: "low" | "medium" | "high"; // Impacts implementation order
+  riskLevel: 'low' | 'medium' | 'high'; // Impacts implementation order
 }
 
 interface ExportedAPI {
   name: string;
-  type: "function" | "class" | "interface" | "constant" | "type";
+  type: 'function' | 'class' | 'interface' | 'constant' | 'type';
   signature?: string;
   description?: string;
 }
 
 interface DependencyGraph {
   nodes: Module[];
-  edges: Array<{ from: string; to: string; type: "import" | "extends" | "implements" }>;
+  edges: Array<{ from: string; to: string; type: 'import' | 'extends' | 'implements' }>;
   cycles: Array<string[]>; // Circular dependencies
 }
 
@@ -60,26 +60,26 @@ interface CodePatterns {
     files: RegExp;
   };
   errorHandling: {
-    pattern: "try-catch" | "promise-rejection" | "error-first-callback" | "result-type";
+    pattern: 'try-catch' | 'promise-rejection' | 'error-first-callback' | 'result-type';
     examples: string[];
   };
   structuralPattern: {
     modulesPerFeature: number; // Average
-    averageModuleSize: "small" | "medium" | "large";
-    organizationStyle: "by-feature" | "by-layer" | "by-type";
+    averageModuleSize: 'small' | 'medium' | 'large';
+    organizationStyle: 'by-feature' | 'by-layer' | 'by-type';
   };
   comments: {
-    docstringFormat: "jsdoc" | "tsdoc" | "docstring" | "none";
+    docstringFormat: 'jsdoc' | 'tsdoc' | 'docstring' | 'none';
     commentCoverage: number; // 0-100
   };
   testOrganization: {
     colocated: boolean; // Tests in same directory as code?
-    pattern: "__tests__" | "*.test.ts" | "*.spec.ts" | "test/" | "tests/";
+    pattern: '__tests__' | '*.test.ts' | '*.spec.ts' | 'test/' | 'tests/';
   };
 }
 
 interface NamingConventions {
-  casing: "camelCase" | "PascalCase" | "snake_case" | "kebab-case";
+  casing: 'camelCase' | 'PascalCase' | 'snake_case' | 'kebab-case';
   variablePrefix?: string; // e.g., "_" for private
   constantSuffix?: string;
   booleanPrefix?: string; // e.g., "is", "has", "should"
@@ -87,6 +87,7 @@ interface NamingConventions {
 ```
 
 **Validation Rules**:
+
 - `name` must be non-empty
 - `rootPath` must exist and be readable
 - `modules` must be non-empty for analyzed projects
@@ -105,20 +106,20 @@ interface Plan {
   projectId?: string; // Reference to analyzed Project
   featureDescription: string; // Original user input
   createdAt: ISO8601DateTime;
-  
+
   // Planning outcome
   overview: {
     summary: string;
     estimatedTotalEffort: number; // hours
-    riskLevel: "low" | "medium" | "high";
+    riskLevel: 'low' | 'medium' | 'high';
     clarifyingQuestions?: string[];
     assumptions: string[];
   };
-  
+
   milestones: Milestone[];
   sprints: Sprint[];
   tasks: Task[];
-  
+
   // Optional: Advanced planning
   parallelizationOpportunities?: string[];
   reuseOpportunities?: string[];
@@ -137,7 +138,7 @@ interface Milestone {
 interface Sprint {
   id: string;
   number: number;
-  duration: "1-week" | "2-week";
+  duration: '1-week' | '2-week';
   taskIds: string[];
   estimatedVelocity: number; // hours
   focusArea: string;
@@ -147,8 +148,8 @@ interface Task {
   id: string;
   title: string;
   description: string;
-  type: "feature" | "refactor" | "bugfix" | "test" | "documentation" | "infrastructure";
-  
+  type: 'feature' | 'refactor' | 'bugfix' | 'test' | 'documentation' | 'infrastructure';
+
   // Effort estimation
   estimatedEffort: number; // hours
   effortBreakdown?: {
@@ -157,35 +158,36 @@ interface Task {
     testing: number;
     documentation: number;
   };
-  
+
   // Requirements
   acceptanceCriteria: string[];
   inputDependencies: string[]; // Task IDs that must complete first
   outputDependencies: string[]; // Task IDs that depend on this
-  
+
   // Targeting
   targetModule?: string; // Module path this task primarily affects
   affectedModules: string[]; // All modules impacted
-  
+
   // Implementation guidance
   suggestedApproach?: string;
   technicalNotes?: string;
   riskFactors?: RiskFactor[];
-  
+
   // Status (updated during execution)
-  status: "planned" | "in-progress" | "blocked" | "completed" | "deferred";
+  status: 'planned' | 'in-progress' | 'blocked' | 'completed' | 'deferred';
   blockers?: string[];
 }
 
 interface RiskFactor {
   description: string;
-  likelihood: "low" | "medium" | "high";
-  impact: "low" | "medium" | "high";
+  likelihood: 'low' | 'medium' | 'high';
+  impact: 'low' | 'medium' | 'high';
   mitigation: string;
 }
 ```
 
 **Validation Rules**:
+
 - Plan ID must be UUID v4
 - Feature description must be non-empty and > 10 characters
 - Total effort across all tasks must equal sprint velocity × number of sprints ± 10%
@@ -207,7 +209,7 @@ interface CodeGenerationRequest {
   taskId: string; // From plan
   language: string; // "typescript", "python", "rust", etc.
   targetModule: string; // Module path where code goes
-  
+
   context: {
     project: Project; // Full project analysis
     plan: Plan; // Full plan for context
@@ -216,7 +218,7 @@ interface CodeGenerationRequest {
     styleguide?: string; // Code style guidelines extracted from project
     examples?: CodeExample[]; // Similar code patterns to follow
   };
-  
+
   constraints: {
     maxLines?: number;
     mustFollowPattern?: string;
@@ -230,7 +232,7 @@ interface CodeGenerationResponse {
   taskId: string;
   language: string;
   timestamp: ISO8601DateTime;
-  
+
   generatedFiles: GeneratedFile[];
   summary: {
     totalLOC: number;
@@ -238,14 +240,14 @@ interface CodeGenerationResponse {
     filesModified: number;
     newDependencies: string[];
   };
-  
+
   quality: {
     syntaxValid: boolean;
     estimatedCoverage: number; // % of code testable
     lintingIssues: LintIssue[];
     suggestedImprovements: string[];
   };
-  
+
   metadata: {
     generationDurationMs: number;
     tokenUsed?: number;
@@ -259,7 +261,7 @@ interface GeneratedFile {
   path: string; // Relative to project root or module
   content: string;
   language: string;
-  purpose: "implementation" | "export" | "helper" | "type-definition";
+  purpose: 'implementation' | 'export' | 'helper' | 'type-definition';
   dependencies: {
     internal: string[]; // Imports from this project
     external: string[]; // npm/pip/cargo packages
@@ -282,7 +284,7 @@ interface DependencyConstraint {
 
 interface LintIssue {
   rule: string;
-  severity: "error" | "warning" | "info";
+  severity: 'error' | 'warning' | 'info';
   message: string;
   line: number;
   column: number;
@@ -291,6 +293,7 @@ interface LintIssue {
 ```
 
 **Validation Rules**:
+
 - Language must be from supported list
 - Task ID must exist in referenced plan
 - Generated files must have non-empty content
@@ -311,9 +314,9 @@ interface TestSuite {
   language: string;
   testFramework: string; // "vitest", "jest", "pytest", etc.
   timestamp: ISO8601DateTime;
-  
+
   testFiles: TestFile[];
-  
+
   coverage: {
     overall: number; // 0-100
     byType: {
@@ -324,7 +327,7 @@ interface TestSuite {
     };
     byModule?: Record<string, number>; // Coverage per module
   };
-  
+
   summary: {
     totalTests: number;
     passingTests: number;
@@ -332,7 +335,7 @@ interface TestSuite {
     skippedTests: number;
     estimatedDurationMs?: number;
   };
-  
+
   metadata: {
     generationDurationMs: number;
     tokenUsed?: number;
@@ -344,17 +347,17 @@ interface TestSuite {
 interface TestFile {
   path: string;
   content: string;
-  
+
   testCount: number;
   testNames: string[];
-  
+
   coverage: {
     statements: number;
     branches: number;
     functions: number;
     lines: number;
   };
-  
+
   categories: {
     unitTests: number;
     integrationTests: number;
@@ -365,6 +368,7 @@ interface TestFile {
 ```
 
 **Validation Rules**:
+
 - Coverage percentages must be 0-100
 - Total tests must equal sum of test types
 - Passing tests + failing tests + skipped tests ≥ total tests
@@ -383,10 +387,10 @@ interface CodeReview {
   taskId: string;
   timestamp: ISO8601DateTime;
   reviewer: string; // Agent name, e.g., "Reviewer-Agent-v1"
-  
+
   findings: Finding[];
   summary: ReviewSummary;
-  
+
   categories: {
     architecture: Finding[];
     performance: Finding[];
@@ -395,13 +399,13 @@ interface CodeReview {
     testing: Finding[];
     documentation: Finding[];
   };
-  
+
   overallAssessment: {
-    readiness: "approved" | "needs-revision" | "requires-discussion";
+    readiness: 'approved' | 'needs-revision' | 'requires-discussion';
     confidence: number; // 0-1
     estimatedFixTime?: number; // hours to address findings
   };
-  
+
   metadata: {
     reviewDurationMs: number;
     tokenUsed?: number;
@@ -412,28 +416,34 @@ interface CodeReview {
 
 interface Finding {
   id: string;
-  severity: "critical" | "major" | "minor" | "suggestion";
-  category: "architecture" | "performance" | "security" | "maintainability" | "testing" | "documentation";
-  
+  severity: 'critical' | 'major' | 'minor' | 'suggestion';
+  category:
+    | 'architecture'
+    | 'performance'
+    | 'security'
+    | 'maintainability'
+    | 'testing'
+    | 'documentation';
+
   code: string; // Error code, e.g., "ARCH-001"
   title: string;
   description: string;
-  
+
   location: {
     file: string;
     line?: number;
     column?: number;
     snippet?: string;
   };
-  
+
   recommendation: string;
   exampleImprovement?: string;
   references?: string[]; // Links to docs, best practices
-  
+
   // Impact assessment
   impact: {
-    likelihood: "low" | "medium" | "high"; // How likely is this to cause issues?
-    scope: "local" | "module" | "system"; // How much code does it affect?
+    likelihood: 'low' | 'medium' | 'high'; // How likely is this to cause issues?
+    scope: 'local' | 'module' | 'system'; // How much code does it affect?
   };
 }
 
@@ -443,7 +453,7 @@ interface ReviewSummary {
   majorFindings: number;
   minorFindings: number;
   suggestions: number;
-  
+
   strengths: string[];
   concerns: string[];
   recommendations: string[];
@@ -451,6 +461,7 @@ interface ReviewSummary {
 ```
 
 **Validation Rules**:
+
 - Finding IDs must be unique within review
 - Severity and impact must be valid enum values
 - At least one finding or explicit "no issues found" marker
@@ -498,10 +509,9 @@ All entities include an optional `schemaVersion` field for backward compatibilit
 
 ```typescript
 interface Entity {
-  schemaVersion: "1.0" | "1.1" | "2.0"; // Major.Minor
+  schemaVersion: '1.0' | '1.1' | '2.0'; // Major.Minor
   // ... rest of fields
 }
 ```
 
 Current version: **1.0**
-

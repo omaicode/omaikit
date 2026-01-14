@@ -258,6 +258,7 @@ Output locations:
 ### Key Outputs Explained
 
 **plan.json**: Structured Agile plan with:
+
 - Milestones and sprints
 - Tasks with acceptance criteria
 - Effort estimates
@@ -265,6 +266,7 @@ Output locations:
 - Risk factors
 
 **Generated Code**: Production-ready files with:
+
 - Full error handling
 - Comprehensive logging
 - JSDoc/TSDoc comments
@@ -272,12 +274,14 @@ Output locations:
 - Code style matching your project
 
 **Tests**: Comprehensive test coverage including:
+
 - Unit tests for individual functions
 - Integration tests for modules
 - Edge case and error scenario testing
 - Coverage metrics per file
 
 **review.md**: Markdown report with:
+
 - Categorized findings (architecture, performance, security, etc.)
 - Severity levels (critical, major, minor, suggestion)
 - Actionable recommendations
@@ -295,7 +299,7 @@ Output locations:
   "apiProvider": "openai",
   "targetLanguage": "typescript",
   "projectType": "nodejs",
-  
+
   "agents": {
     "planner": {
       "enabled": true,
@@ -318,20 +322,20 @@ Output locations:
       "temperature": 0.6
     }
   },
-  
+
   "codeGeneration": {
     "enforceErrorHandling": true,
     "enforceLogging": true,
     "enforceTypeChecking": true,
     "maxLineLength": 100
   },
-  
+
   "testing": {
     "coverageTarget": 80,
     "framework": "vitest",
     "includeIntegrationTests": true
   },
-  
+
   "cache": {
     "analysisCache": true,
     "cacheDir": ".omaikit/.analysis-cache",
@@ -380,24 +384,28 @@ omaikit config --set codeGeneration.maxLineLength 100
 ### Advanced Workflows
 
 **Regenerate with different settings:**
+
 ```bash
 omaikit code --force          # Overwrite previous generation
 omaikit code --task 3 --force # Regenerate specific task
 ```
 
 **Refine the plan:**
+
 ```bash
 omaikit plan --edit           # Open plan in editor
 omaikit plan --add-task "..."  # Add new task to plan
 ```
 
 **Compare versions:**
+
 ```bash
 omaikit code --version old     # Load previous generation
 omaikit diff old current       # Compare code versions
 ```
 
 **Multi-module projects:**
+
 ```bash
 omaikit run-pipeline --module auth      # Just the auth module
 omaikit run-pipeline --modules auth,models  # Multiple modules
@@ -469,4 +477,3 @@ omaikit <command> --help      # Help for specific command
 omaikit docs open             # Open documentation
 omaikit bug report            # Report an issue
 ```
-

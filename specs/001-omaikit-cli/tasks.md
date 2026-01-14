@@ -24,16 +24,16 @@
 **Purpose**: Project initialization and basic structure enabling all agents  
 **Duration**: 3-4 days | **MVP-Critical**: Yes
 
-- [ ] T001 [CQ] Create monorepo structure with npm workspaces in `package.json` and root configuration
-- [ ] T002 [P] [CQ] Initialize `packages/models/` package with TypeScript configuration and base entity types
-- [ ] T003 [P] [CQ] Initialize `packages/config/` package with environment and configuration management
-- [ ] T004 [P] [CQ] Initialize `packages/analysis/` package with project scanner foundation
-- [ ] T005 [P] [CQ] Initialize `packages/agents/` package with base agent infrastructure
-- [ ] T006 [P] [CQ] Initialize `packages/cli/` package with Oclif/Commander.js CLI framework setup
-- [ ] T007 [CQ] Configure TypeScript, ESLint, Prettier, and vitest across all packages in `tsconfig.json`, `.eslintrc.json`, `.prettierrc`
-- [ ] T008 [CQ] Setup pre-commit hooks and CI/CD pipeline configuration (GitHub Actions) in `.github/workflows/`
-- [ ] T009 [CQ] Create shared build and test scripts in `scripts/` directory and `package.json`
-- [ ] T010 [P] [CQ] Define code style guide document covering naming conventions, error handling, logging per constitution in `docs/CONTRIBUTING.md`
+- [x] T001 [CQ] Create monorepo structure with npm workspaces in `package.json` and root configuration
+- [x] T002 [P] [CQ] Initialize `packages/models/` package with TypeScript configuration and base entity types
+- [x] T003 [P] [CQ] Initialize `packages/config/` package with environment and configuration management
+- [x] T004 [P] [CQ] Initialize `packages/analysis/` package with project scanner foundation
+- [x] T005 [P] [CQ] Initialize `packages/agents/` package with base agent infrastructure
+- [x] T006 [P] [CQ] Initialize `packages/cli/` package with Oclif/Commander.js CLI framework setup
+- [x] T007 [CQ] Configure TypeScript, ESLint, Prettier, and vitest across all packages in `tsconfig.json`, `.eslintrc.json`, `.prettierrc`
+- [x] T008 [CQ] Setup pre-commit hooks and CI/CD pipeline configuration (GitHub Actions) in `.github/workflows/`
+- [x] T009 [CQ] Create shared build and test scripts in `scripts/` directory and `package.json`
+- [x] T010 [P] [CQ] Define code style guide document covering naming conventions, error handling, logging per constitution in `docs/CONTRIBUTING.md`
 
 **Checkpoint**: Monorepo structure initialized, all packages compilable, basic build/test scripts working
 
@@ -46,11 +46,11 @@
 
 ### Base Agent Framework
 
-- [ ] T011 [CQ] Implement base `Agent` interface in `packages/agents/src/base-agent.ts` with execute(), validate(), canHandle() methods per contracts/agents.ts
+- [ ] T011 [CQ] Implement base `Agent` interface in `packages/agents/src/base-agent.ts` with execute(), validate(), canHandle() methods per contracts/agents.md
 - [ ] T012 [P] [CQ] Implement `AgentInput` and `AgentOutput` types in `packages/agents/src/types.ts` with metadata structure
 - [ ] T013 [P] [CQ] Implement agent lifecycle hooks (init, beforeExecute, afterExecute, onError) in `packages/agents/src/base-agent.ts`
 - [ ] T014 [CQ] Setup logging infrastructure with Winston or Pino in `packages/agents/src/logger.ts` (INFO, WARN, ERROR levels)
-- [ ] T015 [CQ] Implement error handling and standard error codes in `packages/agents/src/errors.ts` per contracts/agents.ts
+- [ ] T015 [CQ] Implement error handling and standard error codes in `packages/agents/src/errors.ts` per contracts/agents.md
 
 ### AI Provider Abstraction
 
@@ -77,7 +77,7 @@
 
 ### Pipeline Orchestration Foundation
 
-- [ ] T030 [CQ] Implement `PipelineOrchestrator` interface in `packages/cli/src/orchestrator/orchestrator.ts` per contracts/agents.ts
+- [ ] T030 [CQ] Implement `PipelineOrchestrator` interface in `packages/cli/src/orchestrator/orchestrator.ts` per contracts/agents.md
 - [ ] T031 [CQ] Implement pipeline state machine in `packages/cli/src/orchestrator/state-machine.ts` (planned, running, completed, failed, cancelled)
 - [ ] T032 [P] [CQ] Implement event bus for agent communication in `packages/cli/src/orchestrator/event-bus.ts`
 - [ ] T033 [CQ] Implement cancellation signal handling in `packages/cli/src/orchestrator/cancellation-handler.ts`
@@ -385,6 +385,7 @@ Phase 10 (Polish) [Final optimization & release]
 ## MVP Definition
 
 **Minimum Viable Product** (Phases 1-6):
+
 - ✅ Users can generate plans from descriptions
 - ✅ Users can generate code that compiles
 - ✅ Users can generate tests with >80% coverage
@@ -392,11 +393,13 @@ Phase 10 (Polish) [Final optimization & release]
 - ✅ MVP feature complete, production-ready
 
 **Extended MVP** (Phases 1-8):
+
 - ✅ Full pipeline orchestration working
 - ✅ Code review agent provides actionable feedback
 - ✅ All 5 core agents (P1, P2) implemented
 
 **Enterprise** (Phases 1-10):
+
 - ✅ Multi-module support
 - ✅ Full performance optimization
 - ✅ Comprehensive documentation
@@ -408,14 +411,14 @@ Phase 10 (Polish) [Final optimization & release]
 
 Upon completion:
 
-| Metric | Target | Verification |
-|--------|--------|--------------|
-| Code Coverage | ≥80% for agents, ≥70% for CLI | `npm run coverage` |
-| Performance | Plan <30s, Code <60s, Test <120s, Review <90s, Pipeline <5min | `npm run benchmark` |
-| User Satisfaction | 4.0+/5.0 | User testing feedback |
-| Development Velocity | 5-10x improvement | Real project trials |
-| Specification Adherence | 100% of requirements met | Traceability matrix |
-| Test Execution | All tests passing | `npm test` |
+| Metric                  | Target                                                        | Verification          |
+| ----------------------- | ------------------------------------------------------------- | --------------------- |
+| Code Coverage           | ≥80% for agents, ≥70% for CLI                                 | `npm run coverage`    |
+| Performance             | Plan <30s, Code <60s, Test <120s, Review <90s, Pipeline <5min | `npm run benchmark`   |
+| User Satisfaction       | 4.0+/5.0                                                      | User testing feedback |
+| Development Velocity    | 5-10x improvement                                             | Real project trials   |
+| Specification Adherence | 100% of requirements met                                      | Traceability matrix   |
+| Test Execution          | All tests passing                                             | `npm test`            |
 
 ---
 
@@ -423,4 +426,3 @@ Upon completion:
 **MVP Task Count** (Phases 1-5): 88 tasks  
 **Estimated Duration**: 8-12 weeks for full implementation  
 **Team Size**: 3-4 developers recommended for parallel execution
-

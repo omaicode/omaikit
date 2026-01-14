@@ -1,0 +1,59 @@
+{
+  "name": "@omaikit/monorepo",
+  "version": "0.1.0",
+  "description": "Omaikit - Multi-Agent CLI Toolkit for Accelerated Software Development",
+  "private": true,
+  "workspaces": [
+    "packages/models",
+    "packages/config",
+    "packages/analysis",
+    "packages/agents",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "node scripts/clean.js",
+    "rebuild": "node scripts/rebuild.js",
+    "pre-commit": "node scripts/pre-commit.js",
+    "pre-push": "node scripts/pre-push.js",
+    "coverage": "vitest run --coverage",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "@vitest/ui": "^1.0.4",
+    "@vitest/coverage-v8": "^1.0.4",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "cli",
+    "ai",
+    "agents",
+    "code-generation",
+    "testing",
+    "code-review",
+    "planning"
+  ],
+  "author": "Omaikit Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/omaikit"
+  }
+}

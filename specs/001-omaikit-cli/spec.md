@@ -5,13 +5,13 @@
 **Status**: Draft  
 **Input**: User description: "Build a multi-agent CLI toolkit called Omaikit that accelerates software development by orchestrating specialized AI agents through simple terminal commands. Omaikit transforms high-level project goals into executable Agile plans, generates production-ready code, writes comprehensive tests, and provides detailed code reviews - functioning like a virtual dev team that works 10x faster than solo development."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
+
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
@@ -141,7 +141,7 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 - What if a developer cancels a pipeline midway? (Should cleanly stop all running agents and preserve partial outputs)
 - How does Omaikit handle projects with unconventional structures? (Should attempt to detect and adapt; fall back to defaults)
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -174,6 +174,7 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 ## Constitution Alignment
 
 ### Code Quality Requirements
+
 - **CQ-001**: Generated code MUST include proper error handling for all external calls (file I/O, network, database operations)
 - **CQ-002**: Generated code MUST include structured logging at INFO, WARN, and ERROR levels for observability
 - **CQ-003**: Generated code MUST include JSDoc/TSDoc comments for public APIs explaining parameters, return values, and error conditions
@@ -181,6 +182,7 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 - **CQ-005**: CLI commands MUST follow standard patterns: `omaikit <command> [options] [args]` with consistent help documentation
 
 ### Testing Acceptance Criteria
+
 - **TA-001**: Generated test suites MUST achieve minimum 80% code coverage for core functionality
 - **TA-002**: Test suites MUST include unit tests for individual functions, integration tests for component interaction, and edge case tests
 - **TA-003**: All tests MUST be executable and passing before code review
@@ -188,6 +190,7 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 - **TA-005**: Error paths MUST be tested (invalid inputs, missing resources, network failures)
 
 ### User Experience Consistency
+
 - **UX-001**: All CLI commands MUST provide clear, colored output differentiating success (green), warnings (yellow), and errors (red)
 - **UX-002**: All CLI commands MUST support `--help` and `-h` flags with usage documentation
 - **UX-003**: Long-running operations MUST show progress indicators (progress bars, status messages)
@@ -195,13 +198,14 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 - **UX-005**: Command output MUST be machine-readable (JSON) and human-readable (formatted text) where appropriate
 
 ### Performance Targets
+
 - **PT-001**: Planner agent MUST generate plans within 30 seconds for typical projects (under 500 files)
 - **PT-002**: Coder agent MUST generate code for a single task within 60 seconds
 - **PT-003**: Tester agent MUST generate and validate test suites within 120 seconds
 - **PT-004**: Reviewer agent MUST complete code review within 90 seconds
 - **PT-005**: Pipeline orchestration overhead MUST not exceed 5 seconds
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

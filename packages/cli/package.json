@@ -1,0 +1,34 @@
+{
+  "name": "@omaikit/cli",
+  "version": "0.1.0",
+  "description": "CLI interface for Omaikit - multi-agent development toolkit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "omaikit": "dist/bin/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "keywords": [
+    "omaikit",
+    "cli",
+    "agent",
+    "development"
+  ],
+  "author": "Omaikit",
+  "license": "MIT",
+  "dependencies": {
+    "@omaikit/models": "*",
+    "@omaikit/config": "*",
+    "@omaikit/analysis": "*",
+    "@omaikit/agents": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  }
+}

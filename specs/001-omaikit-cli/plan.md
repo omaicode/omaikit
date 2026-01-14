@@ -14,7 +14,8 @@ Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with Typ
 ## Technical Context
 
 **Language/Version**: Node.js 22, TypeScript 5.3+  
-**Primary Dependencies**: 
+**Primary Dependencies**:
+
 - **CLI Framework**: Oclif or Commander.js (type-safe CLI framework)
 - **AI Integration**: OpenAI API, Anthropic Claude API (abstracted via provider pattern)
 - **Task Orchestration**: Node async/await with Bull or Bullmq for task queues
@@ -26,30 +27,34 @@ Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with Typ
 **Testing**: Vitest with @vitest/ui for test coverage reporting; integration tests via spawning actual CLI commands  
 **Target Platform**: Linux, macOS, Windows (cross-platform Node.js CLI); works with all programming languages as input  
 **Project Type**: Monorepo with packages: `@omaikit/cli` (entry point), `@omaikit/agents` (agent implementations), `@omaikit/analysis` (codebase analysis), `@omaikit/models` (data structures)  
-**Performance Goals**: 
+**Performance Goals**:
+
 - Plan generation: <30 seconds for typical projects
 - Code generation: <60 seconds per task
 - Test generation: <120 seconds with automatic coverage validation
 - Full pipeline: <5 minutes end-to-end
 - CLI response time: <2 seconds for all interactive commands
 
-**Constraints**: 
+**Constraints**:
+
 - Must work offline after initial AI provider connection
 - All outputs must be deterministic and reproducible
 - Generated code must never depend on Omaikit runtime (standalone)
 - No modification of user's source code; only generation into `.omaikit/`
 - Must handle projects 1-10,000+ LOC without performance degradation
 
-**Scale/Scope**: 
+**Scale/Scope**:
+
 - Initial target: Single to 10-module projects
 - Estimated codebase: 15,000-25,000 LOC for MVP
 - CLI must support both greenfield (`omaikit init`) and existing project analysis (`omaikit analyze`)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ✅ **Code Quality**: Feature is decomposable into independently reviewable modules:
+
 - `@omaikit/cli` (CLI entry point)
 - `@omaikit/agents` (modular agent implementations with consistent interfaces)
 - `@omaikit/analysis` (codebase analyzer and project model)
@@ -59,6 +64,7 @@ Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with Typ
 Linting rules defined: TypeScript strict mode, ESLint with Prettier, max line length 100, no unused variables, comprehensive JSDoc for public APIs.
 
 ✅ **Testing Standards**: Feature includes testable acceptance criteria for each user story; TDD approach:
+
 1. Write failing unit tests for agent interfaces
 2. Implement agent core functionality
 3. Write integration tests for agent interaction and CLI commands
@@ -68,6 +74,7 @@ Linting rules defined: TypeScript strict mode, ESLint with Prettier, max line le
 Target: >80% coverage for core agent logic, >70% for CLI orchestration.
 
 ✅ **User Experience Consistency**: CLI commands follow consistent patterns:
+
 - Standard format: `omaikit <command> [options] [args]`
 - Colored output (green=success, yellow=warning, red=error)
 - `--help` and `-h` flags for all commands
@@ -76,6 +83,7 @@ Target: >80% coverage for core agent logic, >70% for CLI orchestration.
 - Error messages with codes and recovery suggestions
 
 ✅ **Performance**: Quantified performance targets established (see Technical Context):
+
 - Plan: <30s, Code: <60s/task, Test: <120s, Review: <90s, Pipeline: <5min
 - Response latency: <2s for interactive commands
 - Memory: <100MB startup, <500MB peak under load
@@ -320,7 +328,7 @@ interface AgentInput {
 interface AgentOutput {
   agentName: string;
   timestamp: ISO8601;
-  status: "success" | "partial" | "failed";
+  status: 'success' | 'partial' | 'failed';
   result: object;
   metadata: { duration: number; tokenUsage?: number; errors?: string[] };
 }
@@ -367,6 +375,7 @@ Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType copilot` to
 ### Task Categories (15-25 high-level tasks expected)
 
 **Core Infrastructure** (4-5 tasks)
+
 - Project setup (package.json, TypeScript, dependencies)
 - CLI framework setup and command routing
 - Configuration management system
@@ -374,6 +383,7 @@ Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType copilot` to
 - Test framework setup and utilities
 
 **Project Analysis** (4-5 tasks)
+
 - File system scanner for project structure detection
 - AST-based code analyzer
 - Dependency graph builder
@@ -381,30 +391,35 @@ Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType copilot` to
 - Cache manager for analysis results
 
 **Base Agent Architecture** (2-3 tasks)
+
 - Abstract agent base class with lifecycle hooks
 - AI provider abstraction layer (OpenAI/Anthropic/OSS)
 - Agent communication protocol (event bus)
 - Async orchestration framework
 
 **Individual Agents** (4 major tasks + subtasks)
+
 - Planner Agent: Feature parsing → JSON plan generation
 - Coder Agent: Task → language-specific code generation
 - Tester Agent: Code → test suite generation with coverage validation
 - Reviewer Agent: Code+tests → markdown review report
 
 **Pipeline Orchestration** (2-3 tasks)
+
 - Sequential execution engine
 - Parallelization detection (test + review can run simultaneously)
 - Output aggregation and summary generation
 - Cancellation and error recovery
 
 **CLI Interface** (2-3 tasks)
+
 - Command handlers for plan, code, test, review
 - run-pipeline orchestrator command
 - Help documentation and argument parsing
 - Progress indicators and colored output
 
 **Testing & Validation** (2-3 tasks)
+
 - Unit tests for all agents
 - Integration tests for CLI commands
 - End-to-end pipeline tests

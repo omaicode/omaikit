@@ -1,0 +1,29 @@
+{
+  "name": "@omaikit/analysis",
+  "version": "0.1.0",
+  "description": "Codebase analysis and AST utilities for Omaikit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "keywords": [
+    "omaikit",
+    "analysis",
+    "ast",
+    "codebase"
+  ],
+  "author": "Omaikit",
+  "license": "MIT",
+  "dependencies": {
+    "@omaikit/models": "*",
+    "@omaikit/config": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  }
+}
