@@ -46,49 +46,49 @@
 
 ### Base Agent Framework
 
-- [ ] T011 [CQ] Implement base `Agent` interface in `packages/agents/src/base-agent.ts` with execute(), validate(), canHandle() methods per contracts/agents.md
-- [ ] T012 [P] [CQ] Implement `AgentInput` and `AgentOutput` types in `packages/agents/src/types.ts` with metadata structure
-- [ ] T013 [P] [CQ] Implement agent lifecycle hooks (init, beforeExecute, afterExecute, onError) in `packages/agents/src/base-agent.ts`
-- [ ] T014 [CQ] Setup logging infrastructure with Winston or Pino in `packages/agents/src/logger.ts` (INFO, WARN, ERROR levels)
-- [ ] T015 [CQ] Implement error handling and standard error codes in `packages/agents/src/errors.ts` per contracts/agents.md
+- [x] T011 [CQ] Implement base `Agent` interface in `packages/agents/src/base-agent.ts` with execute(), validate(), canHandle() methods per contracts/agents.md
+- [x] T012 [P] [CQ] Implement `AgentInput` and `AgentOutput` types in `packages/agents/src/types.ts` with metadata structure
+- [x] T013 [P] [CQ] Implement agent lifecycle hooks (init, beforeExecute, afterExecute, onError) in `packages/agents/src/base-agent.ts`
+- [x] T014 [CQ] Setup logging infrastructure with Winston or Pino in `packages/agents/src/logger.ts` (INFO, WARN, ERROR levels)
+- [x] T015 [CQ] Implement error handling and standard error codes in `packages/agents/src/errors.ts` per contracts/agents.md
 
 ### AI Provider Abstraction
 
-- [ ] T016 [CQ] Implement `AIProvider` interface in `packages/agents/src/ai-provider/provider.ts` (abstract pattern)
-- [ ] T017 [P] [CQ] Implement OpenAI adapter in `packages/agents/src/ai-provider/openai.ts` with streaming support
-- [ ] T018 [P] [CQ] Implement Anthropic adapter in `packages/agents/src/ai-provider/anthropic.ts` with streaming support
-- [ ] T019 [CQ] Implement provider factory in `packages/agents/src/ai-provider/factory.ts` for selecting provider via config
-- [ ] T020 [P] [CQ] Implement token counter and rate limiter in `packages/agents/src/ai-provider/token-manager.ts`
+- [x] T016 [CQ] Implement `AIProvider` interface in `packages/agents/src/ai-provider/provider.ts` (abstract pattern)
+- [x] T017 [P] [CQ] Implement OpenAI adapter in `packages/agents/src/ai-provider/openai.ts` with streaming support
+- [x] T018 [P] [CQ] Implement Anthropic adapter in `packages/agents/src/ai-provider/anthropic.ts` with streaming support
+- [x] T019 [CQ] Implement provider factory in `packages/agents/src/ai-provider/factory.ts` for selecting provider via config
+- [x] T020 [P] [CQ] Implement token counter and rate limiter in `packages/agents/src/ai-provider/token-manager.ts`
 
 ### Project Analysis Infrastructure
 
-- [ ] T021 [CQ] Implement `Project` model interface in `packages/models/src/project.ts` per data-model.md
-- [ ] T022 [P] [CQ] Implement `Module` and `DependencyGraph` models in `packages/models/src/project.ts`
-- [ ] T023 [P] [CQ] Implement `CodePatterns` interface for pattern detection in `packages/models/src/patterns.ts`
-- [ ] T024 [CQ] Setup file system caching layer in `packages/analysis/src/cache-manager.ts` for analysis results
+- [x] T021 [CQ] Implement `Project` model interface in `packages/models/src/project.ts` per data-model.md
+- [x] T022 [P] [CQ] Implement `Module` and `DependencyGraph` models in `packages/models/src/project.ts`
+- [x] T023 [P] [CQ] Implement `CodePatterns` interface for pattern detection in `packages/models/src/patterns.ts`
+- [x] T024 [CQ] Setup file system caching layer in `packages/analysis/src/cache-manager.ts` for analysis results
 
 ### Data Models & Validation
 
-- [ ] T025 [P] [CQ] Implement `Plan` and `Task` models in `packages/models/src/plan.ts` per data-model.md with validation
-- [ ] T026 [P] [CQ] Implement `CodeGeneration` request/response models in `packages/models/src/code-generation.ts`
-- [ ] T027 [P] [CQ] Implement `TestSuite` and `TestFile` models in `packages/models/src/test-suite.ts`
-- [ ] T028 [P] [CQ] Implement `CodeReview` and `Finding` models in `packages/models/src/review.ts`
-- [ ] T029 [CQ] Create JSON schema validators for all models in `packages/models/src/validators/` using Zod or Ajv
+- [x] T025 [P] [CQ] Implement `Plan` and `Task` models in `packages/models/src/plan.ts` per data-model.md with validation
+- [x] T026 [P] [CQ] Implement `CodeGeneration` request/response models in `packages/models/src/code-generation.ts`
+- [x] T027 [P] [CQ] Implement `TestSuite` and `TestFile` models in `packages/models/src/test-suite.ts`
+- [x] T028 [P] [CQ] Implement `CodeReview` and `Finding` models in `packages/models/src/review.ts`
+- [x] T029 [CQ] Create JSON schema validators for all models in `packages/models/src/validators/` using Zod or Ajv
 
 ### Pipeline Orchestration Foundation
 
-- [ ] T030 [CQ] Implement `PipelineOrchestrator` interface in `packages/cli/src/orchestrator/orchestrator.ts` per contracts/agents.md
-- [ ] T031 [CQ] Implement pipeline state machine in `packages/cli/src/orchestrator/state-machine.ts` (planned, running, completed, failed, cancelled)
-- [ ] T032 [P] [CQ] Implement event bus for agent communication in `packages/cli/src/orchestrator/event-bus.ts`
-- [ ] T033 [CQ] Implement cancellation signal handling in `packages/cli/src/orchestrator/cancellation-handler.ts`
+- [x] T030 [CQ] Implement `PipelineOrchestrator` interface in `packages/cli/src/orchestrator/orchestrator.ts` per contracts/agents.md
+- [x] T031 [CQ] Implement pipeline state machine in `packages/cli/src/orchestrator/state-machine.ts` (planned, running, completed, failed, cancelled)
+- [x] T032 [P] [CQ] Implement event bus for agent communication in `packages/cli/src/orchestrator/event-bus.ts`
+- [x] T033 [CQ] Implement cancellation signal handling in `packages/cli/src/orchestrator/cancellation-handler.ts`
 
 ### CLI Infrastructure
 
-- [ ] T034 [CQ] Setup Oclif or Commander.js CLI framework in `packages/cli/src/index.ts` with help and version commands
-- [ ] T035 [CQ] Implement colored output utilities in `packages/cli/src/utils/colors.ts` (green, yellow, red per UX spec)
-- [ ] T036 [P] [CQ] Implement progress bar/spinner utilities in `packages/cli/src/utils/progress.ts`
-- [ ] T037 [CQ] Implement standard error formatter in `packages/cli/src/utils/error-formatter.ts` with error codes and recovery suggestions
-- [ ] T038 [P] [CQ] Implement configuration file loader in `packages/config/src/config-loader.ts` for `.omaikit/config.json`
+- [x] T034 [CQ] Setup Oclif or Commander.js CLI framework in `packages/cli/src/index.ts` with help and version commands
+- [x] T035 [CQ] Implement colored output utilities in `packages/cli/src/utils/colors.ts` (green, yellow, red per UX spec)
+- [x] T036 [P] [CQ] Implement progress bar/spinner utilities in `packages/cli/src/utils/progress.ts`
+- [x] T037 [CQ] Implement standard error formatter in `packages/cli/src/utils/error-formatter.ts` with error codes and recovery suggestions
+- [x] T038 [P] [CQ] Implement configuration file loader in `packages/config/src/config-loader.ts` for `.omaikit/config.json`
 
 **Checkpoint**: All agents can be instantiated and orchestrated; CLI framework is responsive; models are validated; pipeline can be started
 
@@ -101,23 +101,23 @@
 
 ### Tests for User Story 1 (Test-First per Constitution)
 
-- [ ] T039 [P] [US1] [TEST] Unit test for Planner agent interface and initialization in `packages/agents/__tests__/planner/planner.test.ts`
-- [ ] T040 [P] [US1] [TEST] Unit test for plan validator (milestones, tasks, dependencies) in `packages/agents/__tests__/planner/plan-validator.test.ts`
-- [ ] T041 [P] [US1] [TEST] Contract test for plan JSON schema and structure in `packages/agents/__tests__/contracts/plan.contract.test.ts`
-- [ ] T042 [US1] [TEST] Integration test for full planning workflow (description → plan) in `packages/cli/__tests__/integration/plan-command.test.ts`
-- [ ] T043 [US1] [TEST] Edge case tests: ambiguous descriptions, multi-module projects, clarification questions in `packages/agents/__tests__/planner/edge-cases.test.ts`
+- [x] T039 [P] [US1] [TEST] Unit test for Planner agent interface and initialization in `packages/agents/__tests__/planner/planner.test.ts`
+- [x] T040 [P] [US1] [TEST] Unit test for plan validator (milestones, tasks, dependencies) in `packages/agents/__tests__/planner/plan-validator.test.ts`
+- [x] T041 [P] [US1] [TEST] Contract test for plan JSON schema and structure in `packages/agents/__tests__/contracts/plan.contract.test.ts`
+- [x] T042 [US1] [TEST] Integration test for full planning workflow (description → plan) in `packages/cli/__tests__/integration/plan-command.test.ts`
+- [x] T043 [US1] [TEST] Edge case tests: ambiguous descriptions, multi-module projects, clarification questions in `packages/agents/__tests__/planner/edge-cases.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T044 [P] [US1] [CQ] Create planner agent structure in `packages/agents/src/planner/planner.ts` implementing Agent interface
-- [ ] T045 [P] [US1] [CQ] Implement prompt template system in `packages/agents/src/planner/prompt-templates.ts` with few-shot examples
-- [ ] T046 [US1] [CQ] Implement plan parser in `packages/agents/src/planner/plan-parser.ts` to extract structured plan from LLM response
-- [ ] T047 [US1] [CQ] Implement plan validator in `packages/agents/src/planner/plan-validator.ts` validating DAG, effort estimates, dependencies
-- [ ] T048 [P] [US1] [CQ] Implement clarification question handler in `packages/agents/src/planner/clarification-handler.ts` for ambiguous inputs
-- [ ] T049 [US1] [CQ] Implement plan persistence in `packages/analysis/src/plan-writer.ts` to save `.omaikit/plan.json`
-- [ ] T050 [US1] [UX] Implement `omaikit plan` command in `packages/cli/src/commands/plan.ts` with progress indication and error handling
-- [ ] T051 [US1] [UX] Add user-friendly output formatting in `packages/cli/src/commands/plan.ts` showing plan summary and next steps
-- [ ] T052 [US1] [PERF] Optimize planner agent prompt for sub-30-second execution in `packages/agents/src/planner/prompt-templates.ts`
+- [x] T044 [P] [US1] [CQ] Create planner agent structure in `packages/agents/src/planner/planner.ts` implementing Agent interface
+- [x] T045 [P] [US1] [CQ] Implement prompt template system in `packages/agents/src/planner/prompt-templates.ts` with few-shot examples
+- [x] T046 [US1] [CQ] Implement plan parser in `packages/agents/src/planner/plan-parser.ts` to extract structured plan from LLM response
+- [x] T047 [US1] [CQ] Implement plan validator in `packages/agents/src/planner/plan-validator.ts` validating DAG, effort estimates, dependencies
+- [x] T048 [P] [US1] [CQ] Implement clarification question handler in `packages/agents/src/planner/clarification-handler.ts` for ambiguous inputs
+- [x] T049 [US1] [CQ] Implement plan persistence in `packages/analysis/src/plan-writer.ts` to save `.omaikit/plan.json`
+- [x] T050 [US1] [UX] Implement `omaikit plan` command in `packages/cli/src/commands/plan.ts` with progress indication and error handling
+- [x] T051 [US1] [UX] Add user-friendly output formatting in `packages/cli/src/commands/plan.ts` showing plan summary and next steps
+- [x] T052 [US1] [PERF] Optimize planner agent prompt for sub-30-second execution in `packages/agents/src/planner/prompt-templates.ts`
 
 **Checkpoint**: User Story 1 complete - developers can generate plans independently from feature descriptions
 

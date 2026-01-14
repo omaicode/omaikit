@@ -2,5 +2,5 @@
  * Configuration management for Omaikit
  */
 
-export * from './config';
-export * from './loader';
+export type { OmaikitConfig } from './config';
+export { loadConfig } from './loader';

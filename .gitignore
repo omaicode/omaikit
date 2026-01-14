@@ -8,6 +8,9 @@ pnpm-lock.yaml
 dist/
 build/
 *.tsbuildinfo
+*.js
+*.js.map
+*.ts.map
 
 # Development
 .env

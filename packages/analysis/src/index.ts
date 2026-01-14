@@ -4,3 +4,5 @@
 
 export * from './analyzer';
 export * from './parser';
+export { PlanWriter } from './plan-writer';
+export { CacheManager } from './cache-manager';

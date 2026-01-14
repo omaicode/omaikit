@@ -22,8 +22,7 @@
     "rebuild": "node scripts/rebuild.js",
     "pre-commit": "node scripts/pre-commit.js",
     "pre-push": "node scripts/pre-push.js",
-    "coverage": "vitest run --coverage",
-    "prepare": "husky install"
+    "coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
