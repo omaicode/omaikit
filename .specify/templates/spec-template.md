@@ -100,6 +100,28 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## Constitution Alignment
+
+### Code Quality Requirements
+- **CQ-001**: [Module/component names and purpose, e.g., "Validation logic isolated in `validators.py` module with single responsibility"]
+- **CQ-002**: [Linting/style rules specific to this feature, e.g., "No nested ternary operators; max function length 50 lines"]
+- **CQ-003**: [Code reuse strategy, e.g., "Shared logic extracted to `common/utils.py` to prevent duplication"]
+
+### Testing Acceptance Criteria
+- **TA-001**: [Unit test coverage target, e.g., ">80% of public API coverage"]
+- **TA-002**: [Integration test scope, e.g., "Test end-to-end flow for each user story"]
+- **TA-003**: [Error/edge case testing, e.g., "All validation paths covered; null/empty input handling"]
+
+### User Experience Consistency
+- **UX-001**: [Consistency requirement, e.g., "All error messages use format: '[Code]: User-readable message'"]
+- **UX-002**: [Interface convention, e.g., "CLI args follow '--flag value' pattern; required args positional"]
+- **UX-003**: [User feedback, e.g., "All operations provide success/failure feedback within 100ms"]
+
+### Performance Targets
+- **PT-001**: [Latency target, e.g., "Primary operation completes in <200ms p95"]
+- **PT-002**: [Throughput target, e.g., "Process 10,000 items per second"]
+- **PT-003**: [Resource target, e.g., "Memory footprint <100MB at startup; <500MB under load"]
+
 ## Success Criteria *(mandatory)*
 
 <!--

@@ -12,10 +12,15 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
-## Format: `[ID] [P?] [Story] Description`
+## Format: `[ID] [P?] [Story] [Type] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- **[Type]**: Task category per constitution:
+  - **[CQ]**: Code Quality - architecture, module design, duplication removal
+  - **[TEST]**: Test-First Development - test design, edge cases, acceptance criteria
+  - **[UX]**: User Experience - consistency, error messages, interface contracts
+  - **[PERF]**: Performance - optimization, benchmarking, load testing
 - Include exact file paths in descriptions
 
 ## Path Conventions
@@ -48,9 +53,10 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
+- [ ] T001 [CQ] Create project structure per implementation plan
 - [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T003 [P] [CQ] Configure linting and formatting tools per constitution code quality requirements
+- [ ] T004 [P] [CQ] Define code style guide and documentation standards (per spec Constitution Alignment > Code Quality)
 
 ---
 
@@ -62,12 +68,15 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T005 [TEST] Setup test framework and testing conventions per constitution test-first requirements
+- [ ] T006 [CQ] Setup database schema and migrations framework
+- [ ] T007 [P] [CQ] Implement authentication/authorization framework with error handling conventions
+- [ ] T008 [P] [CQ] Setup API routing and middleware structure
+- [ ] T009 [CQ] [UX] Create base models/entities with consistent error messaging patterns (per spec Constitution Alignment > UX)
+- [ ] T010 [CQ] [UX] Configure error handling and logging infrastructure with user-friendly output
+- [ ] T011 [CQ] Setup environment configuration management
+- [ ] T012 [PERF] Establish performance baseline and monitoring (per spec Constitution Alignment > Performance Targets)
+- [ ] T013 [P] [TEST] Document acceptance criteria format and test structure per TDD requirements
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -79,23 +88,26 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (REQUIRED per constitution) ⚠️
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+> **MANDATORY**: Write these tests FIRST, ensure they FAIL before implementation (Test-First principle)
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T014 [P] [US1] [TEST] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T015 [P] [US1] [TEST] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T016 [US1] [TEST] Edge case tests for boundary conditions and error scenarios (per Constitution Alignment > Testing)
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T017 [P] [US1] [CQ] Define module structure and interfaces (per code quality requirements)
+- [ ] T018 [P] [US1] [CQ] Create [Entity1] model in src/models/[entity1].py
+- [ ] T019 [P] [US1] [CQ] Create [Entity2] model in src/models/[entity2].py
+- [ ] T020 [US1] [CQ] Implement [Service] in src/services/[service].py (depends on T018, T019)
+- [ ] T021 [US1] [CQ] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T022 [US1] [UX] Add user-friendly validation and error messages per UX consistency requirements
+- [ ] T023 [US1] [CQ] Add logging for user story 1 operations
+- [ ] T024 [US1] [PERF] Profile performance and verify against targets (per spec Constitution Alignment > Performance)
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+**Checkpoint**: At this point, User Story 1 should be fully functional, tested, and meet all constitution requirements
 
 ---
 
@@ -105,19 +117,21 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (REQUIRED per constitution) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T025 [P] [US2] [TEST] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T026 [P] [US2] [TEST] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T027 [US2] [TEST] Edge case and error handling tests
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T028 [P] [US2] [CQ] Create [Entity] model in src/models/[entity].py
+- [ ] T029 [US2] [CQ] Implement [Service] in src/services/[service].py
+- [ ] T030 [US2] [CQ] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T031 [US2] [UX] Integrate with User Story 1 components with consistent error handling (if needed)
+- [ ] T032 [US2] [PERF] Profile and optimize performance against targets
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently and meet constitution requirements
 
 ---
 
@@ -127,18 +141,20 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (REQUIRED per constitution) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T033 [P] [US3] [TEST] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T034 [P] [US3] [TEST] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T035 [US3] [TEST] Edge case and error handling tests
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T036 [P] [US3] [CQ] Create [Entity] model in src/models/[entity].py
+- [ ] T037 [US3] [CQ] Implement [Service] in src/services/[service].py
+- [ ] T038 [US3] [CQ] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T039 [US3] [UX] Ensure consistent error messages and user feedback
 
-**Checkpoint**: All user stories should now be independently functional
+**Checkpoint**: All user stories should now be independently functional and meet constitution requirements
 
 ---
 
@@ -150,12 +166,13 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
-- [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
-- [ ] TXXX Run quickstart.md validation
+- [ ] T040 [P] [CQ] Code cleanup, refactoring, and duplication removal per code quality standards
+- [ ] T041 [P] [CQ] Documentation updates in docs/
+- [ ] T042 [CQ] Code review compliance check (linting, style, modularity)
+- [ ] T043 [PERF] Performance optimization across all stories based on profiling data
+- [ ] T044 [UX] Cross-story UX consistency audit (error messages, interface patterns)
+- [ ] T045 [TEST] Run complete test suite and verify coverage targets met
+- [ ] T046 Run quickstart.md validation and user experience testing
 
 ---
 

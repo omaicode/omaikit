@@ -31,7 +31,10 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Code Quality**: Feature must be decomposable into independently reviewable modules; linting rules defined upfront
+- **Testing Standards**: Feature spec must include testable acceptance criteria; TDD approach documented
+- **User Experience Consistency**: Any user-facing components must define consistency requirements vs. existing patterns
+- **Performance**: Feature must include quantified performance targets (latency, throughput, resource usage)
 
 ## Project Structure
 

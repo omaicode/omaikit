@@ -1,50 +1,92 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# OmaiKit Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Code Quality Discipline (NON-NEGOTIABLE)
+Every line of code MUST meet quality standards before merge. Code MUST be:
+- Readable and self-documenting with clear variable/function names (no single-letter variables except loop counters)
+- Free of duplicate logic (DRY principle enforced)
+- Properly typed (use static typing where language supports; type hints in Python required)
+- Following established linting rules without exception
+- Reviewed and approved by at least one other developer before merging
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All violations require explicit architectural justification and code review sign-off.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Test-First Development (NON-NEGOTIABLE)
+Test-Driven Development (TDD) is mandatory for all features. The workflow is:
+1. Write failing tests based on acceptance criteria
+2. Get test approval from reviewer
+3. Implement feature to make tests pass
+4. Pass code review and all automated checks
+5. Red-Green-Refactor cycle strictly enforced
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Coverage requirements:
+- Unit tests: MUST cover all public APIs and critical paths (target ≥80%)
+- Integration tests: REQUIRED for inter-service communication and contract changes
+- Edge cases: Each test MUST include at least one boundary condition or error scenario
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. User Experience Consistency
+User-facing interfaces MUST be consistent, predictable, and intuitive:
+- All user interactions follow established patterns; deviations require justification
+- Error messages MUST be user-friendly, actionable, and consistent in tone/format
+- Text I/O ensures debuggability: human-readable + structured (JSON) output formats required
+- API contracts MUST be explicitly documented before implementation
+- All changes to user-facing behavior require explicit approval before development begins
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Consistency applies across: CLI arguments, API responses, error handling, validation messages, and UI components.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Performance Requirements by Design
+Performance is a non-functional requirement, not an afterthought:
+- All features MUST establish performance targets before implementation (latency, throughput, memory, startup time)
+- Target performance goals MUST be documented in the feature specification
+- Benchmarks MUST be measurable and reproducible (e.g., "process 10k items in <2s")
+- Load testing is required for features handling user requests or data processing
+- Performance regressions MUST be caught by automated tests; monitoring alerts required for production
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Optimization decisions MUST be justified when trading code simplicity for performance.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Development Standards
+
+### Code Review & Quality Gates
+
+All code changes MUST pass:
+- Automated linting and formatting checks (no manual override)
+- Complete test suite with all tests passing
+- At least one human reviewer approval (code quality focus)
+- Constitution compliance verification (per principles above)
+
+Pull requests violating these gates MUST NOT be merged.
+
+### Testing Standards
+
+Each test MUST be:
+- **Isolated**: No dependencies on external state; clean setup/teardown required
+- **Deterministic**: Same input always produces same result; no flaky tests allowed
+- **Fast**: Unit tests <100ms each; integration tests grouped and run separately
+- **Readable**: Test names describe what is being tested and expected outcome (Given-When-Then format)
+
+Testing framework and conventions determined per technology stack in individual feature plans.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+### Constitution Authority
+This Constitution supersedes all other practices and informal agreements. All architectural decisions, coding standards, and development workflows MUST comply with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Amendment Process
+Amendments require:
+1. Documented justification explaining why current principle is insufficient
+2. Proposed replacement principle or clarification
+3. Review and explicit approval from project lead
+4. Migration plan for existing code (if applicable)
+5. Update to this document with new amendment date
+
+### Compliance Verification
+- All PRs must be verified against Constitution principles during review
+- Any exceptions MUST be explicitly justified and recorded
+- Feature plans (per `.specify/templates/plan-template.md`) MUST include a Constitution Check gate
+- Task decomposition (per `.specify/templates/tasks-template.md`) MUST ensure test-first and quality disciplines
+
+### Runtime Guidance
+For day-to-day development workflows and implementation patterns, refer to project documentation and established team practices. This Constitution sets the non-negotiable gates; operational details are documented in feature-specific plans.
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-14 | **Last Amended**: 2026-01-14
