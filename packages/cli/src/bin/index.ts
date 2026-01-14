@@ -3,9 +3,7 @@
  * Omaikit CLI entry point
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { bold, cyan, green } from '../utils/colors';
+import { bold, cyan } from '../utils/colors';
 import { formatError, printError } from '../utils/error-formatter';
 import planCommand from '../commands/plan';
 
@@ -93,7 +91,7 @@ async function main(): Promise<void> {
 
   try {
     switch (args.command.toLowerCase()) {
-      case 'plan':
+      case 'plan': {
         if (!args.description) {
           const err = formatError('INVALID_ARGS', 'Description is required for plan command');
           printError(err);
@@ -107,6 +105,7 @@ async function main(): Promise<void> {
           output: args.output,
         });
         break;
+      }
 
       case 'code':
       case 'test':
@@ -116,12 +115,13 @@ async function main(): Promise<void> {
         process.exit(0);
         break;
 
-      default:
+      default: {
         const err = formatError('UNKNOWN_COMMAND', `Unknown command: ${args.command}`);
         printError(err);
         console.log('');
         console.log("Run 'omaikit --help' for usage information");
         process.exit(1);
+      }
     }
   } catch (error) {
     const err = error as Error;
