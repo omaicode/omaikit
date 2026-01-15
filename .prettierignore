@@ -1,0 +1,14 @@
+# Ignore files
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.local
+.env*
+specs/
+**/.github/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.omaikit/

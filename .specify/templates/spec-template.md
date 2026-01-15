@@ -5,13 +5,13 @@
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
   you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
+
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
   - Developed independently
@@ -75,7 +75,7 @@
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 <!--
   ACTION REQUIRED: The content in this section represents placeholders.
@@ -85,17 +85,17 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
-*Example of marking unclear requirements:*
+_Example of marking unclear requirements:_
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
@@ -103,26 +103,30 @@
 ## Constitution Alignment
 
 ### Code Quality Requirements
+
 - **CQ-001**: [Module/component names and purpose, e.g., "Validation logic isolated in `validators.py` module with single responsibility"]
 - **CQ-002**: [Linting/style rules specific to this feature, e.g., "No nested ternary operators; max function length 50 lines"]
 - **CQ-003**: [Code reuse strategy, e.g., "Shared logic extracted to `common/utils.py` to prevent duplication"]
 
 ### Testing Acceptance Criteria
+
 - **TA-001**: [Unit test coverage target, e.g., ">80% of public API coverage"]
 - **TA-002**: [Integration test scope, e.g., "Test end-to-end flow for each user story"]
 - **TA-003**: [Error/edge case testing, e.g., "All validation paths covered; null/empty input handling"]
 
 ### User Experience Consistency
+
 - **UX-001**: [Consistency requirement, e.g., "All error messages use format: '[Code]: User-readable message'"]
 - **UX-002**: [Interface convention, e.g., "CLI args follow '--flag value' pattern; required args positional"]
 - **UX-003**: [User feedback, e.g., "All operations provide success/failure feedback within 100ms"]
 
 ### Performance Targets
+
 - **PT-001**: [Latency target, e.g., "Primary operation completes in <200ms p95"]
 - **PT-002**: [Throughput target, e.g., "Process 10,000 items per second"]
 - **PT-003**: [Resource target, e.g., "Memory footprint <100MB at startup; <500MB under load"]
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 <!--
   ACTION REQUIRED: Define measurable success criteria.

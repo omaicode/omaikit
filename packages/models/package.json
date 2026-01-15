@@ -1,0 +1,26 @@
+{
+  "type": "module",
+  "name": "@omaikit/models",
+  "version": "0.1.0",
+  "description": "Core data models and types for Omaikit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "omaikit",
+    "models",
+    "types"
+  ],
+  "author": "Omaikit",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  }
+}

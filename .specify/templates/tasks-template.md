@@ -1,6 +1,5 @@
 ---
-
-description: "Task list template for feature implementation"
+description: 'Task list template for feature implementation'
 ---
 
 # Tasks: [FEATURE NAME]
@@ -30,21 +29,21 @@ description: "Task list template for feature implementation"
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
 - Paths shown below assume single project - adjust based on plan.md structure
 
-<!-- 
+<!--
   ============================================================================
   IMPORTANT: The tasks below are SAMPLE TASKS for illustration purposes only.
-  
+
   The /speckit.tasks command MUST replace these with actual tasks based on:
   - User stories from spec.md (with their priorities P1, P2, P3...)
   - Feature requirements from plan.md
   - Entities from data-model.md
   - Endpoints from contracts/
-  
+
   Tasks MUST be organized by user story so each story can be:
   - Implemented independently
   - Tested independently
   - Delivered as an MVP increment
-  
+
   DO NOT keep these sample tasks in the generated tasks.md file.
   ============================================================================
 -->
@@ -92,8 +91,8 @@ Examples of foundational tasks (adjust based on your project):
 
 > **MANDATORY**: Write these tests FIRST, ensure they FAIL before implementation (Test-First principle)
 
-- [ ] T014 [P] [US1] [TEST] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T015 [P] [US1] [TEST] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T014 [P] [US1] [TEST] Contract test for [endpoint] in tests/contract/test\_[name].py
+- [ ] T015 [P] [US1] [TEST] Integration test for [user journey] in tests/integration/test\_[name].py
 - [ ] T016 [US1] [TEST] Edge case tests for boundary conditions and error scenarios (per Constitution Alignment > Testing)
 
 ### Implementation for User Story 1
@@ -119,8 +118,8 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 2 (REQUIRED per constitution) ⚠️
 
-- [ ] T025 [P] [US2] [TEST] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T026 [P] [US2] [TEST] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T025 [P] [US2] [TEST] Contract test for [endpoint] in tests/contract/test\_[name].py
+- [ ] T026 [P] [US2] [TEST] Integration test for [user journey] in tests/integration/test\_[name].py
 - [ ] T027 [US2] [TEST] Edge case and error handling tests
 
 ### Implementation for User Story 2
@@ -143,8 +142,8 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 3 (REQUIRED per constitution) ⚠️
 
-- [ ] T033 [P] [US3] [TEST] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T034 [P] [US3] [TEST] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T033 [P] [US3] [TEST] Contract test for [endpoint] in tests/contract/test\_[name].py
+- [ ] T034 [P] [US3] [TEST] Integration test for [user journey] in tests/integration/test\_[name].py
 - [ ] T035 [US3] [TEST] Edge case and error handling tests
 
 ### Implementation for User Story 3
