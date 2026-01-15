@@ -1,9 +1,6 @@
 /**
- * Coder agent
+ * Coder Agent - Code Generation
+ * Re-export from the coder module
  */
 
-export class CoderAgent {
-  code(): void {
-    // TODO: Implement code generation
-  }
-}
+export { CoderAgent, CoderAgentInput, CoderAgentOutput } from './coder/coder';

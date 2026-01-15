@@ -35,6 +35,7 @@ export class PlanParser {
     }
 
     return {
+      id: raw.id || 'P-' + Date.now(),
       title: String(raw.title).trim(),
       description: String(raw.description).trim(),
       milestones: raw.milestones.map((m: any, idx: number) => ({

@@ -130,23 +130,23 @@
 
 ### Tests for User Story 2 (Test-First per Constitution)
 
-- [ ] T053 [P] [US2] [TEST] Unit test for Coder agent interface in `packages/agents/__tests__/coder/coder.test.ts`
-- [ ] T054 [P] [US2] [TEST] Unit test for language handler detection in `packages/agents/__tests__/coder/language-handlers.test.ts`
-- [ ] T055 [P] [US2] [TEST] Unit test for dependency resolver in `packages/agents/__tests__/coder/dependency-resolver.test.ts`
-- [ ] T056 [US2] [TEST] Contract test for generated code syntax validation in `packages/agents/__tests__/contracts/code-generation.contract.test.ts`
-- [ ] T057 [US2] [TEST] Integration test for full code generation workflow in `packages/cli/__tests__/integration/code-command.test.ts`
-- [ ] T058 [US2] [TEST] Edge case tests: circular dependencies, missing modules, unsupported languages in `packages/agents/__tests__/coder/edge-cases.test.ts`
+- [x] T053 [P] [US2] [TEST] Unit test for Coder agent interface in `packages/agents/__tests__/coder/coder.test.ts`
+- [x] T054 [P] [US2] [TEST] Unit test for language handler detection in `packages/agents/__tests__/coder/language-handlers.test.ts`
+- [x] T055 [P] [US2] [TEST] Unit test for dependency resolver in `packages/agents/__tests__/coder/dependency-resolver.test.ts`
+- [x] T056 [US2] [TEST] Contract test for generated code syntax validation in `packages/agents/__tests__/contracts/code-generation.contract.test.ts`
+- [x] T057 [US2] [TEST] Integration test for full code generation workflow in `packages/cli/__tests__/integration/code-command.test.ts`
+- [x] T058 [US2] [TEST] Edge case tests: circular dependencies, missing modules, unsupported languages in `packages/agents/__tests__/coder/edge-cases.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T059 [P] [US2] [CQ] Create coder agent structure in `packages/agents/src/coder/coder.ts` implementing Agent interface
-- [ ] T060 [P] [US2] [CQ] Implement language handler registry in `packages/agents/src/coder/language-handlers.ts` for TypeScript, Python, Go, Rust, C#
-- [ ] T061 [US2] [CQ] Implement prompt templates for code generation in `packages/agents/src/coder/prompt-templates.ts` per language
-- [ ] T062 [P] [US2] [CQ] Implement code parser in `packages/agents/src/coder/code-parser.ts` extracting generated files from LLM response
-- [ ] T063 [P] [US2] [CQ] Implement syntax validator in `packages/agents/src/coder/syntax-validator.ts` for generated code correctness
-- [ ] T064 [US2] [CQ] Implement dependency resolver in `packages/agents/src/coder/dependency-resolver.ts` tracking imports and module relationships
-- [ ] T065 [US2] [CQ] Implement linting integration in `packages/agents/src/coder/linter-integration.ts` (ESLint, Pylint, Clippy, etc.)
-- [ ] T066 [US2] [CQ] Implement code quality checker in `packages/agents/src/coder/quality-checker.ts` enforcing error handling and logging
+- [x] T059 [P] [US2] [CQ] Create coder agent structure in `packages/agents/src/coder/coder.ts` implementing Agent interface
+- [x] T060 [P] [US2] [CQ] Implement language handler registry in `packages/agents/src/coder/language-handlers.ts` for TypeScript, Python, Go, Rust, C#
+- [x] T061 [US2] [CQ] Implement prompt templates for code generation in `packages/agents/src/coder/prompt-templates.ts` per language
+- [x] T062 [P] [US2] [CQ] Implement code parser in `packages/agents/src/coder/code-parser.ts` extracting generated files from LLM response
+- [x] T063 [P] [US2] [CQ] Implement syntax validator in `packages/agents/src/coder/syntax-validator.ts` for generated code correctness
+- [x] T064 [US2] [CQ] Implement dependency resolver in `packages/agents/src/coder/dependency-resolver.ts` tracking imports and module relationships
+- [x] T065 [US2] [CQ] Implement linting integration in `packages/agents/src/coder/linter-integration.ts` (ESLint, Pylint, Clippy, etc.)
+- [x] T066 [US2] [CQ] Implement code quality checker in `packages/agents/src/coder/quality-checker.ts` enforcing error handling and logging
 - [ ] T067 [US2] [CQ] Implement code file writer in `packages/analysis/src/code-writer.ts` to save generated code to `.omaikit/code/`
 - [ ] T068 [US2] [UX] Implement `omaikit code` command in `packages/cli/src/commands/code.ts` with file-by-file progress
 - [ ] T069 [US2] [UX] Add summary output showing LOC, files created, dependencies in `packages/cli/src/commands/code.ts`

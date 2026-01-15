@@ -69,14 +69,14 @@ export class PlanValidator {
 
     // Check for invalid references
     for (const task of tasks) {
-      if (task.dependencies) {
-        for (const dep of task.dependencies) {
-          if (!taskMap.has(dep)) {
-            invalidReferences.push({
-              task: task.id,
-              reference: dep,
-            });
-          }
+      const legacyDeps = (task as any).dependencies || [];
+      const allDeps = task.inputDependencies || task.outputDependencies ? [...(task.inputDependencies || []), ...(task.outputDependencies || [])] : legacyDeps;
+      for (const dep of allDeps) {
+        if (!taskMap.has(dep)) {
+          invalidReferences.push({
+            task: task.id,
+            reference: dep,
+          });
         }
       }
     }
@@ -90,8 +90,10 @@ export class PlanValidator {
       recursionStack.add(taskId);
 
       const task = taskMap.get(taskId);
-      if (task && task.dependencies) {
-        for (const dep of task.dependencies) {
+      const legacyDeps = (task as any)?.dependencies || [];
+      const depsToCheck = task?.inputDependencies || task?.outputDependencies ? task?.inputDependencies || [] : legacyDeps;
+      if (task) {
+        for (const dep of depsToCheck) {
           if (!visited.has(dep)) {
             if (hasCycle(dep, [...path, dep])) {
               return true;
@@ -125,13 +127,14 @@ export class PlanValidator {
     const warnings: string[] = [];
 
     for (const task of tasks) {
-      if (task.effort <= 0) {
-        errors.push(`Task "${task.title}" has invalid effort: ${task.effort}`);
+      const effort = (task as any).estimatedEffort ?? (task as any).effort;
+      if (effort <= 0) {
+        errors.push(`Task "${task.title}" has invalid effort: ${effort}`);
       }
 
-      if (task.effort > 40) {
+      if (effort > 40) {
         warnings.push(
-          `Task "${task.title}" has high effort estimate: ${task.effort} hours. Consider breaking it down.`
+          `Task "${task.title}" has high effort estimate: ${effort} hours. Consider breaking it down.`
         );
       }
     }
@@ -146,7 +149,10 @@ export class PlanValidator {
     const warnings: string[] = [];
 
     for (const milestone of milestones) {
-      const totalEffort = milestone.tasks.reduce((sum: number, t: any) => sum + t.effort, 0);
+      const totalEffort = milestone.tasks.reduce(
+        (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),
+        0
+      );
 
       if (totalEffort > milestone.duration * 8) {
         warnings.push(
