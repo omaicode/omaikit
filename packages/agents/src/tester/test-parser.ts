@@ -15,7 +15,9 @@ export class TestParser {
     codeBlocks.forEach((block, index) => {
       const pathMatch = FILE_HEADER_REGEX.exec(block.content);
       const path = pathMatch?.[1]?.trim() || this.defaultFilePath(language, index);
-      const content = pathMatch ? block.content.replace(pathMatch[0], '').trim() : block.content.trim();
+      const content = pathMatch
+        ? block.content.replace(pathMatch[0], '').trim()
+        : block.content.trim();
 
       files.push({
         path,
@@ -69,9 +71,7 @@ export class TestParser {
   }
 
   private buildFallbackFile(language: string, framework: string, response: string): TestFile {
-    const content = response.trim()
-      ? response
-      : this.defaultTemplate(language, framework);
+    const content = response.trim() ? response : this.defaultTemplate(language, framework);
 
     return {
       path: this.defaultFilePath(language, 0),

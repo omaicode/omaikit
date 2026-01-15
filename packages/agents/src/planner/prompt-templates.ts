@@ -1,13 +1,7 @@
 export class PromptTemplates {
-  generatePrompt(
-    description: string,
-    projectType?: string,
-    techStack?: string[]
-  ): string {
+  generatePrompt(description: string, projectType?: string, techStack?: string[]): string {
     const techStackStr =
-      techStack && techStack.length > 0
-        ? `Technology Stack: ${techStack.join(', ')}`
-        : '';
+      techStack && techStack.length > 0 ? `Technology Stack: ${techStack.join(', ')}` : '';
 
     const projectTypeStr = projectType ? `Project Type: ${projectType}` : '';
     const languageHint = this.getLanguageHint(projectType, techStack);
@@ -82,15 +76,19 @@ Return ONLY valid JSON, no markdown or extra text.`;
   }
 
   private getLanguageHint(projectType?: string, techStack?: string[]): string | undefined {
-    const entries = [projectType, ...(techStack ?? [])].filter((value): value is string => Boolean(value));
+    const entries = [projectType, ...(techStack ?? [])].filter((value): value is string =>
+      Boolean(value),
+    );
     const haystack = entries.join(' ').toLowerCase();
 
     if (haystack.includes('golang') || haystack.includes(' go ')) return 'Go';
     if (haystack.includes('typescript') || haystack.includes('ts')) return 'TypeScript';
-    if (haystack.includes('javascript') || haystack.includes('node') || haystack.includes('react')) return 'JavaScript';
+    if (haystack.includes('javascript') || haystack.includes('node') || haystack.includes('react'))
+      return 'JavaScript';
     if (haystack.includes('python')) return 'Python';
     if (haystack.includes('rust')) return 'Rust';
-    if (haystack.includes('c#') || haystack.includes('csharp') || haystack.includes('.net')) return 'C#';
+    if (haystack.includes('c#') || haystack.includes('csharp') || haystack.includes('.net'))
+      return 'C#';
     if (haystack.includes('php') || haystack.includes('laravel')) return 'PHP';
 
     return undefined;
@@ -148,10 +146,7 @@ Return ONLY valid JSON, no markdown or extra text.`;
 - scripts/ (tooling)`;
   }
 
-  generateClarificationPrompt(
-    description: string,
-    ambiguities: string[]
-  ): string {
+  generateClarificationPrompt(description: string, ambiguities: string[]): string {
     return `Given this feature description: "${description}"
 
 I need clarification on these points:

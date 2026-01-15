@@ -46,7 +46,10 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 
     const context = await contextWriter.readContext();
     if (!context) {
-      const err = formatError('CONTEXT_MISSING', 'Project context not found. Run `omaikit init` first.');
+      const err = formatError(
+        'CONTEXT_MISSING',
+        'Project context not found. Run `omaikit init` first.',
+      );
       printError(err);
       if (process.env.VITEST !== undefined) {
         throw new Error('Project context not found');

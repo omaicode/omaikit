@@ -50,9 +50,7 @@ export class PlanValidator {
 
     for (const milestone of validatedPlan.milestones || []) {
       if (!milestone.tasks || milestone.tasks.length === 0) {
-        additionalErrors.push(
-          `Milestone "${milestone.title}" must have at least one task`
-        );
+        additionalErrors.push(`Milestone "${milestone.title}" must have at least one task`);
       }
     }
 
@@ -70,7 +68,10 @@ export class PlanValidator {
     // Check for invalid references
     for (const task of tasks) {
       const legacyDeps = (task as any).dependencies || [];
-      const allDeps = task.inputDependencies || task.outputDependencies ? [...(task.inputDependencies || []), ...(task.outputDependencies || [])] : legacyDeps;
+      const allDeps =
+        task.inputDependencies || task.outputDependencies
+          ? [...(task.inputDependencies || []), ...(task.outputDependencies || [])]
+          : legacyDeps;
       for (const dep of allDeps) {
         if (!taskMap.has(dep)) {
           invalidReferences.push({
@@ -91,7 +92,10 @@ export class PlanValidator {
 
       const task = taskMap.get(taskId);
       const legacyDeps = (task as any)?.dependencies || [];
-      const depsToCheck = task?.inputDependencies || task?.outputDependencies ? task?.inputDependencies || [] : legacyDeps;
+      const depsToCheck =
+        task?.inputDependencies || task?.outputDependencies
+          ? task?.inputDependencies || []
+          : legacyDeps;
       if (task) {
         for (const dep of depsToCheck) {
           if (!visited.has(dep)) {
@@ -134,7 +138,7 @@ export class PlanValidator {
 
       if (effort > 40) {
         warnings.push(
-          `Task "${task.title}" has high effort estimate: ${effort} hours. Consider breaking it down.`
+          `Task "${task.title}" has high effort estimate: ${effort} hours. Consider breaking it down.`,
         );
       }
     }
@@ -151,18 +155,18 @@ export class PlanValidator {
     for (const milestone of milestones) {
       const totalEffort = milestone.tasks.reduce(
         (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),
-        0
+        0,
       );
 
       if (totalEffort > milestone.duration * 8) {
         warnings.push(
-          `Milestone "${milestone.title}": total effort (${totalEffort}h) may exceed duration (${milestone.duration}d)`
+          `Milestone "${milestone.title}": total effort (${totalEffort}h) may exceed duration (${milestone.duration}d)`,
         );
       }
 
       if (milestone.tasks.length > 15) {
         warnings.push(
-          `Milestone "${milestone.title}": has many tasks (${milestone.tasks.length}), consider breaking it into smaller milestones`
+          `Milestone "${milestone.title}": has many tasks (${milestone.tasks.length}), consider breaking it into smaller milestones`,
         );
       }
     }

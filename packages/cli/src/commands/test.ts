@@ -50,7 +50,10 @@ export async function testCommand(options?: TestCommandOptions): Promise<void> {
 
     const context = await contextWriter.readContext();
     if (!context) {
-      const err = formatError('CONTEXT_MISSING', 'Project context not found. Run `omaikit init` first.');
+      const err = formatError(
+        'CONTEXT_MISSING',
+        'Project context not found. Run `omaikit init` first.',
+      );
       printError(err);
       if (process.env.VITEST !== undefined) {
         process.exit(1);
@@ -102,7 +105,7 @@ export async function testCommand(options?: TestCommandOptions): Promise<void> {
       if (result.status === 'failed' || result.error) {
         const err = formatError(
           result.error?.code || 'TESTER_ERROR',
-          result.error?.message || 'Test generation failed'
+          result.error?.message || 'Test generation failed',
         );
         printError(err);
         process.exit(1);
@@ -127,7 +130,10 @@ export async function testCommand(options?: TestCommandOptions): Promise<void> {
       }
     }
 
-    const writtenPaths = await testWriter.writeFiles(allFiles, options?.outputDir || '.omaikit/tests');
+    const writtenPaths = await testWriter.writeFiles(
+      allFiles,
+      options?.outputDir || '.omaikit/tests',
+    );
 
     console.log('');
     console.log(green(`✓ Tests generated: ${options?.outputDir || '.omaikit/tests'}`));

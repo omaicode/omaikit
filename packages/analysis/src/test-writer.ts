@@ -44,7 +44,9 @@ export class TestWriter {
       return normalized.replace(/^[A-Z]:/i, '').replace(/^[\\/]+/, '');
     }
 
-    const segments = normalized.split(path.sep).filter((segment) => segment !== '..' && segment !== '');
+    const segments = normalized
+      .split(path.sep)
+      .filter((segment) => segment !== '..' && segment !== '');
     return segments.join(path.sep);
   }
 }

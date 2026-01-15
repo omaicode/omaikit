@@ -10,7 +10,10 @@ export const searchToolDefinition: ToolDefinition = {
     properties: {
       query: { type: 'string', description: 'Search query string or regex pattern.' },
       isRegex: { type: 'boolean', description: 'Treat query as regex (default: false).' },
-      includePattern: { type: 'string', description: 'Optional glob pattern to filter file paths.' },
+      includePattern: {
+        type: 'string',
+        description: 'Optional glob pattern to filter file paths.',
+      },
       maxResults: { type: 'integer', description: 'Maximum number of matches to return.' },
     },
     required: ['query'],
@@ -26,16 +29,15 @@ export const searchToolHandler: ToolHandler = (args, context) => {
   const root = context.rootPath || context.cwd || process.cwd();
   const { absolutePath: rootPath } = resolveSafePath('.', root);
 
-  const includePattern = typeof args.includePattern === 'string' && args.includePattern.length > 0
-    ? globToRegex(args.includePattern)
-    : undefined;
+  const includePattern =
+    typeof args.includePattern === 'string' && args.includePattern.length > 0
+      ? globToRegex(args.includePattern)
+      : undefined;
 
   const files = walkFiles(rootPath, includePattern);
   const maxResults = typeof args.maxResults === 'number' ? Math.max(args.maxResults, 1) : 50;
 
-  const regex = args.isRegex
-    ? new RegExp(query, 'i')
-    : new RegExp(escapeRegex(query), 'i');
+  const regex = args.isRegex ? new RegExp(query, 'i') : new RegExp(escapeRegex(query), 'i');
 
   const matches: Array<{ path: string; line: number; text: string }> = [];
 

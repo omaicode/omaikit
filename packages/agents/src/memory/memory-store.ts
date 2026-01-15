@@ -31,7 +31,10 @@ export class MemoryStore {
 
     const content = fs.readFileSync(filepath, 'utf-8');
     const lines = content.split(/\r?\n/).filter(Boolean);
-    const recent = lines.slice(-limit).map((line) => this.safeParse(line)).filter(Boolean) as MemoryEntry[];
+    const recent = lines
+      .slice(-limit)
+      .map((line) => this.safeParse(line))
+      .filter(Boolean) as MemoryEntry[];
     return recent;
   }
 

@@ -29,7 +29,8 @@ export const readToolHandler: ToolHandler = (args, context) => {
   const lines = readFileLines(absolutePath, encoding);
 
   const startLine = typeof args.startLine === 'number' ? Math.max(args.startLine, 1) : 1;
-  const endLine = typeof args.endLine === 'number' ? Math.min(args.endLine, lines.length) : lines.length;
+  const endLine =
+    typeof args.endLine === 'number' ? Math.min(args.endLine, lines.length) : lines.length;
 
   const slice = lines.slice(startLine - 1, endLine).join('\n');
 

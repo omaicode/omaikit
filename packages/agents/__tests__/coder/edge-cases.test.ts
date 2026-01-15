@@ -149,7 +149,7 @@ describe('Code Generation Edge Cases', () => {
 
     it('should provide documentation for language support', () => {
       const supportedLanguages = ['typescript', 'python', 'go', 'rust', 'csharp'];
-      const docs : any = getLanguageSupportDocumentation();
+      const docs: any = getLanguageSupportDocumentation();
 
       supportedLanguages.forEach((lang) => {
         expect(docs[lang]).toBeDefined();
@@ -210,11 +210,7 @@ describe('Code Generation Edge Cases', () => {
     });
 
     it('should reject paths with invalid characters', () => {
-      const invalidPaths = [
-        'src/file@with@symbols.ts',
-        'src/file$name.ts',
-        'src/file|name.ts',
-      ];
+      const invalidPaths = ['src/file@with@symbols.ts', 'src/file$name.ts', 'src/file|name.ts'];
 
       invalidPaths.forEach((path) => {
         expect(isValidFilePath(path)).toBe(false);
@@ -251,7 +247,7 @@ describe('Code Generation Edge Cases', () => {
         (e) => ({
           timedOut: true,
           error: e.message,
-        })
+        }),
       );
 
       expect(result.timedOut !== undefined || result.success !== undefined).toBe(true);
@@ -340,7 +336,9 @@ function detectCircularDependencies(modules: Record<string, string[]>): string[]
   Object.entries(modules).forEach(([file, deps]) => {
     const normalizedFile = file.replace(/^\.\//, '').replace(/\.(ts|js|py|go|rs|cs)$/, '');
     normalizedToOriginal[normalizedFile] = file;
-    normalizedDeps[normalizedFile] = deps.map((d) => d.replace(/^\.\//, '').replace(/\.(ts|js|py|go|rs|cs)$/, ''));
+    normalizedDeps[normalizedFile] = deps.map((d) =>
+      d.replace(/^\.\//, '').replace(/\.(ts|js|py|go|rs|cs)$/, ''),
+    );
   });
 
   const hasCycle = (node: string, path: string[]): boolean => {
@@ -379,7 +377,12 @@ function detectCircularDependencies(modules: Record<string, string[]>): string[]
 }
 
 function suggestCircularDependencyFix(_modules: Record<string, string[]>) {
-  const strategies = ['Extract shared code to new module', 'Reverse dependency direction', 'Use dependency injection', 'Use interfaces/protocols'];
+  const strategies = [
+    'Extract shared code to new module',
+    'Reverse dependency direction',
+    'Use dependency injection',
+    'Use interfaces/protocols',
+  ];
   return { strategies };
 }
 
@@ -510,7 +513,9 @@ function validateTask(task: Task): boolean {
 }
 
 function validateTaskEffort(task: Task): string | undefined {
-  return task.estimatedEffort && task.estimatedEffort > 100 ? 'Effort estimate unusually high' : undefined;
+  return task.estimatedEffort && task.estimatedEffort > 100
+    ? 'Effort estimate unusually high'
+    : undefined;
 }
 
 function isValidFilePath(path: string): boolean {

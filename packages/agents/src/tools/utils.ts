@@ -11,9 +11,14 @@ const DEFAULT_IGNORE_DIRS = new Set([
   '.analysis-cache',
 ]);
 
-export function resolveSafePath(targetPath: string, rootPath?: string): { absolutePath: string; relativePath: string } {
+export function resolveSafePath(
+  targetPath: string,
+  rootPath?: string,
+): { absolutePath: string; relativePath: string } {
   const base = rootPath ? path.resolve(rootPath) : process.cwd();
-  const absolute = path.isAbsolute(targetPath) ? path.resolve(targetPath) : path.resolve(base, targetPath);
+  const absolute = path.isAbsolute(targetPath)
+    ? path.resolve(targetPath)
+    : path.resolve(base, targetPath);
 
   const baseNormalized = normalizePath(base);
   const absoluteNormalized = normalizePath(absolute);
@@ -36,7 +41,11 @@ export function readFileLines(filePath: string, encoding: BufferEncoding = 'utf-
   return content.split(/\r?\n/);
 }
 
-export function writeFileLines(filePath: string, lines: string[], encoding: BufferEncoding = 'utf-8'): void {
+export function writeFileLines(
+  filePath: string,
+  lines: string[],
+  encoding: BufferEncoding = 'utf-8',
+): void {
   fs.writeFileSync(filePath, lines.join('\n'), encoding);
 }
 
@@ -67,10 +76,7 @@ export function walkFiles(rootPath: string, includePattern?: RegExp): string[] {
 
 export function globToRegex(glob: string): RegExp {
   const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-  const regex = escaped
-    .replace(/\*\*/g, '.*')
-    .replace(/\*/g, '[^/\\\\]*')
-    .replace(/\?/g, '.');
+  const regex = escaped.replace(/\*\*/g, '.*').replace(/\*/g, '[^/\\\\]*').replace(/\?/g, '.');
   return new RegExp(`^${regex}$`, 'i');
 }
 

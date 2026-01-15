@@ -170,9 +170,42 @@ describe('Plan Validator', () => {
   describe('validateDependencies', () => {
     it('should detect circular dependencies', () => {
       const tasks: any = [
-        { id: 'T1', title: 'Task 1', description: 'T1', type: 'feature', estimatedEffort: 5, acceptanceCriteria: ['Done'], inputDependencies: ['T2'], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
-        { id: 'T2', title: 'Task 2', description: 'T2', type: 'feature', estimatedEffort: 3, acceptanceCriteria: ['Done'], inputDependencies: ['T3'], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
-        { id: 'T3', title: 'Task 3', description: 'T3', type: 'feature', estimatedEffort: 2, acceptanceCriteria: ['Done'], inputDependencies: ['T1'], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
+        {
+          id: 'T1',
+          title: 'Task 1',
+          description: 'T1',
+          type: 'feature',
+          estimatedEffort: 5,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T2'],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T2',
+          title: 'Task 2',
+          description: 'T2',
+          type: 'feature',
+          estimatedEffort: 3,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T3'],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T3',
+          title: 'Task 3',
+          description: 'T3',
+          type: 'feature',
+          estimatedEffort: 2,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T1'],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
       ];
 
       const result = validator.validateDependencies(tasks);
@@ -182,10 +215,54 @@ describe('Plan Validator', () => {
 
     it('should accept valid DAG', () => {
       const tasks: any = [
-        { id: 'T1', title: 'Task 1', description: 'T1', type: 'feature', estimatedEffort: 5, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: ['T2', 'T3'], affectedModules: ['core'], status: 'planned' },
-        { id: 'T2', title: 'Task 2', description: 'T2', type: 'feature', estimatedEffort: 3, acceptanceCriteria: ['Done'], inputDependencies: ['T1'], outputDependencies: ['T3'], affectedModules: ['core'], status: 'planned' },
-        { id: 'T3', title: 'Task 3', description: 'T3', type: 'feature', estimatedEffort: 2, acceptanceCriteria: ['Done'], inputDependencies: ['T1', 'T2'], outputDependencies: ['T4'], affectedModules: ['core'], status: 'planned' },
-        { id: 'T4', title: 'Task 4', description: 'T4', type: 'feature', estimatedEffort: 8, acceptanceCriteria: ['Done'], inputDependencies: ['T3'], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
+        {
+          id: 'T1',
+          title: 'Task 1',
+          description: 'T1',
+          type: 'feature',
+          estimatedEffort: 5,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: [],
+          outputDependencies: ['T2', 'T3'],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T2',
+          title: 'Task 2',
+          description: 'T2',
+          type: 'feature',
+          estimatedEffort: 3,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T1'],
+          outputDependencies: ['T3'],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T3',
+          title: 'Task 3',
+          description: 'T3',
+          type: 'feature',
+          estimatedEffort: 2,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T1', 'T2'],
+          outputDependencies: ['T4'],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T4',
+          title: 'Task 4',
+          description: 'T4',
+          type: 'feature',
+          estimatedEffort: 8,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T3'],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
       ];
 
       const result = validator.validateDependencies(tasks);
@@ -195,8 +272,30 @@ describe('Plan Validator', () => {
 
     it('should detect missing dependency references', () => {
       const tasks: any = [
-        { id: 'T1', title: 'Task 1', description: 'T1', type: 'feature', estimatedEffort: 5, acceptanceCriteria: ['Done'], inputDependencies: ['T2'], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
-        { id: 'T2', title: 'Task 2', description: 'T2', type: 'feature', estimatedEffort: 3, acceptanceCriteria: ['Done'], inputDependencies: ['T99'], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
+        {
+          id: 'T1',
+          title: 'Task 1',
+          description: 'T1',
+          type: 'feature',
+          estimatedEffort: 5,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T2'],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T2',
+          title: 'Task 2',
+          description: 'T2',
+          type: 'feature',
+          estimatedEffort: 3,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: ['T99'],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
       ];
 
       const result = validator.validateDependencies(tasks);
@@ -207,9 +306,42 @@ describe('Plan Validator', () => {
   describe('validateEffortEstimates', () => {
     it('should validate reasonable effort estimates', () => {
       const tasks: any = [
-        { id: 'T1', title: 'Task 1', description: 'T1', type: 'feature', estimatedEffort: 5, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
-        { id: 'T2', title: 'Task 2', description: 'T2', type: 'feature', estimatedEffort: 13, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
-        { id: 'T3', title: 'Task 3', description: 'T3', type: 'feature', estimatedEffort: 8, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: [], affectedModules: ['core'], status: 'planned' },
+        {
+          id: 'T1',
+          title: 'Task 1',
+          description: 'T1',
+          type: 'feature',
+          estimatedEffort: 5,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: [],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T2',
+          title: 'Task 2',
+          description: 'T2',
+          type: 'feature',
+          estimatedEffort: 13,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: [],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
+        {
+          id: 'T3',
+          title: 'Task 3',
+          description: 'T3',
+          type: 'feature',
+          estimatedEffort: 8,
+          acceptanceCriteria: ['Done'],
+          inputDependencies: [],
+          outputDependencies: [],
+          affectedModules: ['core'],
+          status: 'planned',
+        },
       ];
 
       const result = validator.validateEffortEstimates(tasks);

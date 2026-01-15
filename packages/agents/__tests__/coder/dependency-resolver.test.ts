@@ -203,7 +203,9 @@ describe('Dependency Resolver', () => {
 
       const graph = buildDependencyGraph(files);
 
-      expect(graph.nodes).toEqual(expect.arrayContaining(['src/index.ts', 'src/utils.ts', 'src/types.ts']));
+      expect(graph.nodes).toEqual(
+        expect.arrayContaining(['src/index.ts', 'src/utils.ts', 'src/types.ts']),
+      );
       expect(graph.edges.length).toBeGreaterThan(0);
     });
 
@@ -214,7 +216,9 @@ describe('Dependency Resolver', () => {
       };
 
       const graph = buildDependencyGraph(files);
-      const leafNodes = graph.nodes.filter((node: unknown) => !graph.edges.some((e: { from: unknown; }) => e.from === node));
+      const leafNodes = graph.nodes.filter(
+        (node: unknown) => !graph.edges.some((e: { from: unknown }) => e.from === node),
+      );
 
       expect(leafNodes).toContain('src/utils.ts');
     });
@@ -226,7 +230,9 @@ describe('Dependency Resolver', () => {
       };
 
       const graph = buildDependencyGraph(files);
-      const rootNodes = graph.nodes.filter((node: unknown) => !graph.edges.some((e: { to: unknown; }) => e.to === node));
+      const rootNodes = graph.nodes.filter(
+        (node: unknown) => !graph.edges.some((e: { to: unknown }) => e.to === node),
+      );
 
       expect(rootNodes).toContain('src/index.ts');
     });
@@ -365,17 +371,19 @@ function detectCycles(dependencies: Record<string, string[]>): string[][] {
   // Normalize all keys for consistent processing
   const normalizedDeps: Record<string, string[]> = {};
   const nodeMap: Record<string, string> = {}; // Map normalized names back to original
-  
+
   Object.entries(dependencies).forEach(([file, deps]) => {
     const normalizedFile = file.replace(/^\.\//, '').replace(/\.(ts|js|py|go|rs|cs)$/, '');
     nodeMap[normalizedFile] = file;
-    const normalizedDep = deps.map((d) => d.replace(/^\.\//, '').replace(/\.(ts|js|py|go|rs|cs)$/, ''));
+    const normalizedDep = deps.map((d) =>
+      d.replace(/^\.\//, '').replace(/\.(ts|js|py|go|rs|cs)$/, ''),
+    );
     normalizedDeps[normalizedFile] = normalizedDep;
   });
 
   const hasCycle = (node: string): boolean => {
     if (visited.has(node)) return false;
-    
+
     visited.add(node);
     recursionStack.add(node);
     pathStack.push(node);
@@ -449,7 +457,9 @@ function buildDependencyGraph(files: Record<string, string[]>): any {
         candidate = `${baseDir}/${normalized}`;
       }
 
-      const depName = nodes.find((n) => n === candidate || n === `${candidate}.ts` || n.endsWith(`${candidate}.ts`));
+      const depName = nodes.find(
+        (n) => n === candidate || n === `${candidate}.ts` || n.endsWith(`${candidate}.ts`),
+      );
       if (depName && depName !== file) {
         edges.push({ from: file, to: depName });
       }
@@ -479,7 +489,9 @@ function topologicalSort(dependencies: Record<string, string[]>): string[] {
         depName = baseDir ? `${baseDir}/${normalized}` : normalized;
       }
 
-      const resolved = Object.keys(dependencies).find((key) => key === depName || key === `${depName}.ts` || key.endsWith(`${depName}.ts`));
+      const resolved = Object.keys(dependencies).find(
+        (key) => key === depName || key === `${depName}.ts` || key.endsWith(`${depName}.ts`),
+      );
       if (resolved && Object.prototype.hasOwnProperty.call(dependencies, resolved)) {
         if (!visit(resolved)) {
           return false;

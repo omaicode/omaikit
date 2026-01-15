@@ -9,7 +9,7 @@ export class TestPromptTemplates {
     projectContext: any,
     plan: any,
     language: string,
-    framework: string
+    framework: string,
   ): Promise<string> {
     const patterns = this.patterns.getPatterns(language, framework);
     const projectName = projectContext?.name || projectContext?.project?.name || 'the project';
@@ -28,7 +28,9 @@ export class TestPromptTemplates {
       '  // File: tests/<name>.test.ts',
       '',
       'Patterns:',
-      ...patterns.map((pattern) => `- ${pattern.name}: ${pattern.description}\n  Example: ${pattern.example}`),
+      ...patterns.map(
+        (pattern) => `- ${pattern.name}: ${pattern.description}\n  Example: ${pattern.example}`,
+      ),
       '',
       `Target language: ${language}`,
       `Test framework: ${framework}`,

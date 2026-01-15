@@ -61,7 +61,7 @@ export class AnthropicProvider implements AIProvider {
     prompt: string,
     model: string,
     maxTokens: number,
-    onProgress: (chunk: string) => void
+    onProgress: (chunk: string) => void,
   ): Promise<string> {
     let accumulated = '';
 
@@ -94,4 +94,5 @@ export class AnthropicProvider implements AIProvider {
 
   async close(): Promise<void> {
     // Anthropic client doesn't need explicit closing
-  }}
+  }
+}

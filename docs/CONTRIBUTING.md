@@ -177,11 +177,7 @@ export class AgentError extends Error {
 }
 
 // Usage
-throw new AgentError(
-  'AGENT_INIT_FAILED',
-  'Failed to initialize Planner agent',
-  500,
-);
+throw new AgentError('AGENT_INIT_FAILED', 'Failed to initialize Planner agent', 500);
 ```
 
 ### Error Codes
@@ -275,12 +271,7 @@ logger.info('Task execution started', {
 });
 
 // ❌ BAD: String concatenation
-logger.info(
-  'Task execution started for task ' +
-    task.id +
-    ' of type ' +
-    task.type,
-);
+logger.info('Task execution started for task ' + task.id + ' of type ' + task.type);
 ```
 
 ---

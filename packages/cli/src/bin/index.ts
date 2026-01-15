@@ -27,10 +27,10 @@ interface CLIArgs {
 
 function parseArgs(args: string[]): CLIArgs {
   const result: CLIArgs = {};
-  
+
   for (let i = 2; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === '--help' || arg === '-h') {
       result.help = true;
     } else if (arg === '--version' || arg === '-v') {
@@ -38,7 +38,7 @@ function parseArgs(args: string[]): CLIArgs {
     } else if (arg === '--project-type' || arg === '-p') {
       result.projectType = args[++i];
     } else if (arg === '--tech-stack' || arg === '-t') {
-      result.techStack = args[++i]?.split(',').map(s => s.trim()) ?? [];
+      result.techStack = args[++i]?.split(',').map((s) => s.trim()) ?? [];
     } else if (arg === '--output' || arg === '-o') {
       result.output = args[++i];
     } else if (arg === '--plan') {
@@ -57,7 +57,7 @@ function parseArgs(args: string[]): CLIArgs {
       }
     }
   }
-  
+
   return result;
 }
 

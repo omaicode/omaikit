@@ -12,7 +12,7 @@ describe('Init Command Integration Test', () => {
     fs.writeFileSync(
       path.join(tempDir, 'package.json'),
       JSON.stringify({ name: 'init-test', description: 'test project' }, null, 2),
-      'utf-8'
+      'utf-8',
     );
   });
 

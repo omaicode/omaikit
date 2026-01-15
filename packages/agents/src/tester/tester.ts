@@ -105,7 +105,7 @@ export class TesterAgent extends Agent {
         input.projectContext,
         input.plan,
         language,
-        framework
+        framework,
       );
 
       const recentMemory = await this.memoryStore.readRecent(this.name, 3);
@@ -126,7 +126,7 @@ export class TesterAgent extends Agent {
       const coverage = this.coverageAnalyzer.analyze(files);
       const validation = this.coverageValidator.validate(
         coverage.overall,
-        input.coverageTarget ?? 80
+        input.coverageTarget ?? 80,
       );
 
       output.result.files = files;
@@ -198,15 +198,27 @@ export class TesterAgent extends Agent {
     if (Array.isArray(result.files)) {
       result.files.forEach((file: TestFile, idx: number) => {
         if (!file.path) {
-          issues.push({ severity: 'error', message: `File ${idx} missing path`, field: `result.files[${idx}].path` });
+          issues.push({
+            severity: 'error',
+            message: `File ${idx} missing path`,
+            field: `result.files[${idx}].path`,
+          });
           qualityScore -= 5;
         }
         if (!file.language) {
-          issues.push({ severity: 'error', message: `File ${idx} missing language`, field: `result.files[${idx}].language` });
+          issues.push({
+            severity: 'error',
+            message: `File ${idx} missing language`,
+            field: `result.files[${idx}].language`,
+          });
           qualityScore -= 5;
         }
         if (!file.content) {
-          issues.push({ severity: 'error', message: `File ${idx} missing content`, field: `result.files[${idx}].content` });
+          issues.push({
+            severity: 'error',
+            message: `File ${idx} missing content`,
+            field: `result.files[${idx}].content`,
+          });
           qualityScore -= 5;
         }
       });
@@ -237,7 +249,8 @@ export class TesterAgent extends Agent {
   }
 
   private determineLanguage(input: TesterAgentInput): string {
-    const languages = input.projectContext?.metadata?.languages || input.projectContext?.analysis?.languages || [];
+    const languages =
+      input.projectContext?.metadata?.languages || input.projectContext?.analysis?.languages || [];
     if (languages.length > 0) {
       return languages[0];
     }
@@ -257,7 +270,7 @@ export class TesterAgent extends Agent {
     prompt: string,
     language: string,
     framework: string,
-    input: TesterAgentInput
+    input: TesterAgentInput,
   ): Promise<string> {
     this.logger.info('Calling LLM for test generation', { language, framework });
 
@@ -276,7 +289,7 @@ export class TesterAgent extends Agent {
         temperature: 0.3,
         maxTokens: 900,
       }),
-      90_000
+      90_000,
     );
 
     if (!response) {
@@ -284,11 +297,16 @@ export class TesterAgent extends Agent {
       return this.getMockGeneratedTests(language, input.task);
     }
 
-    if (typeof response === 'string' && (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO'))) {
+    if (
+      typeof response === 'string' &&
+      (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO'))
+    ) {
       return this.getMockGeneratedTests(language, input.task);
     }
 
-    return typeof response === 'string' ? response : this.getMockGeneratedTests(language, input.task);
+    return typeof response === 'string'
+      ? response
+      : this.getMockGeneratedTests(language, input.task);
   }
 
   private async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {

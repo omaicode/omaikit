@@ -22,9 +22,9 @@ describe('Plan Command Integration Test', () => {
             generatedAt: new Date().toISOString(),
           },
           null,
-          2
+          2,
         ),
-        'utf-8'
+        'utf-8',
       );
     }
     if (!fs.existsSync(tempDir)) {
@@ -93,7 +93,7 @@ describe('Plan Command Integration Test', () => {
         // Error is expected from process.exit mock
         if (!exitCalled) throw err;
       }
-      
+
       // Check if directory was created (might fail on write, but that's OK)
       expect(fs.existsSync(path.dirname(outputPath))).toBe(true);
     } finally {
@@ -131,4 +131,3 @@ describe('Plan Command Integration Test', () => {
     }
   });
 });
-

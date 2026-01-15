@@ -237,7 +237,9 @@ export class LanguageHandlers {
 
   private extractJavaScriptDependencies(code: string): string[] {
     return this.extractTypeScriptDependencies(code).concat(
-      ...((code.match(/require\(['"]([^'"]+)['"]\)/g) || []).map((m) => m.match(/require\(['"]([^'"]+)['"]\)/)?.[1] || ''))
+      ...(code.match(/require\(['"]([^'"]+)['"]\)/g) || []).map(
+        (m) => m.match(/require\(['"]([^'"]+)['"]\)/)?.[1] || '',
+      ),
     );
   }
 

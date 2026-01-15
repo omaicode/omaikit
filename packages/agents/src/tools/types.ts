@@ -35,5 +35,7 @@ export interface ToolContext {
   };
 }
 
-export type ToolHandler = (args: Record<string, unknown>, context: ToolContext) => Promise<ToolResult> | ToolResult;
-
+export type ToolHandler = (
+  args: Record<string, unknown>,
+  context: ToolContext,
+) => Promise<ToolResult> | ToolResult;

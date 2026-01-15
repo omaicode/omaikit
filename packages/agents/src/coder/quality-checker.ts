@@ -169,7 +169,9 @@ export class QualityChecker {
       aspect: 'documentation',
       pass: hasDocumentation,
       message: hasDocumentation ? '✓ Documentation present' : '✗ Missing documentation',
-      details: hasDocumentation ? 'Code includes comments/documentation' : 'Code should include documentation',
+      details: hasDocumentation
+        ? 'Code includes comments/documentation'
+        : 'Code should include documentation',
     });
 
     return checks;
@@ -180,7 +182,8 @@ export class QualityChecker {
     const content = file.content;
 
     // Check for type annotations
-    const hasTypeAnnotations = content.includes(':') || content.includes('interface') || content.includes('type ');
+    const hasTypeAnnotations =
+      content.includes(':') || content.includes('interface') || content.includes('type ');
     checks.push({
       aspect: 'typeAnnotations',
       pass: hasTypeAnnotations,
@@ -206,7 +209,11 @@ export class QualityChecker {
     const content = file.content;
 
     // Check for type hints
-    const hasTypeHints = content.includes('->')|| content.includes(':') || content.includes('List[') || content.includes('Dict[');
+    const hasTypeHints =
+      content.includes('->') ||
+      content.includes(':') ||
+      content.includes('List[') ||
+      content.includes('Dict[');
     checks.push({
       aspect: 'typeHints',
       pass: hasTypeHints,
@@ -247,7 +254,8 @@ export class QualityChecker {
     const content = file.content;
 
     // Check for ownership patterns
-    const hasOwnershipPatterns = content.includes('&') || content.includes('move') || content.includes('ref');
+    const hasOwnershipPatterns =
+      content.includes('&') || content.includes('move') || content.includes('ref');
     checks.push({
       aspect: 'ownership',
       pass: hasOwnershipPatterns || content.length < 200,
@@ -276,7 +284,9 @@ export class QualityChecker {
     checks.push({
       aspect: 'resourceManagement',
       pass: hasUsingStatements || !content.includes('Dispose'),
-      message: hasUsingStatements ? '✓ Using statements for resource management' : '✓ No resource management needed',
+      message: hasUsingStatements
+        ? '✓ Using statements for resource management'
+        : '✓ No resource management needed',
       details: 'Resources should be properly disposed',
     });
 

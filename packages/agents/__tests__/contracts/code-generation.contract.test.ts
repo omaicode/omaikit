@@ -387,7 +387,11 @@ function validateTypescriptSyntax(code: string): boolean {
     if (ch === '{' || ch === '(' || ch === '[') stack.push(ch);
     if (ch === '}' || ch === ')' || ch === ']') {
       const last = stack.pop();
-      if ((ch === '}' && last !== '{') || (ch === ')' && last !== '(') || (ch === ']' && last !== '[')) {
+      if (
+        (ch === '}' && last !== '{') ||
+        (ch === ')' && last !== '(') ||
+        (ch === ']' && last !== '[')
+      ) {
         return false;
       }
     }
@@ -461,7 +465,8 @@ function validateCodeGenerationResponse(response: any) {
   if (!response.id) errors.push('Missing id');
   if (!response.taskId) errors.push('Missing taskId');
   if (!response.prompt) errors.push('Missing prompt');
-  if (!Array.isArray(response.files) || response.files.length === 0) errors.push('No files generated');
+  if (!Array.isArray(response.files) || response.files.length === 0)
+    errors.push('No files generated');
 
   return {
     isValid: errors.length === 0,

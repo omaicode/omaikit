@@ -1,5 +1,9 @@
 export class AgentError extends Error {
-  constructor(public code: string, message: string, public statusCode: number = 500) {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500,
+  ) {
     super(message);
     this.name = 'AgentError';
   }

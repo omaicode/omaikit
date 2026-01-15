@@ -26,9 +26,9 @@ describe('Test Command Integration Test', () => {
             generatedAt: new Date().toISOString(),
           },
           null,
-          2
+          2,
         ),
-        'utf-8'
+        'utf-8',
       );
     }
 
@@ -65,9 +65,9 @@ describe('Test Command Integration Test', () => {
             ],
           },
           null,
-          2
+          2,
         ),
-        'utf-8'
+        'utf-8',
       );
     }
   });

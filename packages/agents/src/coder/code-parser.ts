@@ -11,7 +11,7 @@ export class CodeParser {
    */
   async parse(
     response: string,
-    options?: { taskTitle?: string; projectContext?: any; fallbackLanguage?: string }
+    options?: { taskTitle?: string; projectContext?: any; fallbackLanguage?: string },
   ): Promise<CodeFile[]> {
     const files: CodeFile[] = [];
 
@@ -101,7 +101,10 @@ export class CodeParser {
     return markers;
   }
 
-  private findNearestMarker(blockIndex: number, markers: Array<{ path: string; index: number }>): string | null {
+  private findNearestMarker(
+    blockIndex: number,
+    markers: Array<{ path: string; index: number }>,
+  ): string | null {
     let nearest: { path: string; index: number } | null = null;
     for (const marker of markers) {
       if (marker.index < blockIndex && (!nearest || marker.index > nearest.index)) {
@@ -172,12 +175,17 @@ export class CodeParser {
       if (content.includes('using ') && content.includes('namespace ')) {
         return 'csharp';
       }
-      if (content.includes('interface ') || content.includes('type ') || content.includes('const ')) {
+      if (
+        content.includes('interface ') ||
+        content.includes('type ') ||
+        content.includes('const ')
+      ) {
         return 'typescript';
       }
     }
 
-    const projectLanguages = input.projectContext?.analysis?.languages || input.projectContext?.metadata?.languages;
+    const projectLanguages =
+      input.projectContext?.analysis?.languages || input.projectContext?.metadata?.languages;
     if (Array.isArray(projectLanguages) && projectLanguages.length > 0) {
       return projectLanguages[0];
     }

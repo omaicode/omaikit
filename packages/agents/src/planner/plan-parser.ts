@@ -5,7 +5,7 @@ export class PlanParser {
     try {
       // Try to extract JSON from the response
       const jsonStr = this.extractJson(response);
-        
+
       // Parse JSON
       const parsed = JSON.parse(jsonStr);
 
@@ -69,7 +69,8 @@ export class PlanParser {
             : Array.isArray(t.tags)
               ? t.tags.filter((m: any) => typeof m === 'string')
               : [],
-          suggestedApproach: typeof t.suggestedApproach === 'string' ? t.suggestedApproach : undefined,
+          suggestedApproach:
+            typeof t.suggestedApproach === 'string' ? t.suggestedApproach : undefined,
           technicalNotes: typeof t.technicalNotes === 'string' ? t.technicalNotes : undefined,
           riskFactors: Array.isArray(t.riskFactors) ? t.riskFactors : undefined,
           status: this.parseStatus(t.status),
@@ -104,7 +105,7 @@ export class PlanParser {
   }
 
   private parseStatus(
-    status: any
+    status: any,
   ): 'planned' | 'in-progress' | 'completed' | 'blocked' | 'deferred' {
     const validStatuses = ['planned', 'in-progress', 'completed', 'blocked', 'deferred'];
     const s = String(status).toLowerCase().replace(/_/g, '-');
@@ -116,7 +117,10 @@ export class PlanParser {
     return 'planned';
   }
 
-  private parseType(type: any, title?: string): 'feature' | 'refactor' | 'bugfix' | 'test' | 'documentation' | 'infrastructure' {
+  private parseType(
+    type: any,
+    title?: string,
+  ): 'feature' | 'refactor' | 'bugfix' | 'test' | 'documentation' | 'infrastructure' {
     const validTypes = ['feature', 'refactor', 'bugfix', 'test', 'documentation', 'infrastructure'];
     const normalized = String(type || '').toLowerCase();
     if (validTypes.includes(normalized)) {

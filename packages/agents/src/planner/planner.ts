@@ -22,7 +22,7 @@ export class Planner extends Agent {
   private progressCallbacks: Array<(event: any) => void> = [];
   private memoryStore: MemoryStore;
   private cfg: OmaikitConfig;
-  
+
   constructor(logger: Logger) {
     super(logger);
     this.name = 'Planner';
@@ -70,7 +70,7 @@ export class Planner extends Agent {
       const basePrompt = this.promptTemplates.generatePrompt(
         planInput.description,
         planInput.projectType,
-        planInput.techStack
+        planInput.techStack,
       );
 
       const recentMemory = await this.memoryStore.readRecent(this.name, 3);
@@ -79,9 +79,7 @@ export class Planner extends Agent {
         ? `${basePrompt}\n\n## Recent Agent Memory\n${memoryContext}`
         : basePrompt;
 
-      this.logger.info(
-        `Generating plan for: ${planInput.description.substring(0, 50)}...`
-      );
+      this.logger.info(`Generating plan for: ${planInput.description.substring(0, 50)}...`);
 
       // Call AI provider to generate plan
       this.emit('progress', { status: 'generating', message: 'Calling AI provider' });
@@ -143,13 +141,11 @@ export class Planner extends Agent {
       const validationResult = this.validator.validate(parsedPlan);
 
       if (!validationResult.valid) {
-        throw new Error(
-          `Plan validation failed: ${validationResult.errors.join(', ')}`
-        );
+        throw new Error(`Plan validation failed: ${validationResult.errors.join(', ')}`);
       }
 
       const depResult = this.validator.validateDependencies(
-        parsedPlan.milestones.flatMap((m: any) => m.tasks)
+        parsedPlan.milestones.flatMap((m: any) => m.tasks),
       );
 
       if (depResult.hasCycles) {
@@ -233,10 +229,7 @@ export class Planner extends Agent {
               description: 'Configure development tools and dependencies',
               type: 'infrastructure' as const,
               estimatedEffort: 2,
-              acceptanceCriteria: [
-                'Dependencies installed',
-                'Linting and formatting configured',
-              ],
+              acceptanceCriteria: ['Dependencies installed', 'Linting and formatting configured'],
               inputDependencies: ['T1'],
               outputDependencies: ['T3'],
               affectedModules: ['tooling'],
@@ -342,7 +335,8 @@ export class Planner extends Agent {
     const normalized = techStack.map((t) => t.toLowerCase());
     const languages = new Set<string>();
     if (normalized.some((t) => t.includes('typescript') || t === 'ts')) languages.add('typescript');
-    if (normalized.some((t) => t.includes('javascript') || t === 'js' || t.includes('node'))) languages.add('javascript');
+    if (normalized.some((t) => t.includes('javascript') || t === 'js' || t.includes('node')))
+      languages.add('javascript');
     if (normalized.some((t) => t.includes('python') || t === 'py')) languages.add('python');
     if (normalized.some((t) => t.includes('go') || t.includes('golang'))) languages.add('go');
     if (normalized.some((t) => t.includes('rust'))) languages.add('rust');

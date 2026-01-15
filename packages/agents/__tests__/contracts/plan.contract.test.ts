@@ -150,7 +150,20 @@ describe('Plan Contract Tests', () => {
           description: 'Phase 1 description',
           duration: 5,
           successCriteria: ['Phase 1 done'],
-          tasks: [{ id: 'T1', title: 'Task 1', description: 'T1', type: 'feature' as const, estimatedEffort: 5, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: [], affectedModules: ['core'], status: 'planned' as const }],
+          tasks: [
+            {
+              id: 'T1',
+              title: 'Task 1',
+              description: 'T1',
+              type: 'feature' as const,
+              estimatedEffort: 5,
+              acceptanceCriteria: ['Done'],
+              inputDependencies: [],
+              outputDependencies: [],
+              affectedModules: ['core'],
+              status: 'planned' as const,
+            },
+          ],
         },
         {
           id: 'M2',
@@ -158,7 +171,20 @@ describe('Plan Contract Tests', () => {
           description: 'Phase 2 description',
           duration: 5,
           successCriteria: ['Phase 2 done'],
-          tasks: [{ id: 'T2', title: 'Task 2', description: 'T2', type: 'feature' as const, estimatedEffort: 8, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: [], affectedModules: ['core'], status: 'planned' as const }],
+          tasks: [
+            {
+              id: 'T2',
+              title: 'Task 2',
+              description: 'T2',
+              type: 'feature' as const,
+              estimatedEffort: 8,
+              acceptanceCriteria: ['Done'],
+              inputDependencies: [],
+              outputDependencies: [],
+              affectedModules: ['core'],
+              status: 'planned' as const,
+            },
+          ],
         },
         {
           id: 'M3',
@@ -166,7 +192,20 @@ describe('Plan Contract Tests', () => {
           description: 'Phase 3 description',
           duration: 5,
           successCriteria: ['Phase 3 done'],
-          tasks: [{ id: 'T3', title: 'Task 3', description: 'T3', type: 'feature' as const, estimatedEffort: 13, acceptanceCriteria: ['Done'], inputDependencies: [], outputDependencies: [], affectedModules: ['core'], status: 'planned' as const }],
+          tasks: [
+            {
+              id: 'T3',
+              title: 'Task 3',
+              description: 'T3',
+              type: 'feature' as const,
+              estimatedEffort: 13,
+              acceptanceCriteria: ['Done'],
+              inputDependencies: [],
+              outputDependencies: [],
+              affectedModules: ['core'],
+              status: 'planned' as const,
+            },
+          ],
         },
       ],
     };
@@ -209,9 +248,7 @@ describe('Plan Contract Tests', () => {
 
     expect(Array.isArray(taskWithDeps.inputDependencies)).toBe(true);
     expect(taskWithDeps.inputDependencies.length).toBe(2);
-    expect(taskWithDeps.inputDependencies.every((d: any) => typeof d === 'string')).toBe(
-      true
-    );
+    expect(taskWithDeps.inputDependencies.every((d: any) => typeof d === 'string')).toBe(true);
   });
 
   it('should validate Plan descriptions are strings', () => {

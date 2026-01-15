@@ -100,7 +100,7 @@ describe('Language Handlers', () => {
 
       expect(typeof handlers['typescript'].extractDependencies).toBe('function');
       expect(Array.isArray(handlers['typescript'].extractDependencies('import x from "y"'))).toBe(
-        true
+        true,
       );
     });
 

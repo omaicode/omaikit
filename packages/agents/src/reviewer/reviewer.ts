@@ -1,6 +1,6 @@
-import { Agent } from "../agent";
-import { Logger } from "../logger";
-import { AgentInput, AgentOutput } from "../types";
+import { Agent } from '../agent';
+import { Logger } from '../logger';
+import { AgentInput, AgentOutput } from '../types';
 
 export class ReviewerAgent extends Agent {
   protected logger: Logger;
@@ -43,5 +43,5 @@ export class ReviewerAgent extends Agent {
    */
   async onError(error: Error): Promise<void> {
     this.logger.error('Agent error', { error: String(error) });
-  }    
+  }
 }

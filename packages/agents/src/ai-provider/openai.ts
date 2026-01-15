@@ -86,7 +86,11 @@ export class OpenAIProvider implements AIProvider {
               continue;
             }
             const args = parseToolArgs(rawArgs);
-            const result = await options.toolRegistry.call(toolName, args, options.toolContext ?? {});
+            const result = await options.toolRegistry.call(
+              toolName,
+              args,
+              options.toolContext ?? {},
+            );
             messages.push({
               role: 'tool',
               tool_call_id: toolCall.id,
@@ -133,14 +137,12 @@ export class OpenAIProvider implements AIProvider {
     let lastContent = '';
 
     for (let i = 0; i <= maxToolCalls; i += 1) {
-      const response : any = await this.client.responses.create({
+      const response: any = await this.client.responses.create({
         model,
         input,
         max_output_tokens: maxTokens,
         temperature,
-        tools: tools.length > 0
-          ? this.formatToolsForResponses(tools)
-          : undefined,
+        tools: tools.length > 0 ? this.formatToolsForResponses(tools) : undefined,
         tool_choice: normalizeToolChoice(options?.toolChoice),
         previous_response_id: previousResponseId || undefined,
       });
@@ -149,7 +151,9 @@ export class OpenAIProvider implements AIProvider {
       if (outputText && outputText.length > 0) {
         lastContent = outputText;
       } else {
-        const output = (response as any).output as Array<{ content?: Array<{ type?: string; text?: string }>; type?: string }> | undefined;
+        const output = (response as any).output as
+          | Array<{ content?: Array<{ type?: string; text?: string }>; type?: string }>
+          | undefined;
         const collected = (output || [])
           .flatMap((item) => item.content || [])
           .filter((item) => item.type === 'output_text' || item.type === 'text')
@@ -175,7 +179,7 @@ export class OpenAIProvider implements AIProvider {
         const result = await options.toolRegistry.call(
           toolCall.name,
           parseToolArgs(toolCall.arguments),
-          options.toolContext ?? {}
+          options.toolContext ?? {},
         );
         toolOutputs.push({
           type: 'function_call_output',
@@ -184,10 +188,7 @@ export class OpenAIProvider implements AIProvider {
         });
       }
 
-      input = [
-        { role: 'user', content: prompt },
-        ...toolOutputs,
-      ];
+      input = [{ role: 'user', content: prompt }, ...toolOutputs];
       console.log('Tool outputs:', toolOutputs);
     }
 
@@ -226,7 +227,9 @@ export class OpenAIProvider implements AIProvider {
     return [];
   }
 
-  private extractToolCalls(response: unknown): Array<{ id: string; name: string; arguments: string; call_id: string }> {
+  private extractToolCalls(
+    response: unknown,
+  ): Array<{ id: string; name: string; arguments: string; call_id: string }> {
     const toolCalls: Array<{ id: string; name: string; arguments: string; call_id: string }> = [];
     const output = (response as any)?.output as Array<any> | undefined;
     if (!output) {

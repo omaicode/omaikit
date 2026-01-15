@@ -60,11 +60,15 @@ Provide the generated code as a single response with file paths and content.
     const analysis = projectContext?.analysis ?? {};
     const name = project?.name || 'Unknown project';
     const rootPath = project?.rootPath || 'Unknown root';
-    const description = project?.description ? `Description: ${project.description}` : 'Description: (none)';
+    const description = project?.description
+      ? `Description: ${project.description}`
+      : 'Description: (none)';
     const languages = Array.isArray(analysis.languages) ? analysis.languages.join(', ') : 'unknown';
     const fileCount = typeof analysis.fileCount === 'number' ? analysis.fileCount : 'unknown';
     const totalLOC = typeof analysis.totalLOC === 'number' ? analysis.totalLOC : 'unknown';
-    const dependencies = Array.isArray(analysis.dependencies) ? analysis.dependencies.slice(0, 12).join(', ') : 'unknown';
+    const dependencies = Array.isArray(analysis.dependencies)
+      ? analysis.dependencies.slice(0, 12).join(', ')
+      : 'unknown';
     const planTitle = plan?.title ? `Plan: ${plan.title}` : 'Plan: (none)';
 
     return [

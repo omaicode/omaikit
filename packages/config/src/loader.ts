@@ -59,7 +59,11 @@ export function getLocalConfigPath(cwd: string = process.cwd()): string {
   return path.join(cwd, '.omaikit', 'config.json');
 }
 
-export function saveConfig(config: OmaikitConfig, scope: 'global' | 'local' = 'global', cwd: string = process.cwd()): string {
+export function saveConfig(
+  config: OmaikitConfig,
+  scope: 'global' | 'local' = 'global',
+  cwd: string = process.cwd(),
+): string {
   const targetPath = scope === 'global' ? getGlobalConfigPath() : getLocalConfigPath(cwd);
   const dirPath = path.dirname(targetPath);
   if (!fs.existsSync(dirPath)) {

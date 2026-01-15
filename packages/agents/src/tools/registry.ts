@@ -21,7 +21,11 @@ export class ToolRegistry {
     return this.handlers.get(name);
   }
 
-  async call(name: string, args: Record<string, unknown>, context: ToolContext): Promise<ToolResult> {
+  async call(
+    name: string,
+    args: Record<string, unknown>,
+    context: ToolContext,
+  ): Promise<ToolResult> {
     const handler = this.handlers.get(name);
     if (!handler) {
       return { ok: false, error: { message: `Tool not found: ${name}`, code: 'TOOL_NOT_FOUND' } };

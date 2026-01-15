@@ -14,7 +14,8 @@ export class CoverageAnalyzer {
     const byFile: Record<string, number> = {};
     const scores = files.map((file) => {
       const testCount = file.testCases.length;
-      const base = file.content.includes('describe') || file.content.includes('def test_') ? 70 : 60;
+      const base =
+        file.content.includes('describe') || file.content.includes('def test_') ? 70 : 60;
       const score = Math.min(95, base + testCount * 5);
       byFile[file.path] = score;
       return score;

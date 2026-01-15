@@ -24,13 +24,13 @@ export class ManagerAgent extends Agent {
   private toolRegistry: ToolRegistry;
   private provider?: any;
   private memoryStore: MemoryStore;
-	private cfg: OmaikitConfig;
+  private cfg: OmaikitConfig;
 
   constructor(logger?: Logger) {
     super(logger);
     this.toolRegistry = createDefaultToolRegistry();
     this.memoryStore = new MemoryStore();
-		this.cfg = loadConfig();
+    this.cfg = loadConfig();
   }
 
   async init(): Promise<void> {
@@ -108,7 +108,10 @@ export class ManagerAgent extends Agent {
     return writer.writeContext(rootPath, description);
   }
 
-  private async generateContext(rootPath: string, description?: string): Promise<Record<string, unknown>> {
+  private async generateContext(
+    rootPath: string,
+    description?: string,
+  ): Promise<Record<string, unknown>> {
     const toolContext = this.getToolContext(rootPath);
     const basePrompt = this.buildContextPrompt(rootPath, description);
     const recentMemory = await this.memoryStore.readRecent(this.name, 3);
@@ -118,7 +121,7 @@ export class ManagerAgent extends Agent {
       : basePrompt;
 
     const response = await this.provider.generate(prompt, {
-    	model: this.cfg.managerModel,
+      model: this.cfg.managerModel,
       tools: this.toolRegistry.getDefinitions(),
       toolRegistry: this.toolRegistry,
       toolContext,
@@ -175,7 +178,10 @@ export class ManagerAgent extends Agent {
     }
   }
 
-  private async writeContextFile(rootPath: string, context: Record<string, unknown>): Promise<string> {
+  private async writeContextFile(
+    rootPath: string,
+    context: Record<string, unknown>,
+  ): Promise<string> {
     const baseDir = path.join(rootPath, '.omaikit');
     if (!fs.existsSync(baseDir)) {
       fs.mkdirSync(baseDir, { recursive: true });

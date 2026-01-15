@@ -13,17 +13,17 @@ export const editToolDefinition: ToolDefinition = {
       mode: {
         type: 'string',
         enum: ['overwrite', 'append', 'replace', 'insert'],
-        description: 'Edit mode to apply.'
+        description: 'Edit mode to apply.',
       },
       content: { type: 'string', description: 'Content to write or insert.' },
       startLine: { type: 'integer', description: '1-based start line for replace/insert.' },
       endLine: { type: 'integer', description: '1-based end line for replace.' },
       find: { type: 'string', description: 'String or regex pattern to replace.' },
       replace: { type: 'string', description: 'Replacement string.' },
-      useRegex: { type: 'boolean', description: 'Treat find as regex (default: false).' }
+      useRegex: { type: 'boolean', description: 'Treat find as regex (default: false).' },
     },
-    required: ['path', 'mode']
-  }
+    required: ['path', 'mode'],
+  },
 };
 
 export const editToolHandler: ToolHandler = (args, context) => {
@@ -58,7 +58,8 @@ export const editToolHandler: ToolHandler = (args, context) => {
 
   if (mode === 'insert') {
     const content = String(args.content ?? '');
-    const startLine = typeof args.startLine === 'number' ? Math.max(args.startLine, 1) : lines.length + 1;
+    const startLine =
+      typeof args.startLine === 'number' ? Math.max(args.startLine, 1) : lines.length + 1;
     const insertLines = content.split(/\r?\n/);
     const updated = [
       ...lines.slice(0, startLine - 1),
@@ -73,20 +74,20 @@ export const editToolHandler: ToolHandler = (args, context) => {
     const content = String(args.content ?? '');
     if (typeof args.startLine === 'number') {
       const startLine = Math.max(args.startLine, 1);
-      const endLine = typeof args.endLine === 'number' ? Math.max(args.endLine, startLine) : startLine;
+      const endLine =
+        typeof args.endLine === 'number' ? Math.max(args.endLine, startLine) : startLine;
       const replacement = content.split(/\r?\n/);
-      const updated = [
-        ...lines.slice(0, startLine - 1),
-        ...replacement,
-        ...lines.slice(endLine),
-      ];
+      const updated = [...lines.slice(0, startLine - 1), ...replacement, ...lines.slice(endLine)];
       writeFileLines(absolutePath, updated, encoding);
       return { ok: true, data: { path: relativePath, mode, startLine, endLine } };
     }
 
     const find = String(args.find ?? '');
     if (!find) {
-      return { ok: false, error: { message: 'find is required when startLine is not provided', code: 'INVALID_ARGS' } };
+      return {
+        ok: false,
+        error: { message: 'find is required when startLine is not provided', code: 'INVALID_ARGS' },
+      };
     }
 
     const useRegex = Boolean(args.useRegex);
