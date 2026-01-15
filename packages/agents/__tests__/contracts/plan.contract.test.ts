@@ -8,6 +8,7 @@ describe('Plan Contract Tests', () => {
       description: 'Full-stack web app with React frontend and Node backend',
       milestones: [
         {
+          id: 'M1',
           title: 'Phase 1: Setup',
           duration: 5,
           tasks: [

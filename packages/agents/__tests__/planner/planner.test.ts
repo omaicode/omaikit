@@ -64,6 +64,7 @@ describe('Planner Agent', () => {
         expect(plan.milestones.length).toBeGreaterThan(0);
 
         plan.milestones.forEach((milestone: Record<string, unknown>) => {
+          expect(milestone).toHaveProperty('id');
           expect(milestone.title).toBeTruthy();
           expect(milestone.tasks).toBeDefined();
           expect(Array.isArray(milestone.tasks)).toBe(true);

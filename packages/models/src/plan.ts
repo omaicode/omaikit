@@ -40,9 +40,12 @@ export interface Task {
 }
 
 export interface Milestone {
+  id: string;
   title: string;
+  description: string;
   duration: number; // Total days or weeks
   tasks: Task[];
+  successCriteria: string[];
 }
 
 export interface Plan {

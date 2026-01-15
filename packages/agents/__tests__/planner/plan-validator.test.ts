@@ -16,6 +16,7 @@ describe('Plan Validator', () => {
         description: 'REST API project',
         milestones: [
           {
+            id: 'M1',
             title: 'Phase 1',
             duration: 5,
             tasks: [
@@ -35,6 +36,7 @@ describe('Plan Validator', () => {
         description: 'Missing title',
         milestones: [
           {
+            id: 'M1',
             title: 'Phase 1',
             duration: 5,
             tasks: [{ id: 'T1', title: 'Task 1', description: 'Task', effort: 5, status: 'pending', dependencies: [] }],
@@ -74,6 +76,7 @@ describe('Plan Validator', () => {
         description: 'REST API',
         milestones: [
           {
+            id: 'M1',
             title: 'M1',
             duration: 10,
             tasks: [
@@ -94,6 +97,7 @@ describe('Plan Validator', () => {
         description: 'App',
         milestones: [
           {
+            id: 'M1',
             title: 'Phase 1',
             duration: 10,
             tasks: [],

@@ -39,7 +39,9 @@ export class PlanParser {
       title: String(raw.title).trim(),
       description: String(raw.description).trim(),
       milestones: raw.milestones.map((m: any, idx: number) => ({
+        id: m.id || `M${idx}`,
         title: m.title || `Milestone ${idx + 1}`,
+        description: m.description || '',
         duration: this.parseDuration(m.duration),
         tasks: (m.tasks || []).map((t: any, tidx: number) => ({
           id: t.id || `T${idx}${tidx}`,

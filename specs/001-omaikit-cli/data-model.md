@@ -128,7 +128,7 @@ interface Plan {
 
 interface Milestone {
   id: string;
-  name: string;
+  title: string;
   description: string;
   targetDate?: ISODate; // For estimation
   targetTaskIds: string[];

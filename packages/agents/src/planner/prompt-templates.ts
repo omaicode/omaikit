@@ -20,11 +20,14 @@ ${techStackStr}
 
 Generate a comprehensive plan with the following JSON structure:
 {
+  "id": "P1",
   "title": "Brief project title",
   "description": "Full description",
   "milestones": [
     {
+      "id": "M1",
       "title": "Milestone name",
+      "description": "Milestone description",
       "duration": 5,
       "tasks": [
         {

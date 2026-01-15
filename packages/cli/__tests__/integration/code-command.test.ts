@@ -31,34 +31,18 @@ describe('Code Generation Integration', () => {
 
     testPlan = {
       id: 'plan-001',
-      featureDescription: 'Build a user management API',
-      createdAt: new Date().toISOString(),
-      overview: {
-        summary: 'User management system with CRUD operations',
-        estimatedTotalEffort: 20,
-        riskLevel: 'low' as const,
-        assumptions: ['TypeScript will be used', 'Express framework available'],
-      },
+      title: 'Build a user management API',
+      description: 'User management system with CRUD operations',
       milestones: [
         {
           id: 'milestone-1',
-          name: 'API Setup',
+          title: 'API Setup',
           description: 'Setup basic API structure',
-          targetTaskIds: ['task-001'],
+          tasks: [testTask],
           successCriteria: ['Endpoint responds'],
+          duration: 7,
         },
-      ],
-      sprints: [
-        {
-          id: 'sprint-1',
-          number: 1,
-          duration: '1-week' as const,
-          taskIds: ['task-001'],
-          estimatedVelocity: 20,
-          focusArea: 'API Core',
-        },
-      ],
-      tasks: [testTask],
+      ]
     };
   });
 
@@ -77,7 +61,7 @@ describe('Code Generation Integration', () => {
       expect(Array.isArray(result.generatedFiles)).toBe(true);
       expect(result.generatedFiles.length).toBeGreaterThan(0);
 
-      result.generatedFiles.forEach((file) => {
+      result.generatedFiles.forEach((file: { path: unknown; content: unknown; language: unknown; }) => {
         expect(file.path).toBeDefined();
         expect(file.content).toBeDefined();
         expect(file.language).toBeDefined();
@@ -88,7 +72,7 @@ describe('Code Generation Integration', () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
       // All generated files should use TypeScript (from plan assumptions)
-      result.generatedFiles.forEach((file) => {
+      result.generatedFiles.forEach((file: { language: unknown; }) => {
         expect(['typescript', 'javascript']).toContain(file.language);
       });
     });
@@ -98,7 +82,7 @@ describe('Code Generation Integration', () => {
     it('should generate properly formatted code', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      result.generatedFiles.forEach((file) => {
+      result.generatedFiles.forEach((file: { content: { trim: () => { (): unknown; new(): unknown; length: unknown; }; }; language: string; }) => {
         // Code should not be empty
         expect(file.content.trim().length).toBeGreaterThan(0);
 
@@ -113,7 +97,7 @@ describe('Code Generation Integration', () => {
     it('should include proper error handling', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      const hasErrorHandling = result.generatedFiles.some((file) => {
+      const hasErrorHandling = result.generatedFiles.some((file: { content: string; }) => {
         return file.content.includes('try') || file.content.includes('catch') || file.content.includes('error');
       });
 
@@ -123,7 +107,7 @@ describe('Code Generation Integration', () => {
     it('should include logging statements', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      const hasLogging = result.generatedFiles.some((file) => {
+      const hasLogging = result.generatedFiles.some((file: { content: string; }) => {
         return (
           file.content.includes('logger') ||
           file.content.includes('console.log') ||
@@ -137,7 +121,7 @@ describe('Code Generation Integration', () => {
     it('should include type definitions (TypeScript)', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      const hasTypes = result.generatedFiles.some((file) => {
+      const hasTypes = result.generatedFiles.some((file: { language: string; content: string; }) => {
         return file.language === 'typescript' && (file.content.includes('interface') || file.content.includes('type'));
       });
 
@@ -172,7 +156,7 @@ describe('Code Generation Integration', () => {
     it('should track all dependencies declared', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      result.generatedFiles.forEach((file) => {
+      result.generatedFiles.forEach((file: { dependencies?: unknown[] }) => {
         if (file.dependencies) {
           expect(Array.isArray(file.dependencies)).toBe(true);
         }
@@ -204,10 +188,10 @@ describe('Code Generation Integration', () => {
     it('should preserve relative paths in file structure', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      result.generatedFiles.forEach((file) => {
+      result.generatedFiles.forEach((file: { path: string }) => {
         // Paths should be relative
-        expect(file.path).not.toMatch(/^[\/A-Z]:/);
-        expect(file.path).toMatch(/^[\w.\/]/);
+        expect(file.path).not.toMatch(/^[/A-Z]:/);
+        expect(file.path).toMatch(/^[\w./]/);
       });
     });
 
@@ -253,7 +237,7 @@ describe('Code Generation Integration', () => {
   describe('performance', () => {
     it('should complete code generation within timeout', async () => {
       const startTime = Date.now();
-      const result = await executeCodeCommand(testTask, testPlan);
+      await executeCodeCommand(testTask, testPlan);
       const duration = Date.now() - startTime;
 
       // Should complete within 120 seconds
@@ -271,7 +255,7 @@ describe('Code Generation Integration', () => {
 });
 
 // Helper function
-async function executeCodeCommand(task: Task, plan: Plan): Promise<any> {
+async function executeCodeCommand(task: Task, _plan: Plan): Promise<any> {
   if (!task) {
     throw new Error('Task is required');
   }
