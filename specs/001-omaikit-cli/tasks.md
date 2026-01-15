@@ -59,6 +59,8 @@
 - [x] T018 [P] [CQ] Implement Anthropic adapter in `packages/agents/src/ai-provider/anthropic.ts` with streaming support
 - [x] T019 [CQ] Implement provider factory in `packages/agents/src/ai-provider/factory.ts` for selecting provider via config
 - [x] T020 [P] [CQ] Implement token counter and rate limiter in `packages/agents/src/ai-provider/token-manager.ts`
+- [x] T020a [CQ] Add tool registry and basic edit/read/search tools for AI providers in `packages/agents/src/tools/`
+- [x] T020b [CQ] Add manager agent and use it for context initialization in `packages/agents/src/manager/manager.ts`
 
 ### Project Analysis Infrastructure
 
@@ -74,6 +76,8 @@
 - [x] T027 [P] [CQ] Implement `TestSuite` and `TestFile` models in `packages/models/src/test-suite.ts`
 - [x] T028 [P] [CQ] Implement `CodeReview` and `Finding` models in `packages/models/src/review.ts`
 - [x] T029 [CQ] Create JSON schema validators for all models in `packages/models/src/validators/` using Zod or Ajv
+- [x] T029a [CQ] Define deterministic output strategy (temperature defaults, prompt versioning, output metadata) in `packages/agents/` docs
+- [x] T029b [CQ] Define offline-mode behavior and cache fallback strategy in `packages/analysis/` and `packages/cli/` docs
 
 ### Pipeline Orchestration Foundation
 
@@ -99,7 +103,7 @@
 ## Phase 3: User Story 1 - Plan Generation (Priority: P1) 🎯 MVP Core
 
 **Goal**: Developers can generate structured Agile plans from feature descriptions  
-**Independent Test**: `omaikit plan "build a simple NestJS project"` produces valid JSON plan with milestones, sprints, tasks, dependencies
+**Independent Test**: `omaikit plan "build a simple NestJS project"` produces valid JSON plan with milestones, tasks, acceptance criteria, and dependencies
 
 ### Tests for User Story 1 (Test-First per Constitution)
 
@@ -117,7 +121,7 @@
 - [x] T046 [US1] [CQ] Implement plan parser in `packages/agents/src/planner/plan-parser.ts` to extract structured plan from LLM response
 - [x] T047 [US1] [CQ] Implement plan validator in `packages/agents/src/planner/plan-validator.ts` validating DAG, effort estimates, dependencies
 - [x] T048 [P] [US1] [CQ] Implement clarification question handler in `packages/agents/src/planner/clarification-handler.ts` for ambiguous inputs
-- [x] T049 [US1] [CQ] Implement plan persistence in `packages/analysis/src/plan-writer.ts` to save `.omaikit/plan.json`
+- [x] T049 [US1] [CQ] Implement plan persistence in `packages/analysis/src/plan-writer.ts` to save `.omaikit/plans/P-{N}.json`
 - [x] T050 [US1] [UX] Implement `omaikit plan` command in `packages/cli/src/commands/plan.ts` with progress indication and error handling
 - [x] T051 [US1] [UX] Add user-friendly output formatting in `packages/cli/src/commands/plan.ts` showing plan summary and next steps
 - [x] T052 [US1] [PERF] Optimize planner agent prompt for sub-30-second execution in `packages/agents/src/planner/prompt-templates.ts`
@@ -149,12 +153,13 @@
 - [x] T062 [P] [US2] [CQ] Implement code parser in `packages/agents/src/coder/code-parser.ts` extracting generated files from LLM response
 - [x] T063 [P] [US2] [CQ] Implement syntax validator in `packages/agents/src/coder/syntax-validator.ts` for generated code correctness
 - [x] T064 [US2] [CQ] Implement dependency resolver in `packages/agents/src/coder/dependency-resolver.ts` tracking imports and module relationships
+- [x] T064a [US2] [CQ] Integrate reuse suggestions into coder prompt context in `packages/agents/src/coder/coder.ts`
 - [x] T065 [US2] [CQ] Implement linting integration in `packages/agents/src/coder/linter-integration.ts` (ESLint, Pylint, Clippy, etc.)
 - [x] T066 [US2] [CQ] Implement code quality checker in `packages/agents/src/coder/quality-checker.ts` enforcing error handling and logging
 - [x] T067 [US2] [CQ] Implement code file writer in `packages/analysis/src/code-writer.ts` to save generated code to `.omaikit/code/`
 - [x] T068 [US2] [UX] Implement `omaikit code` command in `packages/cli/src/commands/code.ts` with file-by-file progress
 - [x] T069 [US2] [UX] Add summary output showing LOC, files created, dependencies in `packages/cli/src/commands/code.ts`
-- [ ] T070 [US2] [PERF] Optimize coder agent to generate code within 60 seconds per task
+- [x] T070 [US2] [PERF] Optimize coder agent to generate code within 60 seconds per task
 
 **Checkpoint**: User Story 2 complete - developers can generate code that matches their project style and standards
 
@@ -167,27 +172,27 @@
 
 ### Tests for User Story 3 (Test-First per Constitution)
 
-- [ ] T071 [P] [US3] [TEST] Unit test for Tester agent interface in `packages/agents/__tests__/tester/tester.test.ts`
-- [ ] T072 [P] [US3] [TEST] Unit test for test pattern generator in `packages/agents/__tests__/tester/test-patterns.test.ts`
-- [ ] T073 [P] [US3] [TEST] Unit test for coverage validator in `packages/agents/__tests__/tester/coverage-validator.test.ts`
-- [ ] T074 [US3] [TEST] Contract test for test suite JSON schema in `packages/agents/__tests__/contracts/test-suite.contract.test.ts`
-- [ ] T075 [US3] [TEST] Integration test for full test generation workflow in `packages/cli/__tests__/integration/test-command.test.ts`
-- [ ] T076 [US3] [TEST] Edge case tests: edge inputs, error paths, boundary conditions in `packages/agents/__tests__/tester/edge-cases.test.ts`
+- [x] T071 [P] [US3] [TEST] Unit test for Tester agent interface in `packages/agents/__tests__/tester/tester.test.ts`
+- [x] T072 [P] [US3] [TEST] Unit test for test pattern generator in `packages/agents/__tests__/tester/test-patterns.test.ts`
+- [x] T073 [P] [US3] [TEST] Unit test for coverage validator in `packages/agents/__tests__/tester/coverage-validator.test.ts`
+- [x] T074 [US3] [TEST] Contract test for test suite JSON schema in `packages/agents/__tests__/contracts/test-suite.contract.test.ts`
+- [x] T075 [US3] [TEST] Integration test for full test generation workflow in `packages/cli/__tests__/integration/test-command.test.ts`
+- [x] T076 [US3] [TEST] Edge case tests: edge inputs, error paths, boundary conditions in `packages/agents/__tests__/tester/edge-cases.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T077 [P] [US3] [CQ] Create tester agent structure in `packages/agents/src/tester/tester.ts` implementing Agent interface
-- [ ] T078 [P] [US3] [CQ] Implement test pattern library in `packages/agents/src/tester/test-patterns.ts` (unit, integration, edge case patterns)
-- [ ] T079 [US3] [CQ] Implement test prompt templates in `packages/agents/src/tester/prompt-templates.ts` per language and test framework
-- [ ] T080 [US3] [CQ] Implement test parser in `packages/agents/src/tester/test-parser.ts` extracting tests from LLM response
-- [ ] T081 [P] [US3] [CQ] Implement coverage analyzer in `packages/agents/src/tester/coverage-analyzer.ts` calculating coverage metrics per file
-- [ ] T082 [US3] [CQ] Implement test framework detector in `packages/agents/src/tester/framework-detector.ts` (vitest, jest, pytest, etc.)
-- [ ] T083 [US3] [CQ] Implement test executor in `packages/agents/src/tester/test-executor.ts` running generated tests and capturing results
-- [ ] T084 [US3] [CQ] Implement coverage validator in `packages/agents/src/tester/coverage-validator.ts` enforcing >80% target
-- [ ] T085 [US3] [CQ] Implement test file writer in `packages/analysis/src/test-writer.ts` to save tests to `.omaikit/tests/`
-- [ ] T086 [US3] [UX] Implement `omaikit test` command in `packages/cli/src/commands/test.ts` with test execution output
-- [ ] T087 [US3] [UX] Add coverage summary and failure reporting in `packages/cli/src/commands/test.ts`
-- [ ] T088 [US3] [PERF] Optimize test generation to complete within 120 seconds including execution
+- [x] T077 [P] [US3] [CQ] Create tester agent structure in `packages/agents/src/tester/tester.ts` implementing Agent interface
+- [x] T078 [P] [US3] [CQ] Implement test pattern library in `packages/agents/src/tester/test-patterns.ts` (unit, integration, edge case patterns)
+- [x] T079 [US3] [CQ] Implement test prompt templates in `packages/agents/src/tester/prompt-templates.ts` per language and test framework
+- [x] T080 [US3] [CQ] Implement test parser in `packages/agents/src/tester/test-parser.ts` extracting tests from LLM response
+- [x] T081 [P] [US3] [CQ] Implement coverage analyzer in `packages/agents/src/tester/coverage-analyzer.ts` calculating coverage metrics per file
+- [x] T082 [US3] [CQ] Implement test framework detector in `packages/agents/src/tester/framework-detector.ts` (vitest, jest, pytest, etc.)
+- [x] T083 [US3] [CQ] Implement test executor in `packages/agents/src/tester/test-executor.ts` running generated tests and capturing results
+- [x] T084 [US3] [CQ] Implement coverage validator in `packages/agents/src/tester/coverage-validator.ts` enforcing >80% target
+- [x] T085 [US3] [CQ] Implement test file writer in `packages/analysis/src/test-writer.ts` to save tests to `.omaikit/tests/`
+- [x] T086 [US3] [UX] Implement `omaikit test` command in `packages/cli/src/commands/test.ts` with test execution output
+- [x] T087 [US3] [UX] Add coverage summary and failure reporting in `packages/cli/src/commands/test.ts`
+- [x] T088 [US3] [PERF] Optimize test generation to complete within 120 seconds including execution
 
 **Checkpoint**: User Story 3 complete - developers have comprehensive, executable test suites with verified >80% coverage
 
@@ -277,6 +282,7 @@
 - [ ] T130 [US5] [UX] Implement `omaikit run-pipeline` command in `packages/cli/src/commands/run-pipeline.ts` with full progress reporting
 - [ ] T131 [US5] [UX] Add visual timeline showing agent execution order and parallelization in command output
 - [ ] T132 [US5] [PERF] Optimize pipeline to complete within 5 minutes total (plan 30s + code 60s + test 120s || review 90s)
+- [ ] T132a [US5] [PERF] Measure and optimize pipeline orchestration overhead to <5 seconds
 
 **Checkpoint**: User Story 5 complete - developers can orchestrate full workflow in single command
 

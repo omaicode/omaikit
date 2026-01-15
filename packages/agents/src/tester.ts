@@ -1,9 +1,2 @@
-/**
- * Tester agent
- */
-
-export class TesterAgent {
-  test(): void {
-    // TODO: Implement test generation
-  }
-}
+export { TesterAgent } from './tester/tester';
+export type { TesterAgentInput, TesterAgentOutput } from './tester/tester';

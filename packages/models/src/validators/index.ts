@@ -1,25 +1,54 @@
 import { z } from 'zod';
 
+export const RiskFactorSchema = z.object({
+  description: z.string().min(1),
+  likelihood: z.enum(['low', 'medium', 'high']),
+  impact: z.enum(['low', 'medium', 'high']),
+  mitigation: z.string().min(1),
+});
+
 export const TaskSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   description: z.string().min(1),
-  effort: z.number().int().positive('Effort must be positive'),
-  status: z.enum(['pending', 'in_progress', 'completed', 'blocked']),
-  dependencies: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  type: z.enum(['feature', 'refactor', 'bugfix', 'test', 'documentation', 'infrastructure']),
+  estimatedEffort: z.number().int().positive('Effort must be positive'),
+  effortBreakdown: z
+    .object({
+      analysis: z.number().int().nonnegative(),
+      implementation: z.number().int().nonnegative(),
+      testing: z.number().int().nonnegative(),
+      documentation: z.number().int().nonnegative(),
+    })
+    .optional(),
+  acceptanceCriteria: z.array(z.string()).min(1),
+  inputDependencies: z.array(z.string()),
+  outputDependencies: z.array(z.string()),
+  targetModule: z.string().optional(),
+  affectedModules: z.array(z.string()),
+  suggestedApproach: z.string().optional(),
+  technicalNotes: z.string().optional(),
+  riskFactors: z.array(RiskFactorSchema).optional(),
+  status: z.enum(['planned', 'in-progress', 'blocked', 'completed', 'deferred']),
+  blockers: z.array(z.string()).optional(),
 });
 
 export const MilestoneSchema = z.object({
+  id: z.string().min(1),
   title: z.string().min(1),
+  description: z.string().min(1),
   duration: z.number().int().positive('Duration must be positive'),
   tasks: z.array(TaskSchema).min(1, 'Milestone must have at least one task'),
+  successCriteria: z.array(z.string()).min(1),
 });
 
 export const PlanSchema = z.object({
+  id: z.string().min(1),
   title: z.string().min(1),
   description: z.string().min(1),
   milestones: z.array(MilestoneSchema).min(1, 'Plan must have at least one milestone'),
+  clarifications: z.array(z.string()).optional(),
+  projectContext: z.any().optional(),
 });
 
 export const PlanInputSchema = z.object({

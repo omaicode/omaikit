@@ -113,34 +113,15 @@ interface NamingConventions {
 
 ### 2. Agile Plan
 
-**Purpose**: Structured development plan with tasks, sprints, and dependency information
+**Purpose**: Structured development plan with milestones, tasks, and dependency information
 
 ```typescript
 interface Plan {
-  id: string; // UUID
-  projectId?: string; // Reference to analyzed Project
-  featureDescription: string; // Original user input
-  createdAt: ISO8601DateTime;
-
-  // Planning outcome
-  overview: {
-    summary: string;
-    estimatedTotalEffort: number; // hours
-    riskLevel: 'low' | 'medium' | 'high';
-    clarifyingQuestions?: string[];
-    assumptions: string[];
-  };
-
+  id: string; // P-{N}
+  title: string;
+  description: string; // Original user input
   milestones: Milestone[];
-  sprints: Sprint[];
-  tasks: Task[];
-
-  // Optional: Advanced planning
-  parallelizationOpportunities?: string[];
-  reuseOpportunities?: string[];
-  architecturalConsiderations?: string[];
-
-  // Optional: Project context snapshot
+  clarifications?: string[];
   projectContext?: ProjectContext;
 }
 
@@ -148,18 +129,9 @@ interface Milestone {
   id: string;
   title: string;
   description: string;
-  targetDate?: ISODate; // For estimation
-  targetTaskIds: string[];
+  duration: number; // Total days or weeks
+  tasks: Task[];
   successCriteria: string[];
-}
-
-interface Sprint {
-  id: string;
-  number: number;
-  duration: '1-week' | '2-week';
-  taskIds: string[];
-  estimatedVelocity: number; // hours
-  focusArea: string;
 }
 
 interface Task {
@@ -206,14 +178,12 @@ interface RiskFactor {
 
 **Validation Rules**:
 
-- Plan ID must be UUID v4
-- Feature description must be non-empty and > 10 characters
-- Total effort across all tasks must equal sprint velocity × number of sprints ± 10%
+- Plan ID must follow `P-{N}` format
+- Plan title and description must be non-empty
+- At least one milestone
+- Each milestone must contain at least one task
 - No circular dependencies in task DAG
 - All referenced task IDs in dependencies must exist
-- At least one milestone
-- At least one sprint
-- At least one task per sprint
 - Acceptance criteria must be testable and SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
 
 ---

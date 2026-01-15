@@ -42,7 +42,7 @@ describe('Code Generation Integration', () => {
           successCriteria: ['Endpoint responds'],
           duration: 7,
         },
-      ]
+      ],
     };
   });
 
@@ -61,18 +61,20 @@ describe('Code Generation Integration', () => {
       expect(Array.isArray(result.generatedFiles)).toBe(true);
       expect(result.generatedFiles.length).toBeGreaterThan(0);
 
-      result.generatedFiles.forEach((file: { path: unknown; content: unknown; language: unknown; }) => {
-        expect(file.path).toBeDefined();
-        expect(file.content).toBeDefined();
-        expect(file.language).toBeDefined();
-      });
+      result.generatedFiles.forEach(
+        (file: { path: unknown; content: unknown; language: unknown }) => {
+          expect(file.path).toBeDefined();
+          expect(file.content).toBeDefined();
+          expect(file.language).toBeDefined();
+        },
+      );
     });
 
     it('should respect project language preference', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
       // All generated files should use TypeScript (from plan assumptions)
-      result.generatedFiles.forEach((file: { language: unknown; }) => {
+      result.generatedFiles.forEach((file: { language: unknown }) => {
         expect(['typescript', 'javascript']).toContain(file.language);
       });
     });
@@ -82,23 +84,32 @@ describe('Code Generation Integration', () => {
     it('should generate properly formatted code', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      result.generatedFiles.forEach((file: { content: { trim: () => { (): unknown; new(): unknown; length: unknown; }; }; language: string; }) => {
-        // Code should not be empty
-        expect(file.content.trim().length).toBeGreaterThan(0);
+      result.generatedFiles.forEach(
+        (file: {
+          content: { trim: () => { (): unknown; new (): unknown; length: unknown } };
+          language: string;
+        }) => {
+          // Code should not be empty
+          expect(file.content.trim().length).toBeGreaterThan(0);
 
-        // Code should have proper structure
-        if (file.language === 'typescript') {
-          // TypeScript files should have some structure
-          expect(file.content).toMatch(/^[\s\S]*/);
-        }
-      });
+          // Code should have proper structure
+          if (file.language === 'typescript') {
+            // TypeScript files should have some structure
+            expect(file.content).toMatch(/^[\s\S]*/);
+          }
+        },
+      );
     });
 
     it('should include proper error handling', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      const hasErrorHandling = result.generatedFiles.some((file: { content: string; }) => {
-        return file.content.includes('try') || file.content.includes('catch') || file.content.includes('error');
+      const hasErrorHandling = result.generatedFiles.some((file: { content: string }) => {
+        return (
+          file.content.includes('try') ||
+          file.content.includes('catch') ||
+          file.content.includes('error')
+        );
       });
 
       expect(hasErrorHandling).toBe(true);
@@ -107,7 +118,7 @@ describe('Code Generation Integration', () => {
     it('should include logging statements', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      const hasLogging = result.generatedFiles.some((file: { content: string; }) => {
+      const hasLogging = result.generatedFiles.some((file: { content: string }) => {
         return (
           file.content.includes('logger') ||
           file.content.includes('console.log') ||
@@ -121,8 +132,11 @@ describe('Code Generation Integration', () => {
     it('should include type definitions (TypeScript)', async () => {
       const result = await executeCodeCommand(testTask, testPlan);
 
-      const hasTypes = result.generatedFiles.some((file: { language: string; content: string; }) => {
-        return file.language === 'typescript' && (file.content.includes('interface') || file.content.includes('type'));
+      const hasTypes = result.generatedFiles.some((file: { language: string; content: string }) => {
+        return (
+          file.language === 'typescript' &&
+          (file.content.includes('interface') || file.content.includes('type'))
+        );
       });
 
       expect(hasTypes).toBe(true);
@@ -208,7 +222,9 @@ describe('Code Generation Integration', () => {
   describe('error handling', () => {
     it('should handle missing task gracefully', async () => {
       const invalidTask = null as any;
-      const result = await executeCodeCommand(invalidTask, testPlan).catch((e) => ({ error: e.message }));
+      const result = await executeCodeCommand(invalidTask, testPlan).catch((e) => ({
+        error: e.message,
+      }));
 
       expect(result.error).toBeDefined();
     });

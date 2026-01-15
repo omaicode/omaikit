@@ -28,7 +28,10 @@ function getExistingPlanIndices(planDir: string): number[] {
     .filter((value): value is number => value !== null);
 }
 
-function resolvePlanIndex(planDir: string, options?: { mode?: 'new' | 'update'; planId?: string }): number {
+function resolvePlanIndex(
+  planDir: string,
+  options?: { mode?: 'new' | 'update'; planId?: string },
+): number {
   const existing = getExistingPlanIndices(planDir);
   const maxExisting = existing.length ? Math.max(...existing) : -1;
 
@@ -45,13 +48,16 @@ function resolvePlanIndex(planDir: string, options?: { mode?: 'new' | 'update'; 
   return maxExisting + 1;
 }
 
-export async function planCommand(description: string, options?: {
-  projectType?: string;
-  techStack?: string[];
-  output?: string;
-  mode?: 'new' | 'update';
-  planId?: string;
-}): Promise<void> {
+export async function planCommand(
+  description: string,
+  options?: {
+    projectType?: string;
+    techStack?: string[];
+    output?: string;
+    mode?: 'new' | 'update';
+    planId?: string;
+  },
+): Promise<void> {
   const logger = new Logger();
   const planner = new Planner(logger);
   const writer = new PlanWriter();
@@ -64,7 +70,10 @@ export async function planCommand(description: string, options?: {
 
     const context = await contextWriter.readContext();
     if (!context) {
-      const err = formatError('CONTEXT_MISSING', 'Project context not found. Run `omaikit init` first.');
+      const err = formatError(
+        'CONTEXT_MISSING',
+        'Project context not found. Run `omaikit init` first.',
+      );
       printError(err);
       if (process.env.VITEST !== undefined) {
         throw new Error('Project context not found');
@@ -91,6 +100,7 @@ export async function planCommand(description: string, options?: {
         console.log(green('  ✓ Plan generated'));
       } else if (event.status === 'generating') {
         console.log(cyan('  → Receiving plan from AI...'));
+        progress.update(10);
       }
     });
 
@@ -106,7 +116,9 @@ export async function planCommand(description: string, options?: {
       process.exit(1);
     }
 
-    const plan = result.data?.plan || (result.data && (result.data as any).title ? (result.data as any) : undefined);
+    const plan =
+      result.data?.plan ||
+      (result.data && (result.data as any).title ? (result.data as any) : undefined);
 
     if (!plan) {
       const err = formatError('PLANNING_ERROR', 'Failed to generate plan');
@@ -138,7 +150,11 @@ export async function planCommand(description: string, options?: {
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
       }
-      fs.writeFileSync(options.output, JSON.stringify({ ...planOutput, id: planId }, null, 2), 'utf-8');
+      fs.writeFileSync(
+        options.output,
+        JSON.stringify({ ...planOutput, id: planId }, null, 2),
+        'utf-8',
+      );
       filepath = options.output;
     } else {
       const target = options?.output || archiveFilename;
@@ -151,27 +167,32 @@ export async function planCommand(description: string, options?: {
     console.log(bold('📋 Plan Summary'));
     console.log(bold('═'.repeat(40)));
     console.log(`Title: ${cyan(plan.title)}`);
-    console.log(
-      `Milestones: ${plan.milestones.length}`
-    );
+    console.log(`Milestones: ${plan.milestones.length}`);
 
     const totalTasks = plan.milestones.reduce((sum: number, m: any) => sum + m.tasks.length, 0);
     console.log(`Total Tasks: ${totalTasks}`);
 
     const totalEffort = plan.milestones.reduce(
-      (sum: number, m: any) => sum + m.tasks.reduce((ts: number, t: any) => ts + t.effort, 0),
-      0
+      (sum: number, m: any) =>
+        sum + m.tasks.reduce((ts: number, t: any) => ts + (t.estimatedEffort ?? t.effort ?? 0), 0),
+      0,
     );
     console.log(`Total Effort: ${totalEffort} hours (~${Math.ceil(totalEffort / 8)} days)`);
 
     console.log('');
     console.log(bold('Milestones:'));
     for (const milestone of plan.milestones) {
-      const milestoneEffort = milestone.tasks.reduce((sum: number, t: any) => sum + t.effort, 0);
-      console.log(`  ${cyan('→')} ${milestone.title} (${milestone.duration}d, ${milestoneEffort}h)`);
+      const milestoneEffort = milestone.tasks.reduce(
+        (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),
+        0,
+      );
+      console.log(
+        `  ${cyan('→')} ${milestone.title} (${milestone.duration}d, ${milestoneEffort}h)`,
+      );
 
       for (const task of milestone.tasks.slice(0, 3)) {
-        console.log(`    ${yellow('•')} ${task.title} (${task.effort}h)`);
+        const effort = task.estimatedEffort ?? task.effort ?? 0;
+        console.log(`    ${yellow('•')} ${task.title} (${effort}h)`);
       }
 
       if (milestone.tasks.length > 3) {
@@ -184,7 +205,6 @@ export async function planCommand(description: string, options?: {
     console.log('  1. Review the plan in the generated file');
     console.log('  2. Run `omaikit code` to generate code for tasks');
     console.log('  3. Run `omaikit test` to create test suite');
-
   } catch (error) {
     const err = error as Error;
     const fmtErr = formatError('COMMAND_ERROR', err.message);

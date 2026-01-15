@@ -6,12 +6,13 @@
 
 ## Executive Summary
 
-Omaikit is a multi-agent CLI toolkit (Node.js 22 + TypeScript) that accelerates software development by orchestrating four specialized AI agents:
+Omaikit is a multi-agent CLI toolkit (Node.js 22 + TypeScript) that accelerates software development by orchestrating specialized AI agents:
 
-1. **Planner**: Transforms natural language feature descriptions into structured Agile plans
-2. **Coder**: Generates production-ready code from plan tasks, respecting project patterns
-3. **Tester**: Creates comprehensive test suites with >80% code coverage validation
-4. **Reviewer**: Performs detailed code reviews identifying architecture, performance, security, and maintainability issues
+1. **Manager**: Analyzes the project and generates `.omaikit/context.json`
+2. **Planner**: Transforms natural language feature descriptions into structured Agile plans
+3. **Coder**: Generates production-ready code from plan tasks, respecting project patterns
+4. **Tester**: Creates comprehensive test suites with >80% code coverage validation
+5. **Reviewer**: Performs detailed code reviews identifying architecture, performance, security, and maintainability issues
 
 All outputs live in `.omaikit/` directory, never polluting user's main codebase.
 
@@ -46,7 +47,7 @@ All outputs live in `.omaikit/` directory, never polluting user's main codebase.
 #### 2. **Data Models** ([data-model.md](data-model.md))
 
 - **Project**: Codebase analysis with modules, dependencies, patterns
-- **Plan**: Agile plan with milestones, sprints, tasks, dependencies
+- **Plan**: Agile plan with milestones, tasks, acceptance criteria, and dependencies
 - **CodeGeneration**: Request/response for code generation
 - **TestSuite**: Generated tests with coverage tracking
 - **CodeReview**: Review findings with severity and categorization

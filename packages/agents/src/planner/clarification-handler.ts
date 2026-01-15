@@ -16,23 +16,19 @@ export class ClarificationHandler {
     const ambiguities: string[] = [];
 
     // Check for vague terms
-    const vagueTerms = [
-      'something',
-      'stuff',
-      'things',
-      'app',
-      'tool',
-      'system',
-      'it',
-    ];
+    const vagueTerms = ['something', 'stuff', 'things', 'app', 'tool', 'system', 'it'];
     const lowerDesc = description.toLowerCase();
 
     if (description.length < 20) {
       ambiguities.push('Description is very brief - could you provide more details?');
     }
 
-    if (!lowerDesc.includes('api') && !lowerDesc.includes('ui') &&
-        !lowerDesc.includes('frontend') && !lowerDesc.includes('backend')) {
+    if (
+      !lowerDesc.includes('api') &&
+      !lowerDesc.includes('ui') &&
+      !lowerDesc.includes('frontend') &&
+      !lowerDesc.includes('backend')
+    ) {
       ambiguities.push('What is the primary interface/architecture style?');
     }
 
@@ -52,11 +48,13 @@ export class ClarificationHandler {
       return [];
     }
 
-    return ambiguities.map((_, idx) => this.clarificationPrompts[idx % this.clarificationPrompts.length]);
+    return ambiguities.map(
+      (_, idx) => this.clarificationPrompts[idx % this.clarificationPrompts.length],
+    );
   }
 
   async askForClarifications(
-    description: string
+    description: string,
   ): Promise<{ ambiguities: string[]; questions: string[] }> {
     const ambiguities = this.detectAmbiguities(description);
     const questions = this.generateClarificationQuestions(ambiguities);
@@ -67,10 +65,7 @@ export class ClarificationHandler {
     };
   }
 
-  mergeClarifications(
-    description: string,
-    clarifications: Record<string, string>
-  ): string {
+  mergeClarifications(description: string, clarifications: Record<string, string>): string {
     let enhanced = description;
 
     for (const [key, value] of Object.entries(clarifications)) {

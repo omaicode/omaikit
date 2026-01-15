@@ -31,6 +31,9 @@ export class SyntaxValidator {
       case 'csharp':
         return this.validateCsharp(code);
 
+      case 'php':
+        return this.validatePhp(code);
+
       default:
         return { isValid: true, errors: [] };
     }
@@ -178,6 +181,26 @@ export class SyntaxValidator {
     const errors: string[] = [];
 
     // Check balanced braces
+    const openBraces = (code.match(/{/g) || []).length;
+    const closeBraces = (code.match(/}/g) || []).length;
+
+    if (openBraces !== closeBraces) {
+      errors.push(`Mismatched braces: ${openBraces} open, ${closeBraces} close`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  private validatePhp(code: string): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!code.includes('<?php')) {
+      errors.push('Missing PHP opening tag');
+    }
+
     const openBraces = (code.match(/{/g) || []).length;
     const closeBraces = (code.match(/}/g) || []).length;
 

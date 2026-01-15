@@ -3,6 +3,12 @@
  */
 
 export interface OmaikitConfig {
-  apiKey?: string;
+  openaiApiKey?: string;
+  anthropicApiKey?: string;
   provider?: string;
+  managerModel?: string;
+  plannerModel?: string;
+  coderModel?: string;
+  testerModel?: string;
+  reviewerModel?: string;
 }

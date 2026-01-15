@@ -3,4 +3,4 @@
  */
 
 export type { OmaikitConfig } from './config';
-export { loadConfig } from './loader';
+export { loadConfig, saveConfig, getGlobalConfigPath, getLocalConfigPath } from './loader';

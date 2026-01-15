@@ -1,2 +1,4 @@
+/**
+ * Consolidated in repo-level types.d.ts
+ */
 export {};
-//# sourceMappingURL=anthropic.integration.test.d.ts.map

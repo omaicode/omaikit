@@ -26,8 +26,12 @@ export class DependencyResolver {
       const dependencies = handler.dependencyExtractor(file.content);
 
       // Separate internal and external dependencies
-      const internalDeps = dependencies.filter((dep) => this.isInternalDependency(dep, projectContext));
-      const externalDeps = dependencies.filter((dep) => !this.isInternalDependency(dep, projectContext));
+      const internalDeps = dependencies.filter((dep) =>
+        this.isInternalDependency(dep, projectContext),
+      );
+      const externalDeps = dependencies.filter(
+        (dep) => !this.isInternalDependency(dep, projectContext),
+      );
 
       return {
         ...file,

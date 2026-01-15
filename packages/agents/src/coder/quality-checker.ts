@@ -16,14 +16,15 @@ export class QualityChecker {
   /**
    * Check code quality standards
    */
-  async check(files: CodeFile[], language: string): Promise<QualityCheck[][]> {
-    return files.map((file) => this.checkFile(file, language));
+  async check(files: CodeFile[]): Promise<QualityCheck[][]> {
+    return files.map((file) => this.checkFile(file));
   }
 
   /**
    * Check quality of a single file
    */
-  private checkFile(file: CodeFile, language: string): QualityCheck[] {
+  private checkFile(file: CodeFile): QualityCheck[] {
+    const language = file.language || 'unknown';
     const checks: QualityCheck[] = [];
 
     // Universal checks
@@ -47,6 +48,9 @@ export class QualityChecker {
         break;
       case 'csharp':
         checks.push(...this.checkCsharp(file));
+        break;
+      case 'php':
+        checks.push(...this.checkPhp(file));
         break;
     }
 
@@ -156,13 +160,18 @@ export class QualityChecker {
       case 'csharp':
         hasDocumentation = content.includes('///') || content.includes('//');
         break;
+      case 'php':
+        hasDocumentation = content.includes('/**') || content.includes('//');
+        break;
     }
 
     checks.push({
       aspect: 'documentation',
       pass: hasDocumentation,
       message: hasDocumentation ? '✓ Documentation present' : '✗ Missing documentation',
-      details: hasDocumentation ? 'Code includes comments/documentation' : 'Code should include documentation',
+      details: hasDocumentation
+        ? 'Code includes comments/documentation'
+        : 'Code should include documentation',
     });
 
     return checks;
@@ -173,7 +182,8 @@ export class QualityChecker {
     const content = file.content;
 
     // Check for type annotations
-    const hasTypeAnnotations = content.includes(':') || content.includes('interface') || content.includes('type ');
+    const hasTypeAnnotations =
+      content.includes(':') || content.includes('interface') || content.includes('type ');
     checks.push({
       aspect: 'typeAnnotations',
       pass: hasTypeAnnotations,
@@ -199,7 +209,11 @@ export class QualityChecker {
     const content = file.content;
 
     // Check for type hints
-    const hasTypeHints = content.includes('->')|| content.includes(':') || content.includes('List[') || content.includes('Dict[');
+    const hasTypeHints =
+      content.includes('->') ||
+      content.includes(':') ||
+      content.includes('List[') ||
+      content.includes('Dict[');
     checks.push({
       aspect: 'typeHints',
       pass: hasTypeHints,
@@ -240,7 +254,8 @@ export class QualityChecker {
     const content = file.content;
 
     // Check for ownership patterns
-    const hasOwnershipPatterns = content.includes('&') || content.includes('move') || content.includes('ref');
+    const hasOwnershipPatterns =
+      content.includes('&') || content.includes('move') || content.includes('ref');
     checks.push({
       aspect: 'ownership',
       pass: hasOwnershipPatterns || content.length < 200,
@@ -269,8 +284,33 @@ export class QualityChecker {
     checks.push({
       aspect: 'resourceManagement',
       pass: hasUsingStatements || !content.includes('Dispose'),
-      message: hasUsingStatements ? '✓ Using statements for resource management' : '✓ No resource management needed',
+      message: hasUsingStatements
+        ? '✓ Using statements for resource management'
+        : '✓ No resource management needed',
       details: 'Resources should be properly disposed',
+    });
+
+    return checks;
+  }
+
+  private checkPhp(file: CodeFile): QualityCheck[] {
+    const checks: QualityCheck[] = [];
+    const content = file.content;
+
+    const hasNamespace = content.includes('namespace ');
+    checks.push({
+      aspect: 'namespace',
+      pass: hasNamespace,
+      message: hasNamespace ? '✓ Namespace declared' : '✗ Missing namespace declaration',
+      details: 'PSR-4 requires namespaces that match the directory structure.',
+    });
+
+    const hasStrictTypes = content.includes('declare(strict_types=1)');
+    checks.push({
+      aspect: 'strictTypes',
+      pass: hasStrictTypes,
+      message: hasStrictTypes ? '✓ strict_types enabled' : '⚠ Missing strict_types declaration',
+      details: 'Enable strict typing for safer code.',
     });
 
     return checks;

@@ -1,2 +1,4 @@
+/**
+ * Consolidated in repo-level types.d.ts
+ */
 export {};
-//# sourceMappingURL=openai.integration.test.d.ts.map

@@ -148,7 +148,7 @@ $ omaikit --version
 The plan command:
 1. Shows progress bar during generation
 2. Generates a structured project plan with milestones and tasks
-3. Saves plan to `.omaikit/plan.json` (or custom path)
+3. Saves plan to `.omaikit/plans/P-{N}.json` (or custom path)
 4. Displays summary with formatted colors
 
 ---

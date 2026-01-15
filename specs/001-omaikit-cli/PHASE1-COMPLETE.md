@@ -60,7 +60,7 @@ A comprehensive implementation plan for **Omaikit**, a multi-agent CLI toolkit t
 ```
 packages/
 ├── cli/        # CLI commands & entry point
-├── agents/     # Planner, Coder, Tester, Reviewer implementations
+├── agents/     # Manager, Planner, Coder, Tester, Reviewer implementations
 ├── analysis/   # Codebase analyzer & project scanner
 ├── models/     # Shared data structures
 └── config/     # Configuration management
@@ -69,7 +69,7 @@ packages/
 ### Data Models
 
 - **Project**: Codebase analysis with modules, dependencies, patterns
-- **Plan**: Agile plan with milestones, sprints, tasks
+- **Plan**: Agile plan with milestones, tasks, acceptance criteria, and dependencies
 - **CodeGeneration**: Generated code with dependency tracking
 - **TestSuite**: Test cases with coverage metrics
 - **CodeReview**: Findings with severity and categorization

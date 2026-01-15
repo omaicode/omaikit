@@ -1,4 +1,9 @@
-export type EventType = 'agent-start' | 'agent-progress' | 'agent-complete' | 'agent-error' | 'pipeline-state-change';
+export type EventType =
+  | 'agent-start'
+  | 'agent-progress'
+  | 'agent-complete'
+  | 'agent-error'
+  | 'pipeline-state-change';
 
 export interface Event {
   type: EventType;

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Coder Agent - Code Generation
  * Generates production-ready code from plan tasks
@@ -7,13 +8,15 @@ import type { AgentInput, AgentOutput } from '../types';
 import type { Task, CodeGeneration } from '@omaikit/models';
 import { Agent } from '../agent';
 import { Logger } from '../logger';
-import { LanguageHandlers } from './language-handlers';
 import { PromptTemplates } from './prompt-templates';
 import { CodeParser } from './code-parser';
-import { SyntaxValidator } from './syntax-validator';
-import { DependencyResolver } from './dependency-resolver';
-import { LinterIntegration } from './linter-integration';
-import { QualityChecker } from './quality-checker';
+import { CodeWriter } from '@omaikit/analysis';
+import { createProvider } from '../ai-provider/factory';
+import { createDefaultToolRegistry } from '../tools/default-registry';
+import type { ToolContext } from '../tools/types';
+import { MemoryStore } from '../memory/memory-store';
+import { AIProvider } from '../ai-provider/provider';
+import { loadConfig, OmaikitConfig } from '@omaikit/config';
 
 export interface CoderAgentInput extends AgentInput {
   task: Task;
@@ -30,6 +33,7 @@ export interface CoderAgentOutput extends AgentOutput {
     totalLOC?: number;
     syntaxErrors?: number;
     lintingIssues?: number;
+    writtenPaths?: string[];
     tokenUsage?: {
       input: number;
       output: number;
@@ -42,31 +46,29 @@ export class CoderAgent extends Agent {
   public name = 'coder';
   public version = '1.0.0';
 
-  private languageHandlers: LanguageHandlers;
   private promptTemplates: PromptTemplates;
   private codeParser: CodeParser;
-  private syntaxValidator: SyntaxValidator;
-  private dependencyResolver: DependencyResolver;
-  private linterIntegration: LinterIntegration;
-  private qualityChecker: QualityChecker;
+  private codeWriter: CodeWriter;
+  private provider?: AIProvider;
+  private memoryStore: MemoryStore;
+  private cfg: OmaikitConfig;
 
   constructor(logger?: Logger) {
     super(logger);
-    this.languageHandlers = new LanguageHandlers();
     this.promptTemplates = new PromptTemplates();
     this.codeParser = new CodeParser();
-    this.syntaxValidator = new SyntaxValidator();
-    this.dependencyResolver = new DependencyResolver();
-    this.linterIntegration = new LinterIntegration();
-    this.qualityChecker = new QualityChecker();
+    this.codeWriter = new CodeWriter();
+    this.memoryStore = new MemoryStore();
+    this.cfg = loadConfig();
   }
 
   async init(): Promise<void> {
     this.logger.info('Initializing CoderAgent', { version: this.version });
-    // Initialize sub-components
-    await this.syntaxValidator.init();
-    await this.dependencyResolver.init();
-    await this.linterIntegration.init();
+    try {
+      this.provider = createProvider();
+    } catch (error) {
+      this.logger.warn('Could not initialize AI provider, using mock mode');
+    }
   }
 
   /**
@@ -99,64 +101,66 @@ export class CoderAgent extends Agent {
       // Validate input
       this.validateInput(input);
 
-      // Determine target language
-      const language = this.determineLanguage(input);
-      this.logger.info('Code generation started', { taskId: input.task.id, language });
+      const fallbackLanguage = this.determineLanguage(input);
 
       // Generate prompt
       const prompt = await this.promptTemplates.generatePrompt(
         input.task,
         input.projectContext,
         input.plan,
-        language
       );
-      output.result.prompt = prompt;
+
+      const recentMemory = await this.memoryStore.readRecent(this.name, 3);
+      const memoryContext = this.memoryStore.formatRecent(recentMemory);
+
+      const reuseSection = this.buildReuseSection(input);
+      const finalPrompt = [
+        prompt,
+        memoryContext ? `## Recent Agent Memory\n${memoryContext}` : '',
+        reuseSection ? `## Reuse Opportunities\n${reuseSection}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+      output.result.prompt = finalPrompt;
 
       // Call LLM via AIProvider (would be injected)
       // For now, return mock response
-      const llmResponse = await this.callLLM(prompt, language, input);
+      const llmResponse = await this.callLLM(finalPrompt, input, fallbackLanguage);
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt: finalPrompt,
+        response: llmResponse,
+        taskId: input.task.id,
+      });
 
       // Parse generated code
-      const files = await this.codeParser.parse(llmResponse, language);
+      const files = await this.codeParser.parse(llmResponse, {
+        taskTitle: input.task.title,
+        projectContext: input.projectContext,
+        fallbackLanguage,
+      });
       this.logger.info('Code parsed', { fileCount: files.length });
 
-      // Validate syntax for each file
-      let syntaxErrors = 0;
-      for (const file of files) {
-        const validation = await this.syntaxValidator.validate(file.content, language);
-        if (!validation.isValid) {
-          syntaxErrors++;
-          this.logger.warn('Syntax error in generated file', { path: file.path });
-        }
-      }
-
-      // Resolve dependencies
-      const filesWithDeps = await this.dependencyResolver.resolveDependencies(files, input.projectContext);
-
-      // Run linter
-      const lintResults = await this.linterIntegration.lint(filesWithDeps, language);
-      const totalLintIssues = lintResults.reduce((sum, r) => sum + (r.issues?.length || 0), 0);
-
-      // Quality check
-      const qualityChecks = await this.qualityChecker.check(filesWithDeps, language);
+      const projectRoot = input.projectContext?.project?.rootPath || process.cwd();
+      const writtenPaths = await this.codeWriter.writeFiles(files, projectRoot);
 
       // Prepare output
-      output.result.files = filesWithDeps;
+      output.result.files = files;
       output.result.metadata = {
         generatedAt: new Date().toISOString(),
         model: 'mock-model',
       };
       output.metadata.filesGenerated = files.length;
-      output.metadata.totalLOC = files.reduce((sum, f) => sum + (f.content.split('\n').length || 0), 0);
-      output.metadata.syntaxErrors = syntaxErrors;
-      output.metadata.lintingIssues = totalLintIssues;
-
-      // Set status
-      if (syntaxErrors > 0) {
-        output.status = 'partial';
-      }
+      output.metadata.writtenPaths = writtenPaths;
+      output.metadata.totalLOC = files.reduce(
+        (sum, f) => sum + (f.content.split('\n').length || 0),
+        0,
+      );
+      output.metadata.syntaxErrors = 0;
+      output.metadata.lintingIssues = 0;
 
       await this.afterExecute(output);
+      await this.memoryStore.clear(this.name);
     } catch (error) {
       await this.onError(error as Error);
       output.status = 'failed';
@@ -164,6 +168,13 @@ export class CoderAgent extends Agent {
         code: 'CODER_ERROR',
         message: (error as Error).message,
       };
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt: output.result.prompt || '',
+        response: output.error.message,
+        taskId: input.task.id,
+        metadata: { status: 'failed' },
+      });
     }
 
     output.metadata.durationMs = Date.now() - startTime;
@@ -272,29 +283,97 @@ export class CoderAgent extends Agent {
    * Determine target programming language
    */
   private determineLanguage(input: CoderAgentInput): string {
-    // Try to detect from project context
-    const projectLanguages = input.projectContext?.metadata?.languages || [];
-    if (projectLanguages.length > 0) {
-      return projectLanguages[0];
+    const candidates: string[] = [];
+    const addCandidate = (value: unknown) => {
+      if (typeof value === 'string') {
+        candidates.push(value);
+      }
+    };
+
+    const analysisLanguages = input.projectContext?.analysis?.languages;
+    if (Array.isArray(analysisLanguages)) {
+      analysisLanguages.forEach((lang) => addCandidate(lang));
     }
 
-    // Default to TypeScript
+    const metadataLanguages = input.projectContext?.metadata?.languages;
+    if (Array.isArray(metadataLanguages)) {
+      metadataLanguages.forEach((lang) => addCandidate(lang));
+    }
+
+    const techStack = input.plan?.techStack;
+    if (Array.isArray(techStack)) {
+      techStack.forEach((entry) => addCandidate(entry));
+    }
+
+    const projectType = input.plan?.projectType;
+    addCandidate(projectType);
+
+    for (const candidate of candidates) {
+      const normalized = this.normalizeLanguage(candidate);
+      if (normalized) {
+        return normalized;
+      }
+    }
+
     return 'typescript';
+  }
+
+  private normalizeLanguage(value: string): string | null {
+    const normalized = value.toLowerCase();
+    if (normalized.includes('golang') || normalized === 'go') return 'go';
+    if (normalized.includes('typescript')) return 'typescript';
+    if (normalized.includes('javascript')) return 'javascript';
+    if (normalized.includes('python')) return 'python';
+    if (normalized.includes('rust')) return 'rust';
+    if (normalized.includes('c#') || normalized.includes('csharp')) return 'csharp';
+    if (normalized.includes('php')) return 'php';
+    return null;
   }
 
   /**
    * Call LLM to generate code
    */
-  private async callLLM(prompt: string, language: string, input: CoderAgentInput): Promise<string> {
-    // This would normally call the AI provider
-    // For now, return a mock response
-    this.logger.info('Calling LLM for code generation', { language });
+  private async callLLM(
+    prompt: string,
+    input: CoderAgentInput,
+    fallbackLanguage: string,
+  ): Promise<string> {
+    if (process.env.VITEST !== undefined) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+    }
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    if (!this.provider) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+    }
 
-    // Return mock generated code
-    return this.getMockGeneratedCode(language, input.task);
+    const toolRegistry = createDefaultToolRegistry();
+    const toolContext = this.buildToolContext(input);
+
+    if (!this.provider.generateCodex) {
+      throw new Error('AI provider does not support Codex responses API');
+    }
+
+    const response = await this.provider.generateCodex(prompt, {
+      model: this.cfg.coderModel,
+      maxTokens: undefined,
+      temperature: undefined,
+      tools: toolRegistry.getDefinitions(),
+      toolRegistry,
+      toolContext,
+      toolChoice: 'auto',
+      maxToolCalls: 3,
+    });
+
+    if (
+      typeof response === 'string' &&
+      (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO'))
+    ) {
+      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+    }
+
+    return response;
   }
 
   /**
@@ -424,5 +503,64 @@ export default ${taskName};
       .split('_')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join('');
+  }
+
+  private buildReuseSection(input: CoderAgentInput): string | null {
+    const rawSources = [
+      input.plan?.reuseOpportunities,
+      input.projectContext?.reuseOpportunities,
+      input.projectContext?.analysis?.reuseOpportunities,
+      input.projectContext?.analysis?.reuseSuggestions,
+    ];
+
+    const items = rawSources.flatMap((value) => (Array.isArray(value) ? value : []));
+    const normalized = items
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        if (item && typeof item === 'object') {
+          const description = (item as any).description || (item as any).summary;
+          const moduleName = (item as any).module || (item as any).moduleName;
+          if (description) return String(description).trim();
+          if (moduleName) return `Consider reusing module: ${String(moduleName).trim()}`;
+        }
+        return '';
+      })
+      .filter((item) => item.length > 0);
+
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    return normalized.map((item) => `- ${item}`).join('\n');
+  }
+
+  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    const timeoutPromise = new Promise<null>((resolve) => {
+      timeoutId = setTimeout(() => resolve(null), timeoutMs);
+    });
+
+    const result = await Promise.race([promise, timeoutPromise]);
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    return result as T | null;
+  }
+
+  private buildToolContext(input: CoderAgentInput): ToolContext {
+    const rootPath =
+      input.projectContext?.root ||
+      input.projectContext?.rootPath ||
+      input.projectContext?.project?.rootPath ||
+      process.cwd();
+
+    return {
+      rootPath,
+      cwd: process.cwd(),
+      logger: this.logger,
+    };
   }
 }

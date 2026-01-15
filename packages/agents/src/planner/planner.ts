@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { AgentInput, AgentOutput } from '../types';
@@ -6,14 +7,21 @@ import { PromptTemplates } from './prompt-templates';
 import { PlanParser } from './plan-parser';
 import { PlanValidator } from './plan-validator';
 import { ClarificationHandler } from './clarification-handler';
+import { createDefaultToolRegistry } from '../tools/default-registry';
+import { MemoryStore } from '../memory/memory-store';
+import type { ToolContext } from '../tools/types';
+import { loadConfig, OmaikitConfig } from '@omaikit/config';
+import { AIProvider } from '../ai-provider/provider';
 
 export class Planner extends Agent {
   private promptTemplates: PromptTemplates;
   private planParser: PlanParser;
   private validator: PlanValidator;
   private clarificationHandler: ClarificationHandler;
-  private provider: any;
+  private provider?: AIProvider;
   private progressCallbacks: Array<(event: any) => void> = [];
+  private memoryStore: MemoryStore;
+  private cfg: OmaikitConfig;
 
   constructor(logger: Logger) {
     super(logger);
@@ -22,6 +30,8 @@ export class Planner extends Agent {
     this.planParser = new PlanParser();
     this.validator = new PlanValidator();
     this.clarificationHandler = new ClarificationHandler();
+    this.memoryStore = new MemoryStore();
+    this.cfg = loadConfig();
   }
 
   async init(): Promise<void> {
@@ -45,10 +55,9 @@ export class Planner extends Agent {
 
   async execute(input: AgentInput): Promise<AgentOutput> {
     const planInput = input as any;
-
     try {
       await this.beforeExecute(input);
-      
+
       // Always initialize provider (will use real API if key is available)
       await this.init();
 
@@ -58,46 +67,73 @@ export class Planner extends Agent {
       }
 
       // Generate prompt from input
-      const prompt = this.promptTemplates.generatePrompt(
+      const basePrompt = this.promptTemplates.generatePrompt(
         planInput.description,
         planInput.projectType,
-        planInput.techStack
+        planInput.techStack,
       );
 
-      this.logger.info(
-        `Generating plan for: ${planInput.description.substring(0, 50)}...`
-      );
+      const recentMemory = await this.memoryStore.readRecent(this.name, 3);
+      const memoryContext = this.memoryStore.formatRecent(recentMemory);
+      const prompt = memoryContext
+        ? `${basePrompt}\n\n## Recent Agent Memory\n${memoryContext}`
+        : basePrompt;
+
+      this.logger.info(`Generating plan for: ${planInput.description.substring(0, 50)}...`);
 
       // Call AI provider to generate plan
       this.emit('progress', { status: 'generating', message: 'Calling AI provider' });
-      
+
       // In test mode, use mock generation for speed
       let llmResponse: string;
       if (process.env.VITEST !== undefined) {
-        // We're in vitest - use mock generation
         this.logger.info('Using mock plan generation (test mode)');
         llmResponse = this.generateMockPlan(planInput);
       } else {
-        // Production mode - use real API
         if (!this.provider) {
           throw new Error('AI provider not initialized');
         }
-        
-        llmResponse = await this.provider.generate(prompt);
-        
-        // If we're in echo mode (no API key), generate a mock plan
+
+        const toolRegistry = createDefaultToolRegistry();
+        const toolContext = this.buildToolContext(planInput);
+        llmResponse = await this.provider.generate(prompt, {
+          model: this.cfg.plannerModel,
+          tools: toolRegistry.getDefinitions(),
+          toolRegistry,
+          toolContext,
+          toolChoice: 'auto',
+        });
+
         if (llmResponse.startsWith('OPENAI_ECHO') || llmResponse.startsWith('ANTHROPIC_ECHO')) {
           this.logger.warn('Using mock plan generation (no API key configured)');
           llmResponse = this.generateMockPlan(planInput);
         }
       }
 
+      if (this.isLikelyTruncated(llmResponse)) {
+        if (this.provider && process.env.VITEST === undefined) {
+          this.logger.warn('LLM response appears truncated; attempting repair');
+          const repairPrompt = this.promptTemplates.generateRepairPrompt(llmResponse);
+          llmResponse = await this.provider.generate(repairPrompt);
+        }
+      }
+
       this.emit('progress', { status: 'parsing', message: 'Parsing LLM response' });
 
-      // Parse the LLM response
-      const parsedPlan = this.planParser.parse(llmResponse);
+      let parsedPlan: any;
+      try {
+        parsedPlan = this.planParser.parse(llmResponse);
+      } catch (parseError) {
+        if (this.provider && process.env.VITEST === undefined) {
+          this.logger.warn('Plan JSON parse failed, attempting repair');
+          const repairPrompt = this.promptTemplates.generateRepairPrompt(llmResponse);
+          const repaired = await this.provider.generate(repairPrompt);
+          parsedPlan = this.planParser.parse(repaired);
+        } else {
+          throw parseError;
+        }
+      }
 
-      // Validate the plan
       this.emit('progress', {
         status: 'validating',
         message: 'Validating plan structure',
@@ -105,14 +141,11 @@ export class Planner extends Agent {
       const validationResult = this.validator.validate(parsedPlan);
 
       if (!validationResult.valid) {
-        throw new Error(
-          `Plan validation failed: ${validationResult.errors.join(', ')}`
-        );
+        throw new Error(`Plan validation failed: ${validationResult.errors.join(', ')}`);
       }
 
-      // Check for dependencies
       const depResult = this.validator.validateDependencies(
-        parsedPlan.milestones.flatMap((m: any) => m.tasks)
+        parsedPlan.milestones.flatMap((m: any) => m.tasks),
       );
 
       if (depResult.hasCycles) {
@@ -125,7 +158,6 @@ export class Planner extends Agent {
       });
 
       const projectContext = this.buildProjectContext(planInput);
-
       const result: AgentOutput = {
         data: {
           plan: parsedPlan,
@@ -134,11 +166,23 @@ export class Planner extends Agent {
       };
 
       await this.afterExecute(result);
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt,
+        response: llmResponse,
+      });
+      await this.memoryStore.clear(this.name);
       return result;
     } catch (error) {
       const err = error as Error;
       this.logger.error(`Planner error: ${err.message}`);
       await this.onError(err);
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt: '',
+        response: err.message,
+        metadata: { status: 'failed' },
+      });
 
       return {
         error: {
@@ -149,78 +193,71 @@ export class Planner extends Agent {
     }
   }
 
-  private async callProvider(prompt: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (!this.provider) {
-        reject(new Error('Provider not initialized'));
-        return;
-      }
-
-      let response = '';
-
-      try {
-        if (typeof this.provider.onProgress === 'function') {
-          this.provider.onProgress((chunk: string) => {
-            response += chunk;
-            this.emit('progress', {
-              status: 'generating',
-              message: 'Receiving plan from AI...',
-              chunk: chunk,
-            });
-          });
-        }
-
-        this.provider
-          .complete(prompt)
-          .then((result: string) => {
-            resolve(result || response);
-          })
-          .catch((error: Error) => {
-            reject(error);
-          });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
   private generateMockPlan(input: any): string {
     // Fallback mock response when no API key is available
     const mockPlan = {
+      id: `plan-${Date.now()}`,
       title: `Plan for: ${input.description.substring(0, 30)}`,
       description: input.description,
+      clarifications: [],
       milestones: [
         {
+          id: 'M1',
           title: 'Setup & Foundation',
+          description: 'Project setup and baseline configuration',
           duration: 5,
+          successCriteria: ['Project structure created', 'Tooling configured'],
           tasks: [
             {
               id: 'T1',
               title: 'Project initialization',
               description: 'Setup project structure and configuration',
-              effort: 3,
-              status: 'pending' as const,
+              type: 'infrastructure' as const,
+              estimatedEffort: 3,
+              acceptanceCriteria: [
+                'Repository structure is created',
+                'Configuration files are added',
+              ],
+              inputDependencies: [],
+              outputDependencies: ['T2'],
+              affectedModules: ['core'],
+              status: 'planned' as const,
             },
             {
               id: 'T2',
               title: 'Development environment',
               description: 'Configure development tools and dependencies',
-              effort: 2,
-              status: 'pending' as const,
+              type: 'infrastructure' as const,
+              estimatedEffort: 2,
+              acceptanceCriteria: ['Dependencies installed', 'Linting and formatting configured'],
+              inputDependencies: ['T1'],
+              outputDependencies: ['T3'],
+              affectedModules: ['tooling'],
+              status: 'planned' as const,
             },
           ],
         },
         {
+          id: 'M2',
           title: 'Core Development',
+          description: 'Implement primary functionality',
           duration: 10,
+          successCriteria: ['Core features implemented', 'Basic tests pass'],
           tasks: [
             {
               id: 'T3',
               title: 'Implement core features',
               description: 'Build main functionality',
-              effort: 8,
-              status: 'pending' as const,
-              dependencies: ['T1', 'T2'],
+              type: 'feature' as const,
+              estimatedEffort: 8,
+              acceptanceCriteria: [
+                'Core functionality implemented',
+                'Endpoints/modules behave as expected',
+              ],
+              inputDependencies: ['T1', 'T2'],
+              outputDependencies: [],
+              affectedModules: ['core'],
+              status: 'planned' as const,
             },
           ],
         },
@@ -228,6 +265,25 @@ export class Planner extends Agent {
     };
 
     return JSON.stringify(mockPlan);
+  }
+
+  private isLikelyTruncated(response: string): boolean {
+    const trimmed = response.trim();
+    if (!trimmed || trimmed === '{}') {
+      return true;
+    }
+    const openBraces = (trimmed.match(/{/g) || []).length;
+    const closeBraces = (trimmed.match(/}/g) || []).length;
+    if (openBraces === 0 || closeBraces === 0) {
+      return true;
+    }
+    if (closeBraces < openBraces) {
+      return true;
+    }
+    if (!trimmed.includes('milestones') && !trimmed.includes('"milestones"')) {
+      return true;
+    }
+    return false;
   }
 
   private buildProjectContext(input: any) {
@@ -263,6 +319,14 @@ export class Planner extends Agent {
     };
   }
 
+  private buildToolContext(input: any): ToolContext {
+    return {
+      rootPath: input.rootPath || input.projectRoot || process.cwd(),
+      cwd: process.cwd(),
+      logger: this.logger,
+    };
+  }
+
   private inferLanguages(techStack?: string[]): string[] {
     if (!Array.isArray(techStack) || techStack.length === 0) {
       return ['typescript'];
@@ -271,11 +335,13 @@ export class Planner extends Agent {
     const normalized = techStack.map((t) => t.toLowerCase());
     const languages = new Set<string>();
     if (normalized.some((t) => t.includes('typescript') || t === 'ts')) languages.add('typescript');
-    if (normalized.some((t) => t.includes('javascript') || t === 'js' || t.includes('node'))) languages.add('javascript');
+    if (normalized.some((t) => t.includes('javascript') || t === 'js' || t.includes('node')))
+      languages.add('javascript');
     if (normalized.some((t) => t.includes('python') || t === 'py')) languages.add('python');
     if (normalized.some((t) => t.includes('go') || t.includes('golang'))) languages.add('go');
     if (normalized.some((t) => t.includes('rust'))) languages.add('rust');
     if (normalized.some((t) => t.includes('c#') || t.includes('csharp'))) languages.add('csharp');
+    if (normalized.some((t) => t.includes('php'))) languages.add('php');
 
     return languages.size > 0 ? Array.from(languages) : ['typescript'];
   }

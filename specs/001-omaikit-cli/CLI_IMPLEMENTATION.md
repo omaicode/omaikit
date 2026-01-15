@@ -96,8 +96,9 @@ const CLI_FEATURES = {
 
   // Commands (plan is complete, others ready for Phase 4)
   commands: {
+    init: '✅ COMPLETE - Generates .omaikit/context.json',
     plan: '✅ COMPLETE - Generates project plans',
-    code: '⏳ READY - Will generate project files',
+    code: '✅ COMPLETE - Generates project files',
     test: '⏳ READY - Will generate test files',
     analyze: '⏳ READY - Will analyze existing projects',
     review: '⏳ READY - Will provide code reviews',
@@ -108,7 +109,7 @@ const CLI_FEATURES = {
     planner: '✅ Connected - Generates plans',
     logger: '✅ Connected - Tracks operations',
     provider: '✅ Connected - OpenAI/Anthropic API',
-    fileSystem: '✅ Connected - Saves plans to JSON',
+    fileSystem: '✅ Connected - Saves plans to .omaikit/plans/P-{N}.json',
     progress: '✅ Connected - Shows progress bar',
   },
 };

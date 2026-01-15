@@ -59,7 +59,7 @@ describe('Planner Agent - Edge Cases', () => {
         const plan = result.data.plan;
         const allTasks = plan.milestones.flatMap((m: any) => m.tasks);
         const tasksWithDeps = allTasks.filter((t: any) =>
-          (t.dependencies || []).some((d: any) => d.length > 0)
+          (t.inputDependencies || []).some((d: any) => d.length > 0),
         );
         expect(tasksWithDeps.length).toBeGreaterThanOrEqual(0);
       }
@@ -87,7 +87,11 @@ describe('Planner Agent - Edge Cases', () => {
 
     it('should handle very long descriptions', async () => {
       const input: PlanInput = {
-        description: 'Build a comprehensive modern full-stack comprehensive application that includes both frontend and backend components'.padEnd(1000, '...'),
+        description:
+          'Build a comprehensive modern full-stack comprehensive application that includes both frontend and backend components'.padEnd(
+            1000,
+            '...',
+          ),
       };
 
       const result = await planner.execute(input);
@@ -167,7 +171,7 @@ describe('Planner Agent - Edge Cases', () => {
 
         allTasks.forEach((task: any) => {
           expect(task.title).toBeTruthy();
-          expect(task.effort).toBeGreaterThan(0);
+          expect(task.estimatedEffort).toBeGreaterThan(0);
         });
       }
     });

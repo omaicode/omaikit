@@ -26,16 +26,16 @@ A solo developer working on a new feature can describe their desired outcome in 
 
 **Why this priority**: This is the foundation for all other Omaikit capabilities. Without a plan, code generation and testing lack direction. This enables developers to work "10x faster" by giving them a clear roadmap instead of ad-hoc development.
 
-**Independent Test**: Can be fully tested by running `omaikit init` followed by `omaikit plan "build a simple NestJS project"` and verifying that a JSON plan is generated with all required sections including milestones, tasks, dependencies, and project context metadata.
+**Independent Test**: Can be fully tested by running `omaikit init "describe the project"` followed by `omaikit plan "build a simple NestJS project"` and verifying that a JSON plan is generated with all required sections including milestones, tasks, and dependencies.
 
 **Acceptance Scenarios**:
 
-1. **Given** a developer with a feature description, **When** they run `omaikit plan "build a simple NestJS project"`, **Then** Omaikit outputs a structured Agile plan in JSON format with milestones, sprints, and task details
+1. **Given** a developer with a feature description, **When** they run `omaikit plan "build a simple NestJS project"`, **Then** Omaikit outputs a structured Agile plan in JSON format with milestones, tasks, effort estimates, acceptance criteria, and dependency details
 2. **Given** a multi-module project description, **When** planning is complete, **Then** the plan identifies module dependencies and task parallelization opportunities
 3. **Given** an ambiguous feature description, **When** the plan is generated, **Then** clarifying questions or assumptions are documented in the plan output
-4. **Given** an existing project, **When** the user runs `omaikit init`, **Then** Omaikit creates `.omaikit/context.json` describing the current project structure
+4. **Given** an existing project, **When** the user runs `omaikit init "<description>"`, **Then** the Manager agent analyzes the project using tools and creates `.omaikit/context.json` describing the current project structure
 5. **Given** the user runs any other command, **When** `.omaikit/context.json` is missing, **Then** Omaikit stops and instructs the user to run `omaikit init`
-5. **Given** multiple planning iterations, **When** the user runs `omaikit plan` repeatedly, **Then** Omaikit stores multiple plan versions and can update the current plan on request
+6. **Given** multiple planning iterations, **When** the user runs `omaikit plan` repeatedly, **Then** Omaikit stores multiple plan versions and can update the current plan on request
 
 ---
 
@@ -150,9 +150,9 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 
 - **FR-001**: System MUST expose CLI commands `omaikit init`, `omaikit plan`, `omaikit code`, `omaikit test`, `omaikit review`, and `omaikit run-pipeline` that users can invoke from terminal
 - **FR-002**: System MUST accept natural language feature descriptions as input to the `plan` command and parse them into structured project requirements
-- **FR-003**: System MUST generate structured Agile plans in JSON format that include milestones, sprints, tasks with estimates, and dependency information
+- **FR-003**: System MUST generate structured Agile plans in JSON format that include milestones, tasks with estimates, acceptance criteria, and dependency information
 - **FR-003a**: System MUST store multiple plan versions per project and allow users to update the current plan
-- **FR-003b**: System MUST generate `.omaikit/context.json` with project metadata when `omaikit init` is executed
+- **FR-003b**: System MUST use the Manager agent to generate `.omaikit/context.json` via AI-driven analysis of the current folder when `omaikit init` is executed
 - **FR-003c**: System MUST require `.omaikit/context.json` to exist before running `plan`, `code`, `test`, `review`, or `run-pipeline`
 - **FR-004**: System MUST generate syntactically correct, compilable source code that implements planned features with proper error handling and logging
 - **FR-005**: System MUST generate comprehensive test suites (unit tests, integration tests, edge case tests) that achieve >80% code coverage
@@ -165,14 +165,15 @@ Omaikit can orchestrate independent agent pipelines across multiple project modu
 - **FR-012**: System MUST output clear, user-friendly error messages when operations fail, with suggestions for recovery
 - **FR-013**: System MUST support graceful cancellation of running pipelines with preservation of partial outputs
 - **FR-014**: System MUST log all agent activities with timestamps and operation results for auditability and debugging
+- **FR-015**: System MUST persist recent agent prompts/responses in `.omaikit/memory/` and reuse them during processing, clearing the memory after successful completion
 
 ### Key Entities
 
 - **Project**: Represents a software project with structure, existing code, dependencies, and configuration
 - **Feature**: A user-requested capability or enhancement to be implemented
-- **Plan**: An Agile project plan with milestones, sprints, tasks, effort estimates, and task dependencies
-- **Task**: A discrete unit of work within a sprint with clear acceptance criteria and estimated effort
-- **Agent**: A specialized AI component (Planner, Coder, Tester, Reviewer) with defined responsibilities
+- **Plan**: An Agile project plan with milestones, tasks, effort estimates, acceptance criteria, and task dependencies
+- **Task**: A discrete unit of work within a milestone with clear acceptance criteria and estimated effort
+- **Agent**: A specialized AI component (Manager, Planner, Coder, Tester, Reviewer) with defined responsibilities
 - **Code Module**: A self-contained unit of generated code (file, class, function) with clear responsibilities
 - **Test Suite**: A collection of test cases covering unit tests, integration tests, and edge cases
 - **Review Report**: A detailed markdown document identifying code issues, improvements, and best practices
