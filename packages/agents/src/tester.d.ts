@@ -1,7 +1,2 @@
-/**
- * Tester agent
- */
-export declare class TesterAgent {
-    test(): void;
-}
-//# sourceMappingURL=tester.d.ts.map
+export { TesterAgent } from './tester/tester';
+export type { TesterAgentInput, TesterAgentOutput } from './tester/tester';

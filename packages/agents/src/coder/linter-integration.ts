@@ -35,14 +35,15 @@ export class LinterIntegration {
   /**
    * Lint generated code files
    */
-  async lint(files: CodeFile[], language: string): Promise<LintResult[]> {
-    return files.map((file) => this.lintFile(file, language));
+  async lint(files: CodeFile[]): Promise<LintResult[]> {
+    return files.map((file) => this.lintFile(file));
   }
 
   /**
    * Lint a single file
    */
-  private lintFile(file: CodeFile, language: string): LintResult {
+  private lintFile(file: CodeFile): LintResult {
+    const language = file.language || 'unknown';
     const issues: LintIssue[] = [];
 
     // Perform language-specific linting

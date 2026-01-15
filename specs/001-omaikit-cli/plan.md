@@ -7,9 +7,9 @@
 
 ## Summary
 
-Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with TypeScript that orchestrates four specialized AI agents (Planner, Coder, Tester, Reviewer) to accelerate software development. The system transforms high-level feature descriptions into executable Agile plans, generates production-ready code, creates comprehensive test suites, and provides detailed code reviews - all stored in a `.omaikit/` directory that never pollutes the user's main codebase.
+Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with TypeScript that orchestrates specialized AI agents (Manager, Planner, Coder, Tester, Reviewer) to accelerate software development. The system transforms high-level feature descriptions into executable Agile plans, generates production-ready code, creates comprehensive test suites, and provides detailed code reviews. Operational metadata is stored in `.omaikit/` while generated code is written to the project root by default.
 
-**Primary Technical Approach**: Modular agent architecture with dependency injection, where each agent is independently testable and orchestrable via a pipeline runner. All outputs (plans, code, tests, reviews) are stored in JSON/markdown formats for compatibility across programming languages. The system includes deep codebase analysis to prevent conflicts and support code reuse patterns.
+**Primary Technical Approach**: Modular agent architecture with dependency injection, where each agent is independently testable and orchestrable via a pipeline runner. The Manager agent performs AI-driven project analysis using tools (read/search/edit) to generate `.omaikit/context.json`. Plans/tests/reviews are stored in JSON/markdown formats for compatibility across programming languages, while generated code is written to the project root by default. The system includes deep codebase analysis to prevent conflicts and support code reuse patterns.
 
 ## Technical Context
 
@@ -18,12 +18,12 @@ Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with Typ
 
 - **CLI Framework**: Oclif or Commander.js (type-safe CLI framework)
 - **AI Integration**: OpenAI API, Anthropic Claude API (abstracted via provider pattern)
-- **Task Orchestration**: Node async/await with Bull or Bullmq for task queues
+- **Task Orchestration**: Node async/await with event bus and in-process orchestration (no external queue for MVP)
 - **Code Analysis**: Abstract Syntax Tree (AST) parsing with Babel, TypeScript compiler API
 - **File I/O**: Native fs/promises, YAML/JSON parsing for configuration
 - **Testing**: Vitest or Jest (fast TypeScript testing)
 
-**Storage**: File-based JSON/Markdown in `.omaikit/` directory (no database); project analysis cached in `.omaikit/.analysis-cache/`; project context stored in `.omaikit/context.json` (required before other commands); multiple plans stored in `.omaikit/plans/`  
+**Storage**: File-based JSON/Markdown in `.omaikit/` directory (no database); project analysis cached in `.omaikit/.analysis-cache/`; project context stored in `.omaikit/context.json` (required before other commands); multiple plans stored in `.omaikit/plans/` as `P-{N}.json`; agent memory stored in `.omaikit/memory/` during execution and cleared on completion  
 **Testing**: Vitest with @vitest/ui for test coverage reporting; integration tests via spawning actual CLI commands  
 **Target Platform**: Linux, macOS, Windows (cross-platform Node.js CLI); works with all programming languages as input  
 **Project Type**: Monorepo with packages: `@omaikit/cli` (entry point), `@omaikit/agents` (agent implementations), `@omaikit/analysis` (codebase analysis), `@omaikit/models` (data structures)  
@@ -40,7 +40,7 @@ Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with Typ
 - Must work offline after initial AI provider connection
 - All outputs must be deterministic and reproducible
 - Generated code must never depend on Omaikit runtime (standalone)
-- No modification of user's source code; only generation into `.omaikit/`
+- Generated code is written to the project root by default; metadata remains in `.omaikit/`
 - Must handle projects 1-10,000+ LOC without performance degradation
 
 **Scale/Scope**:
@@ -176,11 +176,11 @@ specs/001-omaikit-cli/
 │
 ├── .omaikit/                      # Runtime output directory (not in repo)
 │   ├── .analysis-cache/
-│   ├── plan.json
 │   ├── plans/
-│   │   ├── plan-<id>.json
+│   │   ├── P-0.json
+│   │   ├── P-1.json
 │   ├── context.json
-│   ├── code/
+│   ├── memory/
 │   ├── tests/
 │   └── review.md
 │
@@ -265,22 +265,22 @@ No Constitution Check violations. All code quality, testing, UX, and performance
   - `codePatterns`: Detected coding patterns (naming conventions, error handling, etc.)
 
 - **Plan**: Agile project plan
-  - `id`: Unique plan identifier
-  - `featureDescription`: Original user input
-  - `milestones`: Array of Milestone objects
-  - `sprints`: Array of Sprint objects
-  - `tasks`: Array of Task objects with estimates
-  - `assumptions`: List of clarifying assumptions made
-  - `riskFactors`: Identified risks and mitigations
+  - `id`: Unique plan identifier (P-{N})
+  - `title`: Plan title
+  - `description`: Original user input
+  - `milestones`: Array of Milestone objects with tasks
+  - `clarifications`: Optional clarifying questions or assumptions
+  - `projectContext`: Optional ProjectContext snapshot
 
 - **Task**: Unit of work
   - `id`: Unique task identifier
   - `title`: Task description
-  - `type`: "implementation", "testing", "refactor", "documentation"
+  - `type`: "feature", "refactor", "bugfix", "test", "documentation", "infrastructure"
   - `estimatedEffort`: Hours (as number)
   - `acceptanceCriteria`: String array
-  - `dependencies`: Task ID array
-  - `assignedModule`: Module path or "core"
+  - `inputDependencies`: Task ID array (must complete first)
+  - `outputDependencies`: Task ID array (depend on this)
+  - `targetModule`: Module path or "core"
 
 - **CodeGeneration**: Request and response for code generation
   - `taskId`: Reference to task being implemented

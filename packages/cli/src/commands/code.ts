@@ -1,6 +1,6 @@
 import type { Plan, Task } from '@omaikit/models';
 import { CoderAgent, Logger } from '@omaikit/agents';
-import { PlanWriter, CodeWriter, ContextWriter } from '@omaikit/analysis';
+import { PlanWriter, ContextWriter } from '@omaikit/analysis';
 import * as fs from 'fs';
 import * as path from 'path';
 import { bold, cyan, green, yellow } from '../utils/colors';
@@ -37,7 +37,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
   const logger = new Logger();
   const coder = new CoderAgent(logger);
   const planWriter = new PlanWriter();
-  const codeWriter = new CodeWriter();
   const contextWriter = new ContextWriter();
   const progress = new ProgressBar(50);
 
@@ -72,8 +71,8 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 
     await coder.init();
 
-    const allFiles: { path: string; content: string; language: string; dependencies?: string[] }[] =
-      [];
+    const projectRoot = context.project?.rootPath || process.cwd();
+    const writtenPaths: string[] = [];
     let generatedLOC = 0;
     let filesCreated = 0;
     const newDependencies = new Set<string>();
@@ -87,7 +86,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
       const input = {
         task,
         plan,
-        projectContext: plan.projectContext || context,
+        projectContext: context,
         force: options?.force,
       };
 
@@ -108,16 +107,13 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
         (file.dependencies || []).forEach((dep) => newDependencies.add(dep));
       });
 
-      allFiles.push(...files);
+      files.forEach((file) => {
+        writtenPaths.push(path.join(projectRoot, file.path));
+      });
     }
 
-    const writtenPaths = await codeWriter.writeFiles(
-      allFiles,
-      options?.outputDir || '.omaikit/code',
-    );
-
     console.log('');
-    console.log(green(`✓ Code generated: ${options?.outputDir || '.omaikit/code'}`));
+    console.log(green(`✓ Code generated: ${projectRoot}`));
 
     console.log('');
     console.log(bold('📄 Generated Files'));
@@ -138,7 +134,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 
     console.log('');
     console.log(green('✨ Next steps:'));
-    console.log('  1. Review the generated files in .omaikit/code');
+    console.log('  1. Review the generated files in your project root');
     console.log('  2. Run `omaikit test` to generate tests');
   } catch (error) {
     const err = error as Error;

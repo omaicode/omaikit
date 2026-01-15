@@ -113,7 +113,7 @@ async function main(): Promise<void> {
   try {
     switch (args.command.toLowerCase()) {
       case 'init': {
-        await initCommand({ rootPath: args.rootPath });
+        await initCommand({ rootPath: args.rootPath, description: args.description });
         break;
       }
 

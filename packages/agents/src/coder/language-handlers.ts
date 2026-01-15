@@ -23,6 +23,18 @@ export class LanguageHandlers {
   }
 
   private registerDefaultHandlers(): void {
+    // Generic fallback
+    this.register({
+      name: 'generic',
+      extensions: ['.txt'],
+      syntaxValidator: () => true,
+      dependencyExtractor: () => [],
+      linterConfig: {},
+      formatter: (code) => code,
+      errorHandlingPattern: 'try-catch',
+      loggingPattern: 'logger.info/error',
+    });
+
     // TypeScript/JavaScript
     this.register({
       name: 'typescript',
@@ -118,6 +130,20 @@ export class LanguageHandlers {
       errorHandlingPattern: 'try-catch',
       loggingPattern: 'ILogger.Log/Error',
     });
+
+    // PHP
+    this.register({
+      name: 'php',
+      extensions: ['.php'],
+      syntaxValidator: this.validatePhp,
+      dependencyExtractor: this.extractPhpDependencies,
+      linterConfig: {
+        standard: 'PSR12',
+      },
+      formatter: (code) => code,
+      errorHandlingPattern: 'try-catch',
+      loggingPattern: 'logger->info/error',
+    });
   }
 
   register(handler: LanguageHandler): void {
@@ -127,10 +153,10 @@ export class LanguageHandlers {
 
   getHandler(language: string): LanguageHandler {
     const handler = this.handlers.get(language);
-    if (!handler) {
-      throw new Error(`Unsupported language: ${language}`);
+    if (handler) {
+      return handler;
     }
-    return handler;
+    return this.handlers.get('generic') as LanguageHandler;
   }
 
   supportedLanguages(): string[] {
@@ -187,6 +213,13 @@ export class LanguageHandlers {
   private validateCsharp(code: string): boolean {
     // Basic C# validation
     return this.validateTypeScript(code);
+  }
+
+  private validatePhp(code: string): boolean {
+    const hasPhpTag = code.includes('<?php');
+    const openBraces = (code.match(/{/g) || []).length;
+    const closeBraces = (code.match(/}/g) || []).length;
+    return hasPhpTag && openBraces === closeBraces;
   }
 
   // Dependency extraction methods
@@ -265,5 +298,22 @@ export class LanguageHandlers {
     }
 
     return [...new Set(imports)];
+  }
+
+  private extractPhpDependencies(code: string): string[] {
+    const dependencies: string[] = [];
+    const useRegex = /use\s+([^;]+);/g;
+    const requireRegex = /(require|include)(_once)?\s*\(?['"]([^'"]+)['"]\)?/g;
+    let match;
+
+    while ((match = useRegex.exec(code)) !== null) {
+      dependencies.push(match[1].trim());
+    }
+
+    while ((match = requireRegex.exec(code)) !== null) {
+      dependencies.push(match[3].trim());
+    }
+
+    return [...new Set(dependencies)];
   }
 }

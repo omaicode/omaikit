@@ -1,8 +1,9 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { AIProvider, AIProviderOptions } from './provider';
 
 export class AnthropicProvider implements AIProvider {
   private apiKey?: string;
-  private client: any;
+  private client: Anthropic | null = null;
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey ?? process.env.ANTHROPIC_API_KEY;
@@ -14,9 +15,6 @@ export class AnthropicProvider implements AIProvider {
     if (!this.apiKey) return;
 
     try {
-      // Dynamic import of official Anthropic SDK
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const Anthropic = require('@anthropic-ai/sdk').default;
       this.client = new Anthropic({ apiKey: this.apiKey });
     } catch (e) {
       // Client may not be available in all environments
@@ -67,13 +65,13 @@ export class AnthropicProvider implements AIProvider {
   ): Promise<string> {
     let accumulated = '';
 
-    const stream = this.client.messages.stream({
+    const stream = this.client?.messages.stream({
       model,
       max_tokens: maxTokens,
       messages: [{ role: 'user', content: prompt }],
     });
 
-    for await (const chunk of stream) {
+    for await (const chunk of stream ?? []) {
       if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
         const text = (chunk.delta as any).text;
         if (text) {
@@ -90,7 +88,7 @@ export class AnthropicProvider implements AIProvider {
     return this.generate(prompt);
   }
 
-  onProgress(callback: (chunk: string) => void): void {
+  onProgress(_callback: (chunk: string) => void): void {
     // Progress callback handled in generate method
   }
 

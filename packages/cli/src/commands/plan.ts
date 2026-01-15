@@ -91,6 +91,7 @@ export async function planCommand(description: string, options?: {
         console.log(green('  ✓ Plan generated'));
       } else if (event.status === 'generating') {
         console.log(cyan('  → Receiving plan from AI...'));
+        progress.update(10);
       }
     });
 
@@ -159,7 +160,8 @@ export async function planCommand(description: string, options?: {
     console.log(`Total Tasks: ${totalTasks}`);
 
     const totalEffort = plan.milestones.reduce(
-      (sum: number, m: any) => sum + m.tasks.reduce((ts: number, t: any) => ts + t.effort, 0),
+      (sum: number, m: any) =>
+        sum + m.tasks.reduce((ts: number, t: any) => ts + (t.estimatedEffort ?? t.effort ?? 0), 0),
       0
     );
     console.log(`Total Effort: ${totalEffort} hours (~${Math.ceil(totalEffort / 8)} days)`);
@@ -167,11 +169,15 @@ export async function planCommand(description: string, options?: {
     console.log('');
     console.log(bold('Milestones:'));
     for (const milestone of plan.milestones) {
-      const milestoneEffort = milestone.tasks.reduce((sum: number, t: any) => sum + t.effort, 0);
+      const milestoneEffort = milestone.tasks.reduce(
+        (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),
+        0
+      );
       console.log(`  ${cyan('→')} ${milestone.title} (${milestone.duration}d, ${milestoneEffort}h)`);
 
       for (const task of milestone.tasks.slice(0, 3)) {
-        console.log(`    ${yellow('•')} ${task.title} (${task.effort}h)`);
+        const effort = task.estimatedEffort ?? task.effort ?? 0;
+        console.log(`    ${yellow('•')} ${task.title} (${effort}h)`);
       }
 
       if (milestone.tasks.length > 3) {

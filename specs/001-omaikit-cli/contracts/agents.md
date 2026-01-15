@@ -14,7 +14,7 @@ All agents implement this interface:
  */
 export interface Agent {
   /** Unique agent identifier */
-  name: "planner" | "coder" | "tester" | "reviewer";
+  name: "manager" | "planner" | "coder" | "tester" | "reviewer";
   
   /** Version of agent implementation */
   version: string;
@@ -85,7 +85,7 @@ export interface AgentOutput {
   status: "success" | "partial" | "failed";
   
   /** Primary result from agent */
-  result: Plan | CodeGeneration | TestSuite | CodeReview;
+  result: ProjectContext | Plan | CodeGeneration | TestSuite | CodeReview;
   
   /** Metadata about execution */
   metadata: {
@@ -162,6 +162,32 @@ export class AgentError extends Error {
 ---
 
 ## Agent-Specific Contracts
+
+### Manager Agent
+
+```typescript
+/**
+ * Manager agent generates project context snapshots
+ */
+export interface ManagerAgent extends Agent {
+  name: "manager";
+
+  /**
+   * Input to manager: root path + optional description
+   */
+  execute(input: AgentInput & { rootPath?: string; description?: string }): Promise<ManagerOutput>;
+}
+
+/**
+ * Manager-specific output
+ */
+export interface ManagerOutput extends AgentOutput {
+  result: ProjectContext;
+  metadata: AgentOutput["metadata"] & {
+    contextPath?: string;
+  };
+}
+```
 
 ### Planner Agent
 

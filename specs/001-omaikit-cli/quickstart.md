@@ -8,12 +8,12 @@
 
 Omaikit is a multi-agent CLI toolkit that accelerates software development by orchestrating specialized AI agents to:
 
-- **Plan** feature work into structured Agile sprints
+- **Plan** feature work into structured milestones and tasks
 - **Generate** production-ready code that matches your project style
 - **Test** generated code with comprehensive test suites
 - **Review** code to identify issues and improvements
 
-All outputs live in a `.omaikit/` directory that never touches your main codebase.
+Plans, tests, reviews, and agent memory live in `.omaikit/`. Generated code is written to the project root by default.
 
 ---
 
@@ -42,7 +42,7 @@ omaikit --help
 
 ### Configure API Key
 
-Omaikit requires an AI provider API key. Configure it in `.omaikit/config.json`:
+Omaikit requires an AI provider API key. If none is configured, `omaikit init` prompts for a key and stores it in your global user config (`~/.omaikit/config.json`). You can also configure it manually in `.omaikit/config.json`:
 
 ```bash
 omaikit config --set api-provider openai
@@ -67,8 +67,8 @@ omaikit plan "describe your feature"
 
 ```bash
 mkdir my-project && cd my-project
-omaikit init
-# Creates project context in .omaikit/context.json
+omaikit init "Greenfield project for a REST API"
+# Manager agent analyzes the folder and creates .omaikit/context.json
 ```
 
 **Option B: Existing Project (Add Feature)**
@@ -82,8 +82,8 @@ omaikit analyze
 You can also initialize a lightweight context snapshot:
 
 ```bash
-omaikit init
-# Output: .omaikit/context.json
+omaikit init "Add auth feature to existing project"
+# Output: .omaikit/context.json (AI-generated)
 ```
 ```
 
@@ -98,17 +98,17 @@ omaikit plan "Add user authentication with JWT tokens"
 Output:
 
 ```
-✓ Plan generated: .omaikit/plan.json (latest)
-✓ Plan archived: .omaikit/plans/plan-<id>.json
+✓ Plan generated: .omaikit/plans/P-0.json
+✓ Plan archived: .omaikit/plans/P-1.json
 
 Summary:
-  Estimated Effort: 12 hours across 2 sprints
+  Estimated Effort: 12 hours across 2 milestones
   Tasks: 6 implementation tasks
   Modules Affected: auth, models, api
 
 Preview:
-  Sprint 1: Core auth module + middleware (8 hours)
-  Sprint 2: Integration + documentation (4 hours)
+  Milestone 1: Core auth module + middleware (8 hours)
+  Milestone 2: Integration + documentation (4 hours)
 
 Options:
   omaikit code          # Generate code for all tasks
@@ -127,7 +127,7 @@ omaikit code
 Output:
 
 ```
-✓ Code generated: .omaikit/code/
+✓ Code generated: <project-root>/
 
 Files Created:
   src/auth/auth-service.ts (145 LOC)
@@ -232,8 +232,8 @@ Output:
   Issues identified: 7
 
 Output locations:
-  Plan: .omaikit/plan.json
-  Code: .omaikit/code/
+  Plan: .omaikit/plans/P-0.json
+  Code: <project-root>/
   Tests: .omaikit/tests/
   Review: .omaikit/review.md
 
@@ -251,26 +251,23 @@ Output locations:
 ├── config.json                  # Omaikit configuration
 ├── context.json                 # Project context snapshot
 ├── analysis.json               # Project analysis from analyze/init
-├── plan.json                   # Generated Agile plan
 ├── plans/                       # Archived plans
-│   └── plan-<id>.json
-├── code/                       # Generated source code
-│   ├── auth-service.ts
-│   ├── jwt-handler.ts
-│   └── auth-middleware.ts
+│   ├── P-0.json
+│   └── P-1.json
 ├── tests/                      # Generated test suites
 │   ├── auth-service.test.ts
 │   ├── jwt-handler.test.ts
 │   └── auth-middleware.test.ts
 ├── review.md                   # Code review report
+├── memory/                     # Agent prompt/response memory (cleared on success)
 └── .analysis-cache/            # Cached analysis data (git-ignored)
 ```
 
 ### Key Outputs Explained
 
-**plan.json**: Structured Agile plan with:
+**P-{N}.json**: Structured Agile plan with:
 
-- Milestones and sprints
+- Milestones and task dependencies
 - Tasks with acceptance criteria
 - Effort estimates
 - Task dependencies
@@ -384,7 +381,7 @@ omaikit config --set codeGeneration.maxLineLength 100
 
 ### After Generating Code
 
-1. **Review the plan**: `cat .omaikit/plan.json`
+1. **Review the plan**: `cat .omaikit/plans/P-0.json`
 2. **Inspect generated code**: Open `.omaikit/code/` in your editor
 3. **Run tests locally**: `omaikit test --run`
 4. **Read the review**: `cat .omaikit/review.md`
@@ -443,7 +440,7 @@ omaikit logs --errors --lines 20
 
 If generated code doesn't meet expectations:
 
-1. Review the plan accuracy first (`cat .omaikit/plan.json`)
+1. Review the plan accuracy first (`cat .omaikit/plans/P-0.json`)
 2. Check that project analysis is complete (`cat .omaikit/analysis.json`)
 3. Regenerate with adjusted settings:
    ```bash
@@ -466,7 +463,7 @@ If generated tests fail:
 
 1. **Start with analysis**: Always run `omaikit analyze` on existing projects first to ensure code generation respects your patterns
 
-2. **Review the plan before code**: Take 5 minutes to review and adjust `.omaikit/plan.json` before generating code
+2. **Review the plan before code**: Take 5 minutes to review and adjust `.omaikit/plans/P-0.json` before generating code
 
 3. **Test locally first**: Run `omaikit test --run` before integrating generated code
 

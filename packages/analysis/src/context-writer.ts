@@ -48,8 +48,8 @@ export class ContextWriter {
     }
   }
 
-  async writeContext(rootPath?: string): Promise<string> {
-    const context = this.buildContext(rootPath || process.cwd());
+  async writeContext(rootPath?: string, descriptionOverride?: string): Promise<string> {
+    const context = this.buildContext(rootPath || process.cwd(), descriptionOverride);
     return this.writeContextFile(context);
   }
 
@@ -82,13 +82,16 @@ export class ContextWriter {
     });
   }
 
-  private buildContext(rootPath: string): ContextSummary {
+  private buildContext(rootPath: string, descriptionOverride?: string): ContextSummary {
     const stats = this.scanProject(rootPath);
+    const description = descriptionOverride?.trim()
+      ? descriptionOverride.trim()
+      : this.readDescription(rootPath);
     return {
       project: {
         name: path.basename(rootPath),
         rootPath,
-        description: this.readDescription(rootPath),
+        description,
       },
       analysis: {
         languages: stats.languages,

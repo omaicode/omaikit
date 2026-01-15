@@ -15,7 +15,7 @@ The **@omaikit/cli** package has been fully implemented and tested. All function
   - `--output` / `-o` (path to save plan JSON)
   - `--help` / `-h` (display help)
   - `--version` / `-v` (show version)
-- ✅ Command routing: `plan`, `code`, `test`, `analyze`, `review`
+- ✅ Command routing: `init`, `plan`, `code`, `test`, `analyze`, `review`
 - ✅ Comprehensive help system with examples
 - ✅ Error handling with user-friendly messages
 - ✅ Support for positional description: `omaikit plan "Build API"`
@@ -25,7 +25,7 @@ The **@omaikit/cli** package has been fully implemented and tested. All function
 - ✅ Takes description and options (projectType, techStack, output)
 - ✅ Shows real-time progress with progress bar
 - ✅ Generates project plans with milestones and tasks
-- ✅ Saves plans to `.omaikit/plan.json` or custom output path
+- ✅ Saves plans to `.omaikit/plans/P-{N}.json` or custom output path
 - ✅ Displays formatted summary with colors and formatting
 - ✅ Error handling with detailed error messages
 

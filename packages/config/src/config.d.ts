@@ -2,7 +2,8 @@
  * Configuration interface and types
  */
 export interface OmaikitConfig {
-    apiKey?: string;
+    openaiApiKey?: string;
+    anthropicApiKey?: string;
     provider?: string;
 }
 //# sourceMappingURL=config.d.ts.map
