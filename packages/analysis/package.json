@@ -5,6 +5,9 @@
   "description": "Codebase analysis and AST utilities for Omaikit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc && tsc-alias",
     "dev": "tsc --watch",
