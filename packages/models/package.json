@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "dev": "tsc --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "postinstall": "tsc && tsc-alias"
   },
   "keywords": [
     "omaikit",

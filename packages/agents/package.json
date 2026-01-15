@@ -12,7 +12,8 @@
     "build": "tsc && tsc-alias",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "postinstall": "tsc && tsc-alias"
   },
   "keywords": [
     "omaikit",
