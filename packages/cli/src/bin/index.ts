@@ -6,6 +6,8 @@
 import { bold, cyan } from '../utils/colors';
 import { formatError, printError } from '../utils/error-formatter';
 import planCommand from '../commands/plan';
+import initCommand from '../commands/init';
+import codeCommand from '../commands/code';
 
 const VERSION = '0.1.0';
 
@@ -15,6 +17,10 @@ interface CLIArgs {
   projectType?: string;
   techStack?: string[];
   output?: string;
+  planFile?: string;
+  taskId?: string;
+  force?: boolean;
+  rootPath?: string;
   help?: boolean;
   version?: boolean;
 }
@@ -35,6 +41,14 @@ function parseArgs(args: string[]): CLIArgs {
       result.techStack = args[++i]?.split(',').map(s => s.trim()) ?? [];
     } else if (arg === '--output' || arg === '-o') {
       result.output = args[++i];
+    } else if (arg === '--plan') {
+      result.planFile = args[++i];
+    } else if (arg === '--task') {
+      result.taskId = args[++i];
+    } else if (arg === '--force' || arg === '-f') {
+      result.force = true;
+    } else if (arg === '--root' || arg === '--path') {
+      result.rootPath = args[++i];
     } else if (!arg.startsWith('-')) {
       if (!result.command) {
         result.command = arg;
@@ -55,8 +69,9 @@ function printHelp(): void {
   console.log('  omaikit <command> [options]');
   console.log('');
   console.log(bold('Commands:'));
+  console.log('  init               Initialize project context');
   console.log('  plan <description>  Generate a project plan');
-  console.log('  code <plan>         Generate code from a plan');
+  console.log('  code [plan]         Generate code from a plan');
   console.log('  test <plan>         Generate tests from a plan');
   console.log('  analyze <path>      Analyze existing codebase');
   console.log('  review <path>       Review code quality');
@@ -65,13 +80,19 @@ function printHelp(): void {
   console.log('  -p, --project-type  Project type (e.g., web, api, cli)');
   console.log('  -t, --tech-stack    Comma-separated tech stack (e.g., typescript,node,express)');
   console.log('  -o, --output        Output directory for generated files');
+  console.log('      --plan          Plan file path for code generation');
+  console.log('      --task          Task ID or title to generate');
+  console.log('  -f, --force         Force overwrite existing output');
+  console.log('      --root          Project root path for init');
   console.log('  -h, --help          Show this help message');
   console.log('  -v, --version       Show version');
   console.log('');
   console.log(bold('Examples:'));
+  console.log('  omaikit init');
   console.log('  omaikit plan "Build a REST API"');
   console.log('  omaikit plan "Web app" --project-type web --tech-stack react,typescript');
   console.log('  omaikit plan "CLI tool" --output ./my-plan.json');
+  console.log('  omaikit code P-0.json');
 }
 
 async function main(): Promise<void> {
@@ -91,6 +112,11 @@ async function main(): Promise<void> {
 
   try {
     switch (args.command.toLowerCase()) {
+      case 'init': {
+        await initCommand({ rootPath: args.rootPath });
+        break;
+      }
+
       case 'plan': {
         if (!args.description) {
           const err = formatError('INVALID_ARGS', 'Description is required for plan command');
@@ -107,7 +133,16 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'code':
+      case 'code': {
+        await codeCommand({
+          planFile: args.planFile ?? args.description,
+          outputDir: args.output,
+          taskId: args.taskId,
+          force: args.force,
+        });
+        break;
+      }
+
       case 'test':
       case 'analyze':
       case 'review':

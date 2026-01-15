@@ -1,24 +1,76 @@
 import { PlanInput } from '@omaikit/models';
 import { Planner } from '@omaikit/agents';
 import { Logger } from '@omaikit/agents';
-import { PlanWriter } from '@omaikit/analysis';
+import { PlanWriter, ContextWriter } from '@omaikit/analysis';
+import * as fs from 'fs';
+import * as path from 'path';
 import { cyan, bold, green, yellow } from '../utils/colors';
 import { ProgressBar } from '../utils/progress';
 import { formatError, printError } from '../utils/error-formatter';
+
+const PLAN_DIR = path.join('.omaikit', 'plans');
+
+function parsePlanIndex(filename: string): number | null {
+  const match = /^P-(\d+)(?:\.json)?$/i.exec(filename);
+  if (!match) {
+    return null;
+  }
+  return Number.parseInt(match[1], 10);
+}
+
+function getExistingPlanIndices(planDir: string): number[] {
+  if (!fs.existsSync(planDir)) {
+    return [];
+  }
+  return fs
+    .readdirSync(planDir)
+    .map((file) => parsePlanIndex(file))
+    .filter((value): value is number => value !== null);
+}
+
+function resolvePlanIndex(planDir: string, options?: { mode?: 'new' | 'update'; planId?: string }): number {
+  const existing = getExistingPlanIndices(planDir);
+  const maxExisting = existing.length ? Math.max(...existing) : -1;
+
+  if (options?.mode === 'update') {
+    if (options?.planId) {
+      const parsed = parsePlanIndex(options.planId) ?? Number.parseInt(options.planId, 10);
+      if (!Number.isNaN(parsed)) {
+        return parsed;
+      }
+    }
+    return maxExisting >= 0 ? maxExisting : 0;
+  }
+
+  return maxExisting + 1;
+}
 
 export async function planCommand(description: string, options?: {
   projectType?: string;
   techStack?: string[];
   output?: string;
+  mode?: 'new' | 'update';
+  planId?: string;
 }): Promise<void> {
   const logger = new Logger();
   const planner = new Planner(logger);
   const writer = new PlanWriter();
+  const contextWriter = new ContextWriter();
   const progress = new ProgressBar(50);
 
   try {
     console.log(cyan('🎯 Generating project plan...'));
     console.log('');
+
+    const context = await contextWriter.readContext();
+    if (!context) {
+      const err = formatError('CONTEXT_MISSING', 'Project context not found. Run `omaikit init` first.');
+      printError(err);
+      if (process.env.VITEST !== undefined) {
+        throw new Error('Project context not found');
+      }
+      process.exit(1);
+    }
 
     const input: PlanInput = {
       description,
@@ -48,20 +100,50 @@ export async function planCommand(description: string, options?: {
     if (result.error) {
       const err = formatError(result.error.code, result.error.message);
       printError(err);
+      if (process.env.VITEST !== undefined) {
+        throw new Error(result.error.message);
+      }
       process.exit(1);
     }
 
-    if (!result.data || !result.data.plan) {
+    const plan = result.data?.plan || (result.data && (result.data as any).title ? (result.data as any) : undefined);
+
+    if (!plan) {
       const err = formatError('PLANNING_ERROR', 'Failed to generate plan');
       printError(err);
+      if (process.env.VITEST !== undefined) {
+        throw new Error('Failed to generate plan');
+      }
       process.exit(1);
     }
 
-    const plan = result.data.plan;
+    const planOutput = { ...plan } as any;
+    if ('projectContext' in planOutput) {
+      delete planOutput.projectContext;
+    }
+
+    if (!fs.existsSync(PLAN_DIR)) {
+      fs.mkdirSync(PLAN_DIR, { recursive: true });
+    }
+
+    const planIndex = resolvePlanIndex(PLAN_DIR, options);
+    const planId = `P-${planIndex}`;
+    const archiveFilename = `plans/${planId}.json`;
 
     // Save plan
     console.log('');
-    const filepath = await writer.writePlan(plan, options?.output);
+    let filepath: string;
+    if (options?.output && path.isAbsolute(options.output)) {
+      const dirPath = path.dirname(options.output);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+      fs.writeFileSync(options.output, JSON.stringify({ ...planOutput, id: planId }, null, 2), 'utf-8');
+      filepath = options.output;
+    } else {
+      const target = options?.output || archiveFilename;
+      filepath = await writer.writePlan({ ...planOutput, id: planId }, target);
+    }
     console.log(green(`✓ Plan saved to ${filepath}`));
 
     // Display summary
@@ -108,6 +190,9 @@ export async function planCommand(description: string, options?: {
     const fmtErr = formatError('COMMAND_ERROR', err.message);
     printError(fmtErr);
     logger.error(err.message);
+    if (process.env.VITEST !== undefined) {
+      throw err;
+    }
     process.exit(1);
   }
 }

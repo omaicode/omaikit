@@ -53,15 +53,12 @@ export interface Plan {
   title: string;
   description: string;
   milestones: Milestone[];
+  clarifications?: string[];
+  projectContext?: any;
 }
 
 export interface PlanInput {
   description: string;
   projectType?: 'backend' | 'frontend' | 'fullstack' | 'mobile' | 'monorepo' | 'tool' | 'web';
   techStack?: string[];
-}
-
-export interface PlanOutput {
-  plan: Plan;
-  clarifications?: string[];
 }

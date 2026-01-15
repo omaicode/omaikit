@@ -5,8 +5,28 @@ import planCommand from '../../src/commands/plan';
 
 describe('Plan Command Integration Test', () => {
   const tempDir = path.resolve(__dirname, '.test-output');
+  const omaikitDir = path.resolve(process.cwd(), '.omaikit');
+  const contextPath = path.join(omaikitDir, 'context.json');
 
   beforeAll(() => {
+    if (!fs.existsSync(omaikitDir)) {
+      fs.mkdirSync(omaikitDir, { recursive: true });
+    }
+    if (!fs.existsSync(contextPath)) {
+      fs.writeFileSync(
+        contextPath,
+        JSON.stringify(
+          {
+            project: { name: 'test-project', rootPath: process.cwd() },
+            analysis: { languages: ['typescript'], fileCount: 0, totalLOC: 0, dependencies: [] },
+            generatedAt: new Date().toISOString(),
+          },
+          null,
+          2
+        ),
+        'utf-8'
+      );
+    }
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
@@ -15,6 +35,9 @@ describe('Plan Command Integration Test', () => {
   afterAll(() => {
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+    if (fs.existsSync(contextPath)) {
+      fs.rmSync(contextPath, { force: true });
     }
   });
 

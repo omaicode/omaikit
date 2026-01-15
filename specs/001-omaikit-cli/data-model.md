@@ -27,6 +27,21 @@ interface Project {
   };
 }
 
+interface ProjectContext {
+  project: {
+    name: string;
+    rootPath: string;
+    description?: string;
+  };
+  analysis: {
+    languages: string[];
+    fileCount: number;
+    totalLOC: number;
+    dependencies: string[];
+  };
+  generatedAt: ISO8601DateTime;
+}
+
 interface Module {
   name: string;
   path: string;
@@ -124,6 +139,9 @@ interface Plan {
   parallelizationOpportunities?: string[];
   reuseOpportunities?: string[];
   architecturalConsiderations?: string[];
+
+  // Optional: Project context snapshot
+  projectContext?: ProjectContext;
 }
 
 interface Milestone {

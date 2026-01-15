@@ -68,7 +68,7 @@ omaikit plan "describe your feature"
 ```bash
 mkdir my-project && cd my-project
 omaikit init
-# Creates initial project structure
+# Creates project context in .omaikit/context.json
 ```
 
 **Option B: Existing Project (Add Feature)**
@@ -78,11 +78,18 @@ cd /path/to/existing/project
 omaikit analyze
 # Scans and understands your existing codebase
 # Output: .omaikit/analysis.json with project structure
+
+You can also initialize a lightweight context snapshot:
+
+```bash
+omaikit init
+# Output: .omaikit/context.json
+```
 ```
 
 ### Step 2: Generate a Plan
 
-Describe the feature you want to build:
+Describe the feature you want to build (requires `omaikit init` first):
 
 ```bash
 omaikit plan "Add user authentication with JWT tokens"
@@ -91,7 +98,8 @@ omaikit plan "Add user authentication with JWT tokens"
 Output:
 
 ```
-✓ Plan generated: .omaikit/plan.json (2.3 KB)
+✓ Plan generated: .omaikit/plan.json (latest)
+✓ Plan archived: .omaikit/plans/plan-<id>.json
 
 Summary:
   Estimated Effort: 12 hours across 2 sprints
@@ -241,8 +249,11 @@ Output locations:
 ```
 .omaikit/
 ├── config.json                  # Omaikit configuration
+├── context.json                 # Project context snapshot
 ├── analysis.json               # Project analysis from analyze/init
 ├── plan.json                   # Generated Agile plan
+├── plans/                       # Archived plans
+│   └── plan-<id>.json
 ├── code/                       # Generated source code
 │   ├── auth-service.ts
 │   ├── jwt-handler.ts

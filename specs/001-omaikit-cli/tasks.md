@@ -89,6 +89,8 @@
 - [x] T036 [P] [CQ] Implement progress bar/spinner utilities in `packages/cli/src/utils/progress.ts`
 - [x] T037 [CQ] Implement standard error formatter in `packages/cli/src/utils/error-formatter.ts` with error codes and recovery suggestions
 - [x] T038 [P] [CQ] Implement configuration file loader in `packages/config/src/config-loader.ts` for `.omaikit/config.json`
+- [x] T038a [CQ] Implement `omaikit init` command to generate `.omaikit/context.json` in `packages/cli/src/commands/init.ts`
+- [x] T038b [CQ] Require `.omaikit/context.json` before executing CLI commands in `packages/cli/src/commands/`
 
 **Checkpoint**: All agents can be instantiated and orchestrated; CLI framework is responsive; models are validated; pipeline can be started
 
@@ -105,6 +107,7 @@
 - [x] T040 [P] [US1] [TEST] Unit test for plan validator (milestones, tasks, dependencies) in `packages/agents/__tests__/planner/plan-validator.test.ts`
 - [x] T041 [P] [US1] [TEST] Contract test for plan JSON schema and structure in `packages/agents/__tests__/contracts/plan.contract.test.ts`
 - [x] T042 [US1] [TEST] Integration test for full planning workflow (description → plan) in `packages/cli/__tests__/integration/plan-command.test.ts`
+- [x] T042a [US1] [TEST] Integration test for init workflow in `packages/cli/__tests__/integration/init-command.test.ts`
 - [x] T043 [US1] [TEST] Edge case tests: ambiguous descriptions, multi-module projects, clarification questions in `packages/agents/__tests__/planner/edge-cases.test.ts`
 
 ### Implementation for User Story 1
@@ -118,6 +121,7 @@
 - [x] T050 [US1] [UX] Implement `omaikit plan` command in `packages/cli/src/commands/plan.ts` with progress indication and error handling
 - [x] T051 [US1] [UX] Add user-friendly output formatting in `packages/cli/src/commands/plan.ts` showing plan summary and next steps
 - [x] T052 [US1] [PERF] Optimize planner agent prompt for sub-30-second execution in `packages/agents/src/planner/prompt-templates.ts`
+- [x] T052a [US1] [UX] Support multi-plan storage and update mode in `packages/cli/src/commands/plan.ts`
 
 **Checkpoint**: User Story 1 complete - developers can generate plans independently from feature descriptions
 
@@ -147,9 +151,9 @@
 - [x] T064 [US2] [CQ] Implement dependency resolver in `packages/agents/src/coder/dependency-resolver.ts` tracking imports and module relationships
 - [x] T065 [US2] [CQ] Implement linting integration in `packages/agents/src/coder/linter-integration.ts` (ESLint, Pylint, Clippy, etc.)
 - [x] T066 [US2] [CQ] Implement code quality checker in `packages/agents/src/coder/quality-checker.ts` enforcing error handling and logging
-- [ ] T067 [US2] [CQ] Implement code file writer in `packages/analysis/src/code-writer.ts` to save generated code to `.omaikit/code/`
-- [ ] T068 [US2] [UX] Implement `omaikit code` command in `packages/cli/src/commands/code.ts` with file-by-file progress
-- [ ] T069 [US2] [UX] Add summary output showing LOC, files created, dependencies in `packages/cli/src/commands/code.ts`
+- [x] T067 [US2] [CQ] Implement code file writer in `packages/analysis/src/code-writer.ts` to save generated code to `.omaikit/code/`
+- [x] T068 [US2] [UX] Implement `omaikit code` command in `packages/cli/src/commands/code.ts` with file-by-file progress
+- [x] T069 [US2] [UX] Add summary output showing LOC, files created, dependencies in `packages/cli/src/commands/code.ts`
 - [ ] T070 [US2] [PERF] Optimize coder agent to generate code within 60 seconds per task
 
 **Checkpoint**: User Story 2 complete - developers can generate code that matches their project style and standards

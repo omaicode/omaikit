@@ -20,7 +20,13 @@ export class PlanWriter {
           fs.mkdirSync(this.baseDir, { recursive: true });
         }
 
-        const filepath = path.join(this.baseDir, filename || this.planFile);
+        const target = filename || this.planFile;
+        const filepath = path.isAbsolute(target) ? target : path.join(this.baseDir, target);
+
+        const dirPath = path.dirname(filepath);
+        if (!fs.existsSync(dirPath)) {
+          fs.mkdirSync(dirPath, { recursive: true });
+        }
 
         // Write plan as pretty JSON
         const content = JSON.stringify(plan, null, 2);
@@ -36,7 +42,8 @@ export class PlanWriter {
   async readPlan(filename?: string): Promise<Plan | null> {
     return new Promise((resolve) => {
       try {
-        const filepath = path.join(this.baseDir, filename || this.planFile);
+        const target = filename || this.planFile;
+        const filepath = path.isAbsolute(target) ? target : path.join(this.baseDir, target);
 
         if (!fs.existsSync(filepath)) {
           resolve(null);

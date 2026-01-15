@@ -23,7 +23,7 @@ Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with Typ
 - **File I/O**: Native fs/promises, YAML/JSON parsing for configuration
 - **Testing**: Vitest or Jest (fast TypeScript testing)
 
-**Storage**: File-based JSON/Markdown in `.omaikit/` directory (no database); project analysis cached in `.omaikit/.analysis-cache/`  
+**Storage**: File-based JSON/Markdown in `.omaikit/` directory (no database); project analysis cached in `.omaikit/.analysis-cache/`; project context stored in `.omaikit/context.json` (required before other commands); multiple plans stored in `.omaikit/plans/`  
 **Testing**: Vitest with @vitest/ui for test coverage reporting; integration tests via spawning actual CLI commands  
 **Target Platform**: Linux, macOS, Windows (cross-platform Node.js CLI); works with all programming languages as input  
 **Project Type**: Monorepo with packages: `@omaikit/cli` (entry point), `@omaikit/agents` (agent implementations), `@omaikit/analysis` (codebase analysis), `@omaikit/models` (data structures)  
@@ -177,6 +177,9 @@ specs/001-omaikit-cli/
 ├── .omaikit/                      # Runtime output directory (not in repo)
 │   ├── .analysis-cache/
 │   ├── plan.json
+│   ├── plans/
+│   │   ├── plan-<id>.json
+│   ├── context.json
 │   ├── code/
 │   ├── tests/
 │   └── review.md

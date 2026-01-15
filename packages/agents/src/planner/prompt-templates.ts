@@ -23,6 +23,9 @@ Generate a comprehensive plan with the following JSON structure:
   "id": "P1",
   "title": "Brief project title",
   "description": "Full description",
+  "projectContext": {
+    // Any relevant context about the existing codebase, architecture, or constraints
+  },
   "milestones": [
     {
       "id": "M1",

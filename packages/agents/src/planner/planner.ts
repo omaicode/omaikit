@@ -1,7 +1,6 @@
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { AgentInput, AgentOutput } from '../types';
-import { PlanOutput } from '@omaikit/models';
 import { createProvider } from '../ai-provider/factory';
 import { PromptTemplates } from './prompt-templates';
 import { PlanParser } from './plan-parser';
@@ -125,12 +124,13 @@ export class Planner extends Agent {
         message: 'Plan generation complete',
       });
 
-      const output: PlanOutput = {
-        plan: parsedPlan,
-      };
+      const projectContext = this.buildProjectContext(planInput);
 
       const result: AgentOutput = {
-        data: output,
+        data: {
+          plan: parsedPlan,
+          projectContext,
+        },
       };
 
       await this.afterExecute(result);
@@ -228,5 +228,72 @@ export class Planner extends Agent {
     };
 
     return JSON.stringify(mockPlan);
+  }
+
+  private buildProjectContext(input: any) {
+    const languages = this.inferLanguages(input.techStack);
+    return {
+      name: input.projectName || 'omaikit-project',
+      root: input.rootPath || process.cwd(),
+      modules: [],
+      dependencyGraph: { modules: {}, edges: [] },
+      metadata: {
+        totalLOC: 0,
+        fileCount: 0,
+        languages,
+        dependencies: this.inferDependencies(input.techStack),
+      },
+      codePatterns: {
+        namingConventions: {
+          variables: 'camelCase',
+          functions: 'camelCase',
+          classes: 'PascalCase',
+          constants: 'UPPER_SNAKE_CASE',
+          files: 'kebab-case',
+        },
+        errorHandling: { pattern: 'try-catch', examples: [] },
+        structuralPattern: {
+          modulesPerFeature: 2,
+          averageModuleSize: 'medium',
+          organizationStyle: 'by-feature',
+        },
+        comments: { docstringFormat: 'jsdoc', commentCoverage: 0 },
+        testOrganization: { colocated: true, pattern: '__tests__' },
+      },
+    };
+  }
+
+  private inferLanguages(techStack?: string[]): string[] {
+    if (!Array.isArray(techStack) || techStack.length === 0) {
+      return ['typescript'];
+    }
+
+    const normalized = techStack.map((t) => t.toLowerCase());
+    const languages = new Set<string>();
+    if (normalized.some((t) => t.includes('typescript') || t === 'ts')) languages.add('typescript');
+    if (normalized.some((t) => t.includes('javascript') || t === 'js' || t.includes('node'))) languages.add('javascript');
+    if (normalized.some((t) => t.includes('python') || t === 'py')) languages.add('python');
+    if (normalized.some((t) => t.includes('go') || t.includes('golang'))) languages.add('go');
+    if (normalized.some((t) => t.includes('rust'))) languages.add('rust');
+    if (normalized.some((t) => t.includes('c#') || t.includes('csharp'))) languages.add('csharp');
+
+    return languages.size > 0 ? Array.from(languages) : ['typescript'];
+  }
+
+  private inferDependencies(techStack?: string[]): string[] {
+    if (!Array.isArray(techStack)) {
+      return [];
+    }
+
+    const deps = new Set<string>();
+    techStack.forEach((entry) => {
+      const normalized = entry.toLowerCase();
+      if (normalized.includes('express')) deps.add('express');
+      if (normalized.includes('react')) deps.add('react');
+      if (normalized.includes('nestjs')) deps.add('@nestjs/core');
+      if (normalized.includes('prisma')) deps.add('prisma');
+    });
+
+    return Array.from(deps);
   }
 }
