@@ -59,7 +59,7 @@
 - [x] T018 [P] [CQ] Implement Anthropic adapter in `packages/agents/src/ai-provider/anthropic.ts` with streaming support
 - [x] T019 [CQ] Implement provider factory in `packages/agents/src/ai-provider/factory.ts` for selecting provider via config
 - [x] T020 [P] [CQ] Implement token counter and rate limiter in `packages/agents/src/ai-provider/token-manager.ts`
-- [x] T020a [CQ] Add tool registry and basic edit/read/search tools for AI providers in `packages/agents/src/tools/`
+- [x] T020a [CQ] Add tool registry and basic read_file/search_text/edit_file/list_files/apply_patch tools for AI providers in `packages/agents/src/tools/`
 - [x] T020b [CQ] Add manager agent and use it for context initialization in `packages/agents/src/manager/manager.ts`
 
 ### Project Analysis Infrastructure

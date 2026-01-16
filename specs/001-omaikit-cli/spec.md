@@ -33,7 +33,7 @@ A solo developer working on a new feature can describe their desired outcome in 
 1. **Given** a developer with a feature description, **When** they run `omaikit plan "build a simple NestJS project"`, **Then** Omaikit outputs a structured Agile plan in JSON format with milestones, tasks, effort estimates, acceptance criteria, and dependency details
 2. **Given** a multi-module project description, **When** planning is complete, **Then** the plan identifies module dependencies and task parallelization opportunities
 3. **Given** an ambiguous feature description, **When** the plan is generated, **Then** clarifying questions or assumptions are documented in the plan output
-4. **Given** an existing project, **When** the user runs `omaikit init "<description>"`, **Then** the Manager agent analyzes the project using tools and creates `.omaikit/context.json` describing the current project structure
+4. **Given** an existing project, **When** the user runs `omaikit init "<description>"`, **Then** the Manager agent analyzes the project using tools (list_files, search_text, read_file, edit_file, apply_patch) and creates `.omaikit/context.json` describing the current project structure
 5. **Given** the user runs any other command, **When** `.omaikit/context.json` is missing, **Then** Omaikit stops and instructs the user to run `omaikit init`
 6. **Given** multiple planning iterations, **When** the user runs `omaikit plan` repeatedly, **Then** Omaikit stores multiple plan versions and can update the current plan on request
 

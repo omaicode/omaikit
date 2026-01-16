@@ -9,7 +9,7 @@
 
 Omaikit is a multi-agent CLI toolkit implemented entirely in Node.js 22 with TypeScript that orchestrates specialized AI agents (Manager, Planner, Coder, Tester, Reviewer) to accelerate software development. The system transforms high-level feature descriptions into executable Agile plans, generates production-ready code, creates comprehensive test suites, and provides detailed code reviews. Operational metadata is stored in `.omaikit/` while generated code is written to the project root by default.
 
-**Primary Technical Approach**: Modular agent architecture with dependency injection, where each agent is independently testable and orchestrable via a pipeline runner. The Manager agent performs AI-driven project analysis using tools (read/search/edit) to generate `.omaikit/context.json`. Plans/tests/reviews are stored in JSON/markdown formats for compatibility across programming languages, while generated code is written to the project root by default. The system includes deep codebase analysis to prevent conflicts and support code reuse patterns.
+**Primary Technical Approach**: Modular agent architecture with dependency injection, where each agent is independently testable and orchestrable via a pipeline runner. The Manager agent performs AI-driven project analysis using tools (list_files, search_text, read_file, edit_file, apply_patch) to generate `.omaikit/context.json`. Plans/tests/reviews are stored in JSON/markdown formats for compatibility across programming languages, while generated code is written to the project root by default. The system includes deep codebase analysis to prevent conflicts and support code reuse patterns.
 
 ## Technical Context
 
