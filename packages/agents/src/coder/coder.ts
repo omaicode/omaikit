@@ -267,7 +267,7 @@ export class CoderAgent extends Agent {
       throw new Error('Task must have id and title');
     }
   }
-  
+
   /**
    * Call LLM to generate code
    */
@@ -282,11 +282,11 @@ export class CoderAgent extends Agent {
       this.init();
     }
 
-    if (!this.provider || !this.provider.generateCode) {
+    if (!this.provider) {
       throw new Error('AI provider does not support Codex responses API');
     }
 
-    const response = await this.provider.generateCode(prompt, {
+    const response = await this.provider.generate(prompt, {
       model: this.cfg.coderModel,
       maxTokens: undefined,
       temperature: undefined,
@@ -297,8 +297,8 @@ export class CoderAgent extends Agent {
       maxToolCalls: 3,
       onToolCall: (event) => toolCalls.push(event),
       onTextResponse: (text) => {
-        this.logger.info('[Coder] Answered: \n' + text);
-      }
+        this.logger.info('[Coder] Answered: \n' + text + '\n');
+      },
     });
 
     if (typeof response !== 'string') {

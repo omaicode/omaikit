@@ -25,106 +25,7 @@ export class OpenAIProvider implements AIProvider {
     }
   }
 
-  async generate(prompt: string, options?: AIProviderOptions): Promise<string> {
-    if (!this.client) {
-      // Fallback echo mode when client not available
-      if (!this.apiKey) return `OPENAI_ECHO:\n${prompt}`;
-      // Try to initialize if not done yet
-      await this.init();
-      if (!this.client) return `OPENAI_ECHO:\n${prompt}`;
-    }
-
-    try {
-      const model = (options && (options as any).model) || 'gpt-5-mini';
-      const maxTokens = options?.maxTokens || undefined;
-      const temperature = options?.temperature || undefined;
-
-      const tools = this.resolveTools(options);
-      if (tools.length > 0) {
-        if (!options?.toolRegistry) {
-          throw new Error('Tool calls requested but no tool registry provided');
-        }
-
-        const messages: any[] = [{ role: 'user', content: prompt }];
-        const maxToolCalls = options.maxToolCalls ?? 3;
-        let lastContent = '';
-
-        for (let i = 0; i <= maxToolCalls; i += 1) {
-          const response = await this.client.chat.completions.create({
-            model,
-            max_completion_tokens: maxTokens,
-            temperature,
-            messages,
-            tools: tools.map((tool) => ({
-              type: 'function',
-              function: {
-                name: tool.name,
-                description: tool.description,
-                parameters: tool.parameters,
-              },
-            })),
-            tool_choice: normalizeToolChoice(options.toolChoice),
-          });
-
-          const message = response.choices[0]?.message;
-          if (!message) {
-            return lastContent;
-          }
-
-          if (message.content) {
-            lastContent = message.content;
-          }
-
-          if (!message.tool_calls || message.tool_calls.length === 0) {
-            return message.content || lastContent;
-          }
-
-          messages.push(message);
-
-          for (const toolCall of message.tool_calls) {
-            const toolName = toolCall.function?.name;
-            const rawArgs = toolCall.function?.arguments || '{}';
-            if (!toolName) {
-              continue;
-            }
-            const args = parseToolArgs(rawArgs);
-            const result = await options.toolRegistry.call(
-              toolName,
-              args,
-              options.toolContext ?? {},
-            );
-            if (options?.onToolCall) {
-              options.onToolCall({ name: toolName, arguments: args, result });
-            }
-            messages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
-            });
-          }
-        }
-
-        return lastContent;
-      }
-
-      const message = await this.client.chat.completions.create({
-        model,
-        max_completion_tokens: maxTokens,
-        temperature,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const text = message.choices[0]?.message?.content || '';
-      if (options?.onProgress) options.onProgress(text);
-      return text;
-    } catch (error) {
-      const err = error as any;
-      const message = err?.message || String(error);
-      throw new Error(`OpenAI API error: ${message}`);
-    }
-  }
-
-  async generateCode(prompt: string, options?: AIProviderOptions): Promise<any> {
+  async generate(prompt: string, options?: AIProviderOptions): Promise<any> {
     if (!this.client) {
       if (!this.apiKey) return `OPENAI_ECHO:\n${prompt}`;
       await this.init();
@@ -148,7 +49,7 @@ export class OpenAIProvider implements AIProvider {
         max_output_tokens: maxTokens,
         temperature,
         tools:
-          tools.length > 0 ? (this.formatToolsForResponses(tools) as unknown as Tool[]) : undefined,
+          tools.length > 0 ? (this.formatToolsForResponses(tools, model) as unknown as Tool[]) : undefined,
         tool_choice: normalizeToolChoice(options?.toolChoice),
         previous_response_id: previousResponseId || undefined,
       });
@@ -184,62 +85,34 @@ export class OpenAIProvider implements AIProvider {
       if (!options?.toolRegistry) {
         throw new Error('Tool calls requested but no tool registry provided');
       }
-
-      const toolOutputs = [] as Array<{
-        type: string;
-        output: string;
-        call_id: string;
-        status: 'completed' | 'incomplete' | 'in_progress';
-      }>;
-
-      for (const toolCall of toolCalls) {
-        let type = 'function_call_output';
-        let args: any = parseToolArgs(toolCall.arguments);
-
-        if (toolCall.name === 'apply_patch_call') {
-          type = 'apply_patch_call_output';
-          args = toolCall.arguments;
-        }
-
-        const result = await options.toolRegistry.call(
-          toolCall.name,
-          args,
-          options.toolContext ?? {},
-        );
-
-        if (options?.onToolCall) {
-          options.onToolCall({ name: toolCall.name, arguments: args, result });
-        }
-
-        toolOutputs.push({
-          type,
-          call_id: toolCall.call_id,
-          output: JSON.stringify(result),
-          status: result.ok ? 'completed' : 'incomplete',
-        });
-        // console.log('Tool called:', toolCall.name, args, result);
-      }
+      const toolOutputs = await this.processToolCalls(toolCalls, options);
       input = [{ role: 'user', content: prompt }, ...toolOutputs];
     }
 
     return lastContent;
   }
 
-  private formatToolsForResponses(tools: ToolDefinition[]): Array<ResponseTool> {
-    return tools.map((tool) => {
-      if (tool.type && ['web_search', 'apply_patch'].includes(tool.type)) {
-        const type = tool.type as 'web_search' | 'apply_patch';
-        return { type };
-      }
+  private formatToolsForResponses(tools: ToolDefinition[], model: string): Array<ResponseTool> {
+    return tools
+      .map((tool): ResponseTool | null => {
+        if (tool.type && ['web_search', 'apply_patch'].includes(tool.type)) {
+          // Check if model is contain `-mini` and then ignore tool, as mini models do not support some tools
+          if (model.includes('-mini')) {
+            return null;
+          }
+          const type = tool.type as 'web_search' | 'apply_patch';
+          return { type };
+        }
 
-      return {
-        type: 'function',
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        strict: false,
-      };
-    });
+        return {
+          type: 'function' as const,
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters,
+          strict: false,
+        };
+      })
+      .filter((t): t is ResponseTool => t !== null);
   }
 
   async complete(prompt: string): Promise<string> {
@@ -262,6 +135,67 @@ export class OpenAIProvider implements AIProvider {
       return options.toolRegistry.getDefinitions();
     }
     return [];
+  }
+
+  private async processToolCalls(
+    toolCalls: Array<{ id: string; name: string; arguments: string; call_id: string }>,
+    options?: AIProviderOptions,
+  ): Promise<
+    Array<{
+      type: string;
+      output: string;
+      call_id: string;
+      status: 'completed' | 'failed' | 'incomplete' | 'in_progress';
+    }>
+  > {
+    if (!options?.toolRegistry) {
+      throw new Error('Tool calls requested but no tool registry provided');
+    }
+
+    const toolOutputs: Array<{
+      type: string;
+      output: string;
+      call_id: string;
+      status: 'completed' | 'failed' | 'incomplete' | 'in_progress';
+    }> = [];
+    console.log('Processing tool calls:', toolCalls);
+    for (const toolCall of toolCalls) {
+      let type = 'function_call_output';
+      let status: 'completed' | 'failed' | 'incomplete' | 'in_progress' = 'completed';
+      let args: any = parseToolArgs(toolCall.arguments);
+
+      if (toolCall.name === 'apply_patch_call') {
+        type = 'apply_patch_call_output';
+        args = toolCall.arguments;
+      }
+
+      const result = await options.toolRegistry.call(
+        toolCall.name,
+        args,
+        options.toolContext ?? {},
+      );
+
+      status = toolCall.name === 'apply_patch_call'
+        ? result.ok
+          ? 'completed'
+          : 'incomplete'
+        : result.ok
+          ? 'completed'
+          : 'failed';
+
+      if (options?.onToolCall) {
+        options.onToolCall({ name: toolCall.name, arguments: args, result });
+      }
+
+      toolOutputs.push({
+        type,
+        call_id: toolCall.call_id,
+        output: JSON.stringify(result),
+        status,
+      });
+    }
+
+    return toolOutputs;
   }
 
   private extractToolCalls(

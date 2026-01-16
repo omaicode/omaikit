@@ -38,7 +38,6 @@ export class Planner extends Agent {
   async init(): Promise<void> {
     try {
       this.provider = await createProvider();
-      this.logger.info('Planner initialized');
     } catch (error) {
       this.logger.warn('Could not initialize Planner, using mock mode');
     }
@@ -61,107 +60,93 @@ export class Planner extends Agent {
 
       // Always initialize provider (will use real API if key is available)
       await this.init();
+      if (!this.provider) {
+        throw new Error('AI provider not initialized');
+      } 
 
       // Validate input
       if (!planInput.description || planInput.description.trim().length === 0) {
         throw new Error('Description is required');
       }
 
-      // Generate prompt from input
-      const basePrompt = this.promptTemplates.generatePrompt(
+      // Generate prompts from input (step-by-step)
+      const step1Prompt = this.promptTemplates.generatePlanMilestonesPrompt(
         planInput.description,
-        planInput.projectType,
+        planInput.projectDescription,
         planInput.techStack,
       );
 
       const recentMemory = await this.memoryStore.readRecent(this.name, 3);
       const memoryContext = this.memoryStore.formatRecent(recentMemory);
       const prompt = memoryContext
-        ? `${basePrompt}\n\n## Recent Agent Memory\n${memoryContext}`
-        : basePrompt;
+        ? `${step1Prompt}\n\n## Recent Agent Memory\n${memoryContext}`
+        : step1Prompt;
 
       this.logger.info(`Generating plan for: ${planInput.description.substring(0, 50)}...`);
+      this.emit('progress', { status: 'generating', message: 'Generating plan & milestones', percent: 10 });
 
-      // Call AI provider to generate plan
-      this.emit('progress', { status: 'generating', message: 'Calling AI provider' });
-
-      // In test mode, use mock generation for speed
-      let llmResponse: string;
-      if (process.env.VITEST !== undefined) {
-        this.logger.info('Using mock plan generation (test mode)');
-        llmResponse = this.generateMockPlan(planInput);
-      } else {
-        if (!this.provider) {
-          throw new Error('AI provider not initialized');
-        }
-
-        const toolRegistry = createDefaultToolRegistry();
-        const toolContext = this.buildToolContext(planInput);
-        llmResponse = await this.provider.generate(prompt, {
-          model: this.cfg.plannerModel,
-          tools: toolRegistry.getDefinitions(),
-          toolRegistry,
-          toolContext,
-          toolChoice: 'auto',
-        });
-
-        if (llmResponse.startsWith('OPENAI_ECHO') || llmResponse.startsWith('ANTHROPIC_ECHO')) {
-          this.logger.warn('Using mock plan generation (no API key configured)');
-          llmResponse = this.generateMockPlan(planInput);
-        }
-      }
-
-      if (this.isLikelyTruncated(llmResponse)) {
-        if (this.provider && process.env.VITEST === undefined) {
-          this.logger.warn('LLM response appears truncated; attempting repair');
-          const repairPrompt = this.promptTemplates.generateRepairPrompt(llmResponse);
-          llmResponse = await this.provider.generate(repairPrompt);
-        }
-      }
-
-      this.emit('progress', { status: 'parsing', message: 'Parsing LLM response' });
-
-      let parsedPlan: any;
-      try {
-        parsedPlan = this.planParser.parse(llmResponse);
-      } catch (parseError) {
-        if (this.provider && process.env.VITEST === undefined) {
-          this.logger.warn('Plan JSON parse failed, attempting repair');
-          const repairPrompt = this.promptTemplates.generateRepairPrompt(llmResponse);
-          const repaired = await this.provider.generate(repairPrompt);
-          parsedPlan = this.planParser.parse(repaired);
-        } else {
-          throw parseError;
-        }
-      }
-
-      this.emit('progress', {
-        status: 'validating',
-        message: 'Validating plan structure',
+      const toolRegistry = createDefaultToolRegistry();
+      const toolContext = this.buildToolContext(planInput);
+      const step1Response = await this.provider.generate(prompt, {
+        model: this.cfg.plannerModel,
+        tools: toolRegistry.getDefinitions(),
+        toolRegistry,
+        toolContext,
+        toolChoice: 'auto',
+        maxToolCalls: 8,
       });
-      const validationResult = this.validator.validate(parsedPlan);
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt,
+        response: step1Response,
+        metadata: { step: 'plan_milestones' },
+      });
 
-      if (!validationResult.valid) {
-        throw new Error(`Plan validation failed: ${validationResult.errors.join(', ')}`);
-      }
+      this.emit('progress', { status: 'generating', message: 'Generating tasks', percent: 30 });
+      const step2Prompt = this.promptTemplates.generateTasksPrompt(step1Response);
+      const step2Response = await this.provider.generate(step2Prompt, {
+        model: this.cfg.plannerModel,
+        tools: toolRegistry.getDefinitions(),
+        toolRegistry,
+        toolContext,
+        toolChoice: 'auto',
+        maxToolCalls: 8,
+      });
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt: step2Prompt,
+        response: step2Response,
+        metadata: { step: 'tasks' },
+      });
 
-      const depResult = this.validator.validateDependencies(
-        parsedPlan.milestones.flatMap((m: any) => m.tasks),
-      );
-
-      if (depResult.hasCycles) {
-        throw new Error('Plan contains circular dependencies');
-      }
+      this.emit('progress', { status: 'optimizing', message: 'Optimizing plan', percent: 60 });
+      const step3Prompt = this.promptTemplates.generateOptimizePrompt(step2Response);
+      const step3Response = await this.provider.generate(step3Prompt, {
+        model: this.cfg.plannerModel,
+        tools: toolRegistry.getDefinitions(),
+        toolRegistry,
+        toolContext,
+        toolChoice: 'auto',
+        maxToolCalls: 8
+      });
+      await this.memoryStore.append(this.name, {
+        timestamp: new Date().toISOString(),
+        prompt: step3Prompt,
+        response: step3Response,
+        metadata: { step: 'optimize' },
+      });
 
       this.emit('progress', {
         status: 'complete',
         message: 'Plan generation complete',
+        percent: 100,
       });
 
       const projectContext = this.buildProjectContext(planInput);
+      const plan = await this.planParser.parse(step3Response);
       const result: AgentOutput = {
         data: {
-          plan: parsedPlan,
+          plan,
           projectContext,
         },
       };
@@ -170,7 +155,8 @@ export class Planner extends Agent {
       await this.memoryStore.append(this.name, {
         timestamp: new Date().toISOString(),
         prompt,
-        response: llmResponse,
+        response: step3Response,
+        metadata: { step: 'final' },
       });
       return result;
     } catch (error) {
@@ -191,99 +177,6 @@ export class Planner extends Agent {
         },
       };
     }
-  }
-
-  private generateMockPlan(input: any): string {
-    // Fallback mock response when no API key is available
-    const mockPlan = {
-      id: `plan-${Date.now()}`,
-      title: `Plan for: ${input.description.substring(0, 30)}`,
-      description: input.description,
-      clarifications: [],
-      milestones: [
-        {
-          id: 'M1',
-          title: 'Setup & Foundation',
-          description: 'Project setup and baseline configuration',
-          duration: 5,
-          successCriteria: ['Project structure created', 'Tooling configured'],
-          tasks: [
-            {
-              id: 'T1',
-              title: 'Project initialization',
-              description: 'Setup project structure and configuration',
-              type: 'infrastructure' as const,
-              estimatedEffort: 3,
-              acceptanceCriteria: [
-                'Repository structure is created',
-                'Configuration files are added',
-              ],
-              inputDependencies: [],
-              outputDependencies: ['T2'],
-              affectedModules: ['core'],
-              status: 'planned' as const,
-            },
-            {
-              id: 'T2',
-              title: 'Development environment',
-              description: 'Configure development tools and dependencies',
-              type: 'infrastructure' as const,
-              estimatedEffort: 2,
-              acceptanceCriteria: ['Dependencies installed', 'Linting and formatting configured'],
-              inputDependencies: ['T1'],
-              outputDependencies: ['T3'],
-              affectedModules: ['tooling'],
-              status: 'planned' as const,
-            },
-          ],
-        },
-        {
-          id: 'M2',
-          title: 'Core Development',
-          description: 'Implement primary functionality',
-          duration: 10,
-          successCriteria: ['Core features implemented', 'Basic tests pass'],
-          tasks: [
-            {
-              id: 'T3',
-              title: 'Implement core features',
-              description: 'Build main functionality',
-              type: 'feature' as const,
-              estimatedEffort: 8,
-              acceptanceCriteria: [
-                'Core functionality implemented',
-                'Endpoints/modules behave as expected',
-              ],
-              inputDependencies: ['T1', 'T2'],
-              outputDependencies: [],
-              affectedModules: ['core'],
-              status: 'planned' as const,
-            },
-          ],
-        },
-      ],
-    };
-
-    return JSON.stringify(mockPlan);
-  }
-
-  private isLikelyTruncated(response: string): boolean {
-    const trimmed = response.trim();
-    if (!trimmed || trimmed === '{}') {
-      return true;
-    }
-    const openBraces = (trimmed.match(/{/g) || []).length;
-    const closeBraces = (trimmed.match(/}/g) || []).length;
-    if (openBraces === 0 || closeBraces === 0) {
-      return true;
-    }
-    if (closeBraces < openBraces) {
-      return true;
-    }
-    if (!trimmed.includes('milestones') && !trimmed.includes('"milestones"')) {
-      return true;
-    }
-    return false;
   }
 
   private buildProjectContext(input: any) {

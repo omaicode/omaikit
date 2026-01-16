@@ -51,7 +51,7 @@ function resolvePlanIndex(
 export async function planCommand(
   description: string,
   options?: {
-    projectType?: string;
+    projectDescription?: string;
     techStack?: string[];
     output?: string;
     mode?: 'new' | 'update';
@@ -62,7 +62,7 @@ export async function planCommand(
   const planner = new Planner(logger);
   const writer = new PlanWriter();
   const contextWriter = new ContextWriter();
-  const progress = new ProgressBar(50);
+  const progress = new ProgressBar(100);
 
   try {
     console.log(cyan('🎯 Generating project plan...'));
@@ -81,26 +81,29 @@ export async function planCommand(
       process.exit(1);
     }
 
+    // Get projectDescription & techStack from context if not provided
+    const projectDescription = options?.projectDescription || context.project.description || '';
+    const techStack = options?.techStack || context.analysis.languages || [];
     const input: PlanInput = {
       description,
-      projectType: options?.projectType as any,
-      techStack: options?.techStack,
+      projectDescription,
+      techStack,
     };
 
     // Setup progress tracking
-    planner.onProgress((event: any) => {
-      if (event.status === 'parsing') {
-        progress.update(33);
-        console.log(yellow('  ⏳ Parsing response...'));
-      } else if (event.status === 'validating') {
-        progress.update(66);
-        console.log(yellow('  ✓ Validating plan...'));
+    planner.onProgress((event: { status: string; message?: string, percent: number }) => {
+      if (event.status === 'summarizing') {
+        progress.update(event.percent);
+        console.log(yellow(`  ⏳ ${event.message || 'Parsing response...'}`));
+      } else if (event.status === 'optimizing') {
+        progress.update(event.percent);
+        console.log(yellow(`  ✓ ${event.message || 'Optimizing plan...'}`));
       } else if (event.status === 'complete') {
-        progress.update(100);
-        console.log(green('  ✓ Plan generated'));
+        progress.update(event.percent);
+        console.log(green(`  ✓ ${event.message || 'Plan generation complete'}`));
       } else if (event.status === 'generating') {
-        console.log(cyan('  → Receiving plan from AI...'));
-        progress.update(10);
+        progress.update(event.percent);
+        console.log(cyan(`  ⏳ ${event.message || 'Generating plan...'}`));
       }
     });
 
@@ -143,7 +146,6 @@ export async function planCommand(
     const archiveFilename = `plans/${planId}.json`;
 
     // Save plan
-    console.log('');
     let filepath: string;
     if (options?.output && path.isAbsolute(options.output)) {
       const dirPath = path.dirname(options.output);

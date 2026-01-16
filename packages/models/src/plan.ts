@@ -59,6 +59,6 @@ export interface Plan {
 
 export interface PlanInput {
   description: string;
-  projectType?: 'backend' | 'frontend' | 'fullstack' | 'mobile' | 'monorepo' | 'tool' | 'web';
+  projectDescription?: string;
   techStack?: string[];
 }
