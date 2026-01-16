@@ -119,7 +119,7 @@ export class OpenAIProvider implements AIProvider {
     }
   }
 
-  async generateCodex(prompt: string, options?: AIProviderOptions): Promise<string> {
+  async generateCode(prompt: string, options?: AIProviderOptions): Promise<string> {
     if (!this.client) {
       if (!this.apiKey) return `OPENAI_ECHO:\n${prompt}`;
       await this.init();
