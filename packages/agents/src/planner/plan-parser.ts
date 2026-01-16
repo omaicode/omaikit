@@ -1,13 +1,10 @@
 import { Plan } from '@omaikit/models';
+import { parseJsonFromText } from '../utils/json';
 
 export class PlanParser {
   parse(response: string): Plan {
     try {
-      // Try to extract JSON from the response
-      const jsonStr = this.extractJson(response);
-
-      // Parse JSON
-      const parsed = JSON.parse(jsonStr);
+      const parsed = parseJsonFromText(response);
 
       // Normalize the structure
       return this.normalize(parsed);
@@ -136,19 +133,4 @@ export class PlanParser {
     return 'feature';
   }
 
-  private extractJson(response: string): string {
-    let jsonStr = response.trim();
-
-    if (jsonStr.startsWith('```')) {
-      jsonStr = jsonStr.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
-    }
-
-    const firstBrace = jsonStr.indexOf('{');
-    const lastBrace = jsonStr.lastIndexOf('}');
-    if (firstBrace >= 0 && lastBrace > firstBrace) {
-      jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
-    }
-
-    return jsonStr;
-  }
 }

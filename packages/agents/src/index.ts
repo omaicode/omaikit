@@ -8,6 +8,7 @@ export * from './logger';
 export * from './errors';
 export * from './ai-provider/factory';
 export * from './tools';
+export * from './utils/json';
 export { Planner } from './planner/planner';
 export { CoderAgent } from './coder/coder';
 export { TesterAgent, TesterAgentInput, TesterAgentOutput } from './tester/tester';

@@ -10,6 +10,8 @@ import { MemoryStore } from '../memory/memory-store';
 import * as fs from 'fs';
 import * as path from 'path';
 import { loadConfig, OmaikitConfig } from '@omaikit/config';
+import { AIProvider } from '../ai-provider/provider';
+import { parseJsonFromText } from '../utils/json';
 
 export interface ManagerAgentInput extends AgentInput {
   rootPath?: string;
@@ -18,11 +20,10 @@ export interface ManagerAgentInput extends AgentInput {
 }
 
 export class ManagerAgent extends Agent {
-  public name = 'manager';
-  public version = '1.0.0';
+  public name = 'Manager';
 
   private toolRegistry: ToolRegistry;
-  private provider?: any;
+  private provider?: AIProvider;
   private memoryStore: MemoryStore;
   private cfg: OmaikitConfig;
 
@@ -36,6 +37,7 @@ export class ManagerAgent extends Agent {
   async init(): Promise<void> {
     try {
       this.provider = await createProvider();
+      this.logger.info('Manager initialized');
     } catch (error) {
       this.logger.warn('Could not initialize AI provider, manager is offline');
     }
@@ -111,6 +113,10 @@ export class ManagerAgent extends Agent {
     rootPath: string,
     description?: string,
   ): Promise<Record<string, unknown>> {
+    if(!this.provider) {
+      throw new Error('Manager not initialized');
+    }
+
     const toolContext = this.getToolContext(rootPath);
     const basePrompt = this.buildContextPrompt(rootPath, description);
     const recentMemory = await this.memoryStore.readRecent(this.name, 3);
@@ -163,18 +169,7 @@ export class ManagerAgent extends Agent {
   }
 
   private parseContextJson(response: string): Record<string, unknown> {
-    const trimmed = response.trim();
-    try {
-      return JSON.parse(trimmed) as Record<string, unknown>;
-    } catch {
-      const start = trimmed.indexOf('{');
-      const end = trimmed.lastIndexOf('}');
-      if (start >= 0 && end > start) {
-        const snippet = trimmed.slice(start, end + 1);
-        return JSON.parse(snippet) as Record<string, unknown>;
-      }
-      throw new Error('Failed to parse context JSON from AI response');
-    }
+    return parseJsonFromText<Record<string, unknown>>(response);
   }
 
   private async writeContextFile(
