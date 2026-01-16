@@ -1,9 +1,9 @@
 import { ToolDefinition, ToolHandler } from './types';
 import { resolveSafePath, ensureFileExists, readFileLines } from './utils';
 
-export const readToolDefinition: ToolDefinition = {
-  name: 'read',
-  description: 'Read a text file from disk with optional line range.',
+export const readFileToolDefinition: ToolDefinition = {
+  name: 'read_file',
+  description: 'Read a file from disk with optional line range.',
   parameters: {
     type: 'object',
     properties: {
@@ -16,7 +16,7 @@ export const readToolDefinition: ToolDefinition = {
   },
 };
 
-export const readToolHandler: ToolHandler = (args, context) => {
+export const readFileToolHandler: ToolHandler = (args, context) => {
   const pathArg = String(args.path || '');
   if (!pathArg) {
     return { ok: false, error: { message: 'path is required', code: 'INVALID_ARGS' } };

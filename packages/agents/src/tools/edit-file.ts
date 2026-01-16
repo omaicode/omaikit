@@ -3,8 +3,8 @@ import * as path from 'path';
 import { ToolDefinition, ToolHandler } from './types';
 import { resolveSafePath, ensureFileExists, readFileLines, writeFileLines } from './utils';
 
-export const editToolDefinition: ToolDefinition = {
-  name: 'edit',
+export const editFileToolDefinition: ToolDefinition = {
+  name: 'edit_file',
   description: 'Edit a text file by replacing, inserting, appending, or overwriting content.',
   parameters: {
     type: 'object',
@@ -26,7 +26,7 @@ export const editToolDefinition: ToolDefinition = {
   },
 };
 
-export const editToolHandler: ToolHandler = (args, context) => {
+export const editFileToolHandler: ToolHandler = (args, context) => {
   const pathArg = String(args.path || '');
   const mode = String(args.mode || '');
   if (!pathArg) {

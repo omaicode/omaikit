@@ -23,6 +23,32 @@ export class MemoryStore {
     fs.appendFileSync(filepath, `${serialized}\n`, 'utf-8');
   }
 
+  async appendManyUnique(
+    agentName: string,
+    entries: MemoryEntry[],
+    dedupeWindow: number = 200,
+  ): Promise<number> {
+    if (entries.length === 0) return 0;
+    this.ensureDir();
+    const filepath = this.getFilePath(agentName);
+
+    const existing = this.readRecentLines(filepath, dedupeWindow);
+    const seen = new Set(existing);
+
+    let appended = 0;
+    for (const entry of entries) {
+      const serialized = JSON.stringify(entry);
+      if (seen.has(serialized)) {
+        continue;
+      }
+      fs.appendFileSync(filepath, `${serialized}\n`, 'utf-8');
+      seen.add(serialized);
+      appended += 1;
+    }
+
+    return appended;
+  }
+
   async readRecent(agentName: string, limit: number = 5): Promise<MemoryEntry[]> {
     const filepath = this.getFilePath(agentName);
     if (!fs.existsSync(filepath)) {
@@ -75,6 +101,15 @@ export class MemoryStore {
     } catch {
       return null;
     }
+  }
+
+  private readRecentLines(filePath: string, limit: number): string[] {
+    if (!fs.existsSync(filePath)) {
+      return [];
+    }
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split(/\r?\n/).filter(Boolean);
+    return lines.slice(-limit);
   }
 
   private truncate(value: string, maxLength: number): string {

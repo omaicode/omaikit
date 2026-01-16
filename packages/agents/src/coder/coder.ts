@@ -46,8 +46,6 @@ export class CoderAgent extends Agent {
   public name = 'Coder';
   
   private promptTemplates: PromptTemplates;
-  private codeParser: CodeParser;
-  private codeWriter: CodeWriter;
   private provider?: AIProvider;
   private memoryStore: MemoryStore;
   private cfg: OmaikitConfig;
@@ -55,8 +53,6 @@ export class CoderAgent extends Agent {
   constructor(logger?: Logger) {
     super(logger);
     this.promptTemplates = new PromptTemplates();
-    this.codeParser = new CodeParser();
-    this.codeWriter = new CodeWriter();
     this.memoryStore = new MemoryStore();
     this.cfg = loadConfig();
   }
@@ -64,7 +60,6 @@ export class CoderAgent extends Agent {
   async init(): Promise<void> {
     try {
       this.provider = createProvider();
-      this.logger.info('Coder initialized');      
     } catch (error) {
       this.logger.warn('Could not initialize Coder, using mock mode');
     }
@@ -124,39 +119,47 @@ export class CoderAgent extends Agent {
 
       // Call LLM via AIProvider (would be injected)
       // For now, return mock response
-      const llmResponse = await this.callLLM(finalPrompt, input, fallbackLanguage);
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt: finalPrompt,
-        response: llmResponse,
-        taskId: input.task.id,
-      });
-
-      // Parse generated code
-      const files = await this.codeParser.parse(llmResponse, {
-        taskTitle: input.task.title,
-        projectContext: input.projectContext,
+      const { response: llmResponse, toolCalls } = await this.callLLM(
+        finalPrompt,
+        input,
         fallbackLanguage,
-      });
-      this.logger.info('Code parsed', { fileCount: files.length });
+      );
+      const timestamp = new Date().toISOString();
+      const memoryEntries = [] as Array<{
+        timestamp: string;
+        prompt: string;
+        response: string;
+        taskId?: string;
+        metadata?: Record<string, unknown>;
+      }>;
 
-      const projectRoot = input.projectContext?.project?.rootPath || process.cwd();
-      const writtenPaths = await this.codeWriter.writeFiles(files, projectRoot);
+      for (const toolCall of toolCalls) {
+        memoryEntries.push({
+          timestamp,
+          prompt: finalPrompt,
+          response: JSON.stringify(toolCall),
+          taskId: input.task.id,
+          metadata: { type: 'tool_call', tool: toolCall.name },
+        });
+      }
+
+      if (llmResponse && llmResponse.trim().length > 0) {
+        memoryEntries.push({
+          timestamp,
+          prompt: finalPrompt,
+          response: llmResponse,
+          taskId: input.task.id,
+          metadata: { type: 'text_response' },
+        });
+      }
+
+      await this.memoryStore.appendManyUnique(this.name, memoryEntries);
 
       // Prepare output
-      output.result.files = files;
       output.result.metadata = {
         generatedAt: new Date().toISOString(),
-        model: 'mock-model',
+        model: this.cfg.coderModel,
       };
-      output.metadata.filesGenerated = files.length;
-      output.metadata.writtenPaths = writtenPaths;
-      output.metadata.totalLOC = files.reduce(
-        (sum, f) => sum + (f.content.split('\n').length || 0),
-        0,
-      );
-      output.metadata.syntaxErrors = 0;
-      output.metadata.lintingIssues = 0;
 
       await this.afterExecute(output);
     } catch (error) {
@@ -166,13 +169,6 @@ export class CoderAgent extends Agent {
         code: 'CODER_ERROR',
         message: (error as Error).message,
       };
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt: output.result.prompt || '',
-        response: output.error.message,
-        taskId: input.task.id,
-        metadata: { status: 'failed' },
-      });
     }
 
     output.metadata.durationMs = Date.now() - startTime;
@@ -335,15 +331,16 @@ export class CoderAgent extends Agent {
     prompt: string,
     input: CoderAgentInput,
     fallbackLanguage: string,
-  ): Promise<string> {
+  ): Promise<{ response: string; toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> }> {
+    const toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> = [];
     if (process.env.VITEST !== undefined) {
       await new Promise((resolve) => setTimeout(resolve, 10));
-      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+      return { response: this.getMockGeneratedCode(fallbackLanguage, input.task), toolCalls };
     }
 
     if (!this.provider) {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+      return { response: this.getMockGeneratedCode(fallbackLanguage, input.task), toolCalls };
     }
 
     const toolRegistry = createDefaultToolRegistry();
@@ -362,16 +359,24 @@ export class CoderAgent extends Agent {
       toolContext,
       toolChoice: 'auto',
       maxToolCalls: 3,
+      onToolCall: (event) => toolCalls.push(event),
+      onTextResponse: (text) => {
+        this.logger.info('[Coder] Answered: \n' + text);
+      }
     });
 
     if (
       typeof response === 'string' &&
       (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO'))
     ) {
-      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+      return { response: this.getMockGeneratedCode(fallbackLanguage, input.task), toolCalls };
     }
 
-    return response;
+    if (typeof response !== 'string') {
+      return { response: JSON.stringify(response ?? ''), toolCalls };
+    }
+
+    return { response, toolCalls };
   }
 
   /**

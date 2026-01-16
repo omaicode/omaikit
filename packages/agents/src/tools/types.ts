@@ -9,6 +9,7 @@ export type JSONSchema = {
 };
 
 export interface ToolDefinition {
+  type?: string;
   name: string;
   description: string;
   parameters: JSONSchema;

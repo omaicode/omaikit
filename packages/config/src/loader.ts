@@ -57,7 +57,7 @@ export function loadConfig(): OmaikitConfig {
   const envCfg: OmaikitConfig = {
     managerModel: process.env.OMAIKIT_MANAGER_MODEL || 'gpt-5-mini',
     plannerModel: process.env.OMAIKIT_PLANNER_MODEL || 'gpt-5-mini',
-    coderModel: process.env.OMAIKIT_CODER_MODEL || 'gpt-5.1-codex',
+    coderModel: process.env.OMAIKIT_CODER_MODEL || 'gpt-5.1',
     testerModel: process.env.OMAIKIT_TESTER_MODEL || 'gpt-5-mini',
     reviewerModel: process.env.OMAIKIT_REVIEWER_MODEL || 'gpt-5-mini',
   };

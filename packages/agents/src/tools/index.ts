@@ -1,6 +1,7 @@
 export * from './registry';
 export * from './default-registry';
-export { readToolDefinition, readToolHandler } from './read';
+export { readFileToolDefinition, readFileToolHandler } from './read-file';
 export { searchToolDefinition, searchToolHandler } from './search';
-export { editToolDefinition, editToolHandler } from './edit';
+export { editFileToolDefinition, editFileToolHandler } from './edit-file';
 export { applyPatchToolDefinition, applyPatchToolHandler } from './apply-patch';
+export { listFilesToolDefinition, listFilesToolHandler } from './list-files';

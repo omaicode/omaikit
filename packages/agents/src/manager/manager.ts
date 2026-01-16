@@ -155,7 +155,7 @@ export class ManagerAgent extends Agent {
   private buildContextPrompt(rootPath: string, description?: string): string {
     return [
       'You are the Manager agent. Analyze the current project using tools and produce a context.json payload.',
-      'Use tools to read key files (package.json, README, config files) and search the repo for languages, frameworks, and dependencies.',
+      'Use tools to read key files (package.json, README, config files) and search_text the repo for languages, frameworks, and dependencies.',
       'Return ONLY a JSON object with this exact schema:',
       '{',
       '  "project": { "name": string, "rootPath": string, "description"?: string },',

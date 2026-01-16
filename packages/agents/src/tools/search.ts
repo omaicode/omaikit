@@ -3,7 +3,7 @@ import { ToolDefinition, ToolHandler } from './types';
 import { resolveSafePath, walkFiles, globToRegex, readFileLines } from './utils';
 
 export const searchToolDefinition: ToolDefinition = {
-  name: 'search',
+  name: 'search_text',
   description: 'Search for text in files under the project root.',
   parameters: {
     type: 'object',

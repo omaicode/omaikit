@@ -3,6 +3,8 @@ import { ToolDefinition } from '../tools/types';
 import OpenAI from 'openai';
 import { Tool } from 'openai/resources/responses/responses';
 
+type ResponseTool = Tool | { type: 'web_search' } | { type: 'apply_patch' };
+
 export class OpenAIProvider implements AIProvider {
   private apiKey?: string;
   private client: OpenAI | null = null;
@@ -91,6 +93,9 @@ export class OpenAIProvider implements AIProvider {
               args,
               options.toolContext ?? {},
             );
+            if (options?.onToolCall) {
+              options.onToolCall({ name: toolName, arguments: args, result });
+            }
             messages.push({
               role: 'tool',
               tool_call_id: toolCall.id,
@@ -119,7 +124,7 @@ export class OpenAIProvider implements AIProvider {
     }
   }
 
-  async generateCode(prompt: string, options?: AIProviderOptions): Promise<string> {
+  async generateCode(prompt: string, options?: AIProviderOptions): Promise<any> {
     if (!this.client) {
       if (!this.apiKey) return `OPENAI_ECHO:\n${prompt}`;
       await this.init();
@@ -133,7 +138,7 @@ export class OpenAIProvider implements AIProvider {
     const tools = this.resolveTools(options);
     const maxToolCalls = options?.maxToolCalls ?? 3;
     let previousResponseId: string | null = null;
-    let input: any = prompt;
+    let input: any = [{ role: 'user', content: prompt }];
     let lastContent = '';
 
     for (let i = 0; i <= maxToolCalls; i += 1) {
@@ -142,10 +147,12 @@ export class OpenAIProvider implements AIProvider {
         input,
         max_output_tokens: maxTokens,
         temperature,
-        tools: tools.length > 0 ? this.formatToolsForResponses(tools) : undefined,
+        tools:
+          tools.length > 0 ? (this.formatToolsForResponses(tools) as unknown as Tool[]) : undefined,
         tool_choice: normalizeToolChoice(options?.toolChoice),
         previous_response_id: previousResponseId || undefined,
       });
+
       previousResponseId = response.id;
       const outputText = (response as any).output_text as string | undefined;
       if (outputText && outputText.length > 0) {
@@ -163,50 +170,76 @@ export class OpenAIProvider implements AIProvider {
           lastContent = collected;
         }
       }
+      
+      if(lastContent && options?.onTextResponse) {
+        options.onTextResponse(lastContent);
+      }
 
+      // console.log('Extracted tool calls:', toolCalls);
       const toolCalls = this.extractToolCalls(response);
       if (toolCalls.length === 0) {
-        return lastContent;
+        continue;
       }
 
       if (!options?.toolRegistry) {
         throw new Error('Tool calls requested but no tool registry provided');
       }
 
-      const toolOutputs = [] as Array<{ type: string; output: string; call_id: string }>;
+      const toolOutputs = [] as Array<{
+        type: string;
+        output: string;
+        call_id: string;
+        status: 'completed' | 'incomplete' | 'in_progress';
+      }>;
+
       for (const toolCall of toolCalls) {
         let type = 'function_call_output';
-        if (toolCall.name === 'apply_patch') {
-          type = 'apply_patch_output';
+        let args: any = parseToolArgs(toolCall.arguments);
+
+        if (toolCall.name === 'apply_patch_call') {
+          type = 'apply_patch_call_output';
+          args = toolCall.arguments;
         }
 
         const result = await options.toolRegistry.call(
           toolCall.name,
-          parseToolArgs(toolCall.arguments),
+          args,
           options.toolContext ?? {},
         );
+
+        if (options?.onToolCall) {
+          options.onToolCall({ name: toolCall.name, arguments: args, result });
+        }
 
         toolOutputs.push({
           type,
           call_id: toolCall.call_id,
           output: JSON.stringify(result),
+          status: result.ok ? 'completed' : 'incomplete',
         });
+        // console.log('Tool called:', toolCall.name, args, result);
       }
-
       input = [{ role: 'user', content: prompt }, ...toolOutputs];
     }
 
     return lastContent;
   }
 
-  private formatToolsForResponses(tools: ToolDefinition[]): Array<Tool> {
-    return tools.map((tool) => ({
-      type: 'function',
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.parameters,
-      strict: false,
-    }));
+  private formatToolsForResponses(tools: ToolDefinition[]): Array<ResponseTool> {
+    return tools.map((tool) => {
+      if (tool.type && ['web_search', 'apply_patch'].includes(tool.type)) {
+        const type = tool.type as 'web_search' | 'apply_patch';
+        return { type };
+      }
+
+      return {
+        type: 'function',
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.parameters,
+        strict: false,
+      };
+    });
   }
 
   async complete(prompt: string): Promise<string> {
@@ -241,35 +274,25 @@ export class OpenAIProvider implements AIProvider {
     }
 
     for (const item of output) {
-      if (item?.tool_calls && Array.isArray(item.tool_calls)) {
-        for (const toolCall of item.tool_calls) {
-          if (toolCall?.name) {
-            toolCalls.push({
-              id: toolCall.id || toolCall.tool_call_id || `tool_${toolCalls.length + 1}`,
-              name: toolCall.name,
-              arguments: toolCall.arguments || '{}',
-              call_id: toolCall.call_id || toolCall.id || `tool_${toolCalls.length + 1}`,
-            });
-          }
-        }
-      }
-
-      if (item?.type === 'tool_call' && item?.name) {
-        toolCalls.push({
-          id: item.id || item.tool_call_id || `tool_${toolCalls.length + 1}`,
-          name: item.name,
-          arguments: item.arguments || '{}',
-          call_id: item.call_id || item.id || `tool_${toolCalls.length + 1}`,
-        });
-      }
-
-      if (item?.type === 'function_call' && item?.name) {
-        toolCalls.push({
-          id: item.id || `tool_${toolCalls.length + 1}`,
-          name: item.name,
-          arguments: item.arguments || '{}',
-          call_id: item.call_id || `call_${toolCalls.length + 1}`,
-        });
+      switch (item?.type) {
+        case 'function_call':
+          toolCalls.push({
+            id: item.id || `tool_${toolCalls.length + 1}`,
+            name: item.name,
+            arguments: item.arguments || '{}',
+            call_id: item.call_id || `call_${toolCalls.length + 1}`,
+          });
+          break;
+        case 'apply_patch_call':
+          toolCalls.push({
+            id: item.id || `tool_${toolCalls.length + 1}`,
+            name: 'apply_patch_call',
+            arguments: item.operation || {},
+            call_id: item.call_id || `call_${toolCalls.length + 1}`,
+          });
+          break;
+        default:
+          break;
       }
     }
 
@@ -277,9 +300,9 @@ export class OpenAIProvider implements AIProvider {
   }
 }
 
-function parseToolArgs(rawArgs: string): Record<string, unknown> {
+function parseToolArgs(rawArgs: unknown): Record<string, unknown> {
   try {
-    const parsed = JSON.parse(rawArgs);
+    const parsed = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs;
     if (parsed && typeof parsed === 'object') {
       return parsed as Record<string, unknown>;
     }
