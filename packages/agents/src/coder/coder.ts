@@ -267,19 +267,7 @@ export class CoderAgent extends Agent {
       throw new Error('Task must have id and title');
     }
   }
-
-  private normalizeLanguage(value: string): string | null {
-    const normalized = value.toLowerCase();
-    if (normalized.includes('golang') || normalized === 'go') return 'go';
-    if (normalized.includes('typescript')) return 'typescript';
-    if (normalized.includes('javascript')) return 'javascript';
-    if (normalized.includes('python')) return 'python';
-    if (normalized.includes('rust')) return 'rust';
-    if (normalized.includes('c#') || normalized.includes('csharp')) return 'csharp';
-    if (normalized.includes('php')) return 'php';
-    return null;
-  }
-
+  
   /**
    * Call LLM to generate code
    */
