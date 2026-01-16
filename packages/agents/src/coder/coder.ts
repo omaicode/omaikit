@@ -268,45 +268,6 @@ export class CoderAgent extends Agent {
     }
   }
 
-  /**
-   * Determine target programming language
-   */
-  private determineLanguage(input: CoderAgentInput): string {
-    const candidates: string[] = [];
-    const addCandidate = (value: unknown) => {
-      if (typeof value === 'string') {
-        candidates.push(value);
-      }
-    };
-
-    const analysisLanguages = input.projectContext?.analysis?.languages;
-    if (Array.isArray(analysisLanguages)) {
-      analysisLanguages.forEach((lang) => addCandidate(lang));
-    }
-
-    const metadataLanguages = input.projectContext?.metadata?.languages;
-    if (Array.isArray(metadataLanguages)) {
-      metadataLanguages.forEach((lang) => addCandidate(lang));
-    }
-
-    const techStack = input.plan?.techStack;
-    if (Array.isArray(techStack)) {
-      techStack.forEach((entry) => addCandidate(entry));
-    }
-
-    const projectType = input.plan?.projectType;
-    addCandidate(projectType);
-
-    for (const candidate of candidates) {
-      const normalized = this.normalizeLanguage(candidate);
-      if (normalized) {
-        return normalized;
-      }
-    }
-
-    return 'typescript';
-  }
-
   private normalizeLanguage(value: string): string | null {
     const normalized = value.toLowerCase();
     if (normalized.includes('golang') || normalized === 'go') return 'go';
@@ -357,17 +318,6 @@ export class CoderAgent extends Agent {
     }
 
     return { response, toolCalls };
-  }
-
-
-  /**
-   * Convert string to PascalCase
-   */
-  private toPascalCase(str: string): string {
-    return str
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
   }
 
   private buildReuseSection(input: CoderAgentInput): string | null {
