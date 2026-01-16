@@ -137,7 +137,7 @@ export class OpenAIProvider implements AIProvider {
     let lastContent = '';
 
     for (let i = 0; i <= maxToolCalls; i += 1) {
-      const response: any = await this.client.responses.create({
+      const response: OpenAI.Responses.Response = await this.client.responses.create({
         model,
         input,
         max_output_tokens: maxTokens,
@@ -165,7 +165,6 @@ export class OpenAIProvider implements AIProvider {
       }
 
       const toolCalls = this.extractToolCalls(response);
-      console.log('Extracted tool calls:', toolCalls);
       if (toolCalls.length === 0) {
         return lastContent;
       }
@@ -176,20 +175,25 @@ export class OpenAIProvider implements AIProvider {
 
       const toolOutputs = [] as Array<{ type: string; output: string; call_id: string }>;
       for (const toolCall of toolCalls) {
+        let type = 'function_call_output';
+        if (toolCall.name === 'apply_patch') {
+          type = 'apply_patch_output';
+        }
+
         const result = await options.toolRegistry.call(
           toolCall.name,
           parseToolArgs(toolCall.arguments),
           options.toolContext ?? {},
         );
+
         toolOutputs.push({
-          type: 'function_call_output',
+          type,
           call_id: toolCall.call_id,
           output: JSON.stringify(result),
         });
       }
 
       input = [{ role: 'user', content: prompt }, ...toolOutputs];
-      console.log('Tool outputs:', toolOutputs);
     }
 
     return lastContent;

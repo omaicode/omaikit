@@ -17,7 +17,7 @@ export interface AIProviderOptions {
 export interface AIProvider {
   init?(config?: Record<string, unknown>): Promise<void> | void;
   generate(prompt: string, options?: AIProviderOptions): Promise<string>;
-  generateCodex?(prompt: string, options?: AIProviderOptions): Promise<string>;
+  generateCode?(prompt: string, options?: AIProviderOptions): Promise<string>;
   close?(): Promise<void> | void;
   complete?(prompt: string): Promise<string>;
   onProgress?(callback: (chunk: string) => void): void;

@@ -98,7 +98,6 @@ export class ManagerAgent extends Agent {
     }
     const context = await this.generateContext(rootPath, description);
     const filePath = await this.writeContextFile(rootPath, context);
-    await this.memoryStore.clear(this.name);
     return filePath;
   }
 

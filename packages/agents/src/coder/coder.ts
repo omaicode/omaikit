@@ -43,9 +43,8 @@ export interface CoderAgentOutput extends AgentOutput {
 }
 
 export class CoderAgent extends Agent {
-  public name = 'coder';
-  public version = '1.0.0';
-
+  public name = 'Coder';
+  
   private promptTemplates: PromptTemplates;
   private codeParser: CodeParser;
   private codeWriter: CodeWriter;
@@ -63,11 +62,11 @@ export class CoderAgent extends Agent {
   }
 
   async init(): Promise<void> {
-    this.logger.info('Initializing CoderAgent', { version: this.version });
     try {
       this.provider = createProvider();
+      this.logger.info('Coder initialized');      
     } catch (error) {
-      this.logger.warn('Could not initialize AI provider, using mock mode');
+      this.logger.warn('Could not initialize Coder, using mock mode');
     }
   }
 
@@ -160,7 +159,6 @@ export class CoderAgent extends Agent {
       output.metadata.lintingIssues = 0;
 
       await this.afterExecute(output);
-      await this.memoryStore.clear(this.name);
     } catch (error) {
       await this.onError(error as Error);
       output.status = 'failed';
@@ -351,11 +349,11 @@ export class CoderAgent extends Agent {
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
 
-    if (!this.provider.generateCodex) {
+    if (!this.provider.generateCode) {
       throw new Error('AI provider does not support Codex responses API');
     }
 
-    const response = await this.provider.generateCodex(prompt, {
+    const response = await this.provider.generateCode(prompt, {
       model: this.cfg.coderModel,
       maxTokens: undefined,
       temperature: undefined,

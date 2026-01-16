@@ -21,9 +21,10 @@ export const searchToolDefinition: ToolDefinition = {
 };
 
 export const searchToolHandler: ToolHandler = (args, context) => {
-  const query = String(args.query || '');
-  if (!query) {
-    return { ok: false, error: { message: 'query is required', code: 'INVALID_ARGS' } };
+  const rawQuery = typeof args.query === 'string' ? args.query : '';
+  const query = rawQuery.length === 0 ? '.*' : rawQuery;
+  if (rawQuery.length === 0) {
+    args.isRegex = true;
   }
 
   const root = context.rootPath || context.cwd || process.cwd();
