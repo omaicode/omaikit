@@ -9,8 +9,6 @@ import type { Task, CodeGeneration } from '@omaikit/models';
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { PromptTemplates } from './prompt-templates';
-import { CodeParser } from './code-parser';
-import { CodeWriter } from '@omaikit/analysis';
 import { createProvider } from '../ai-provider/factory';
 import { createDefaultToolRegistry } from '../tools/default-registry';
 import type { ToolContext } from '../tools/types';
@@ -95,8 +93,6 @@ export class CoderAgent extends Agent {
       // Validate input
       this.validateInput(input);
 
-      const fallbackLanguage = this.determineLanguage(input);
-
       // Generate prompt
       const prompt = await this.promptTemplates.generatePrompt(
         input.task,
@@ -121,8 +117,7 @@ export class CoderAgent extends Agent {
       // For now, return mock response
       const { response: llmResponse, toolCalls } = await this.callLLM(
         finalPrompt,
-        input,
-        fallbackLanguage,
+        input
       );
       const timestamp = new Date().toISOString();
       const memoryEntries = [] as Array<{
@@ -330,23 +325,15 @@ export class CoderAgent extends Agent {
   private async callLLM(
     prompt: string,
     input: CoderAgentInput,
-    fallbackLanguage: string,
   ): Promise<{ response: string; toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> }> {
     const toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> = [];
-    if (process.env.VITEST !== undefined) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      return { response: this.getMockGeneratedCode(fallbackLanguage, input.task), toolCalls };
-    }
-
-    if (!this.provider) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      return { response: this.getMockGeneratedCode(fallbackLanguage, input.task), toolCalls };
-    }
-
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
+    if(!this.provider) {
+      this.init();
+    }
 
-    if (!this.provider.generateCode) {
+    if (!this.provider || !this.provider.generateCode) {
       throw new Error('AI provider does not support Codex responses API');
     }
 
@@ -365,13 +352,6 @@ export class CoderAgent extends Agent {
       }
     });
 
-    if (
-      typeof response === 'string' &&
-      (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO'))
-    ) {
-      return { response: this.getMockGeneratedCode(fallbackLanguage, input.task), toolCalls };
-    }
-
     if (typeof response !== 'string') {
       return { response: JSON.stringify(response ?? ''), toolCalls };
     }
@@ -379,124 +359,6 @@ export class CoderAgent extends Agent {
     return { response, toolCalls };
   }
 
-  /**
-   * Generate mock code for demonstration
-   */
-  private getMockGeneratedCode(language: string, task: Task): string {
-    const taskName = task.title.toLowerCase().replace(/\s+/g, '_');
-
-    switch (language) {
-      case 'python':
-        return `
-"""
-Generated module for: ${task.title}
-"""
-
-import logging
-from typing import Any
-
-logger = logging.getLogger(__name__)
-
-def ${taskName}() -> Any:
-    """${task.description}"""
-    try:
-        logger.info("Executing ${taskName}")
-        # Implementation goes here
-        return None
-    except Exception as e:
-        logger.error(f"Error in ${taskName}: {e}")
-        raise
-`;
-
-      case 'go':
-        return `
-package main
-
-import (
-    "fmt"
-    "log"
-)
-
-// ${task.title}
-func ${this.toPascalCase(taskName)}() error {
-    log.Println("Executing ${taskName}")
-    // Implementation goes here
-    return nil
-}
-`;
-
-      case 'rust':
-        return `
-//! Generated module for: ${task.title}
-
-use log::{info, error};
-
-/// ${task.description}
-pub async fn ${taskName}() -> Result<(), Box<dyn std::error::Error>> {
-    info!("Executing ${taskName}");
-    // Implementation goes here
-    Ok(())
-}
-`;
-
-      case 'csharp':
-        return `
-using System;
-using System.Logging;
-
-namespace Generated
-{
-    /// <summary>
-    /// ${task.title}
-    /// </summary>
-    public class ${this.toPascalCase(taskName)}
-    {
-        private static readonly ILogger Logger = LoggerFactory.CreateLogger<${this.toPascalCase(taskName)}>();
-
-        public static void Execute()
-        {
-            try
-            {
-                Logger.LogInformation("Executing ${taskName}");
-                // Implementation goes here
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error in ${taskName}");
-                throw;
-            }
-        }
-    }
-}
-`;
-
-      case 'typescript':
-      default:
-        return `
-/**
- * ${task.title}
- * 
- * ${task.description}
- */
-
-import { Logger } from './logger';
-
-const logger = new Logger('${taskName}');
-
-export async function ${taskName}(): Promise<void> {
-  try {
-    logger.info('Executing ${taskName}');
-    // Implementation goes here
-  } catch (error) {
-    logger.error('Error in ${taskName}', { error });
-    throw error;
-  }
-}
-
-export default ${taskName};
-`;
-    }
-  }
 
   /**
    * Convert string to PascalCase
@@ -535,22 +397,6 @@ export default ${taskName};
     }
 
     return normalized.map((item) => `- ${item}`).join('\n');
-  }
-
-  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
-    let timeoutId: NodeJS.Timeout | undefined;
-
-    const timeoutPromise = new Promise<null>((resolve) => {
-      timeoutId = setTimeout(() => resolve(null), timeoutMs);
-    });
-
-    const result = await Promise.race([promise, timeoutPromise]);
-
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-
-    return result as T | null;
   }
 
   private buildToolContext(input: CoderAgentInput): ToolContext {
