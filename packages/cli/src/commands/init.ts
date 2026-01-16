@@ -63,7 +63,7 @@ async function ensureApiKey(logger: Logger): Promise<void> {
   }
 
   const updated = { ...cfg, openaiApiKey: key, provider: cfg.provider || 'openai' };
-  const savedPath = saveConfig(updated, 'global');
+  const savedPath = saveConfig(updated, 'local');
   logger.info(`Saved API key to ${savedPath}`);
 }
 

@@ -6,7 +6,6 @@ Filesystem-based analysis utilities used by Omaikit. This package reads and writ
 
 - `ContextWriter` for `.omaikit/context.json`
 - `PlanWriter` for `.omaikit/plans/`
-- `CodeWriter` for writing generated code
 - `TestWriter` for `.omaikit/tests/`
 - `CacheManager` for `.omaikit/.analysis-cache/`
 

@@ -6,28 +6,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-// Load .env file if it exists
-function loadDotEnv(): void {
-  try {
-    const envPath = path.join(process.cwd(), '.env');
-    if (fs.existsSync(envPath)) {
-      const envContent = fs.readFileSync(envPath, 'utf-8');
-      const lines = envContent.split('\n');
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
-        const [key, ...valueParts] = trimmed.split('=');
-        const value = valueParts.join('=');
-        if (key && value) {
-          process.env[key] = value;
-        }
-      }
-    }
-  } catch (_e) {
-    // Ignore errors loading .env
-  }
-}
-
 export interface OmaikitConfig {
   openaiApiKey?: string;
   anthropicApiKey?: string;
@@ -51,10 +29,12 @@ function readConfigFile(filePath: string): OmaikitConfig {
   return {};
 }
 
+// Get global config path: ~/.omaikit/config.json
 export function getGlobalConfigPath(): string {
   return path.join(os.homedir(), '.omaikit', 'config.json');
 }
 
+// Get local config path: ./ .omaikit/config.json
 export function getLocalConfigPath(cwd: string = process.cwd()): string {
   return path.join(cwd, '.omaikit', 'config.json');
 }
@@ -74,9 +54,6 @@ export function saveConfig(
 }
 
 export function loadConfig(): OmaikitConfig {
-  // Load .env file first
-  loadDotEnv();
-
   const envCfg: OmaikitConfig = {
     managerModel: process.env.OMAIKIT_MANAGER_MODEL || 'gpt-5-mini',
     plannerModel: process.env.OMAIKIT_PLANNER_MODEL || 'gpt-5-mini',
@@ -89,8 +66,7 @@ export function loadConfig(): OmaikitConfig {
   if (process.env.ANTHROPIC_API_KEY) envCfg.anthropicApiKey = process.env.ANTHROPIC_API_KEY;
   if (process.env.OMAIKIT_PROVIDER) envCfg.provider = process.env.OMAIKIT_PROVIDER;
 
-  const globalCfg = readConfigFile(getGlobalConfigPath());
   const localCfg = readConfigFile(getLocalConfigPath());
 
-  return { ...globalCfg, ...localCfg, ...envCfg };
+  return { ...localCfg, ...envCfg };
 }

@@ -7,6 +7,12 @@ export interface AIProviderOptions {
   maxTokens?: number;
   temperature?: number;
   onProgress?: (chunk: string) => void;
+  onToolCall?: (event: {
+    name: string;
+    arguments: Record<string, unknown>;
+    result: unknown;
+  }) => void;
+  onTextResponse?: (text: string) => void;
   tools?: ToolDefinition[];
   toolRegistry?: ToolRegistry;
   toolContext?: ToolContext;
@@ -17,7 +23,7 @@ export interface AIProviderOptions {
 export interface AIProvider {
   init?(config?: Record<string, unknown>): Promise<void> | void;
   generate(prompt: string, options?: AIProviderOptions): Promise<string>;
-  generateCodex?(prompt: string, options?: AIProviderOptions): Promise<string>;
+  generateCode?(prompt: string, options?: AIProviderOptions): Promise<any>;
   close?(): Promise<void> | void;
   complete?(prompt: string): Promise<string>;
   onProgress?(callback: (chunk: string) => void): void;

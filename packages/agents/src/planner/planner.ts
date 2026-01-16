@@ -14,6 +14,8 @@ import { loadConfig, OmaikitConfig } from '@omaikit/config';
 import { AIProvider } from '../ai-provider/provider';
 
 export class Planner extends Agent {
+  public name = 'Planner';
+  
   private promptTemplates: PromptTemplates;
   private planParser: PlanParser;
   private validator: PlanValidator;
@@ -25,7 +27,6 @@ export class Planner extends Agent {
 
   constructor(logger: Logger) {
     super(logger);
-    this.name = 'Planner';
     this.promptTemplates = new PromptTemplates();
     this.planParser = new PlanParser();
     this.validator = new PlanValidator();
@@ -37,9 +38,9 @@ export class Planner extends Agent {
   async init(): Promise<void> {
     try {
       this.provider = await createProvider();
-      this.logger.info('Planner initialized with AI provider');
+      this.logger.info('Planner initialized');
     } catch (error) {
-      this.logger.warn('Could not initialize AI provider, using mock mode');
+      this.logger.warn('Could not initialize Planner, using mock mode');
     }
   }
 
@@ -171,7 +172,6 @@ export class Planner extends Agent {
         prompt,
         response: llmResponse,
       });
-      await this.memoryStore.clear(this.name);
       return result;
     } catch (error) {
       const err = error as Error;

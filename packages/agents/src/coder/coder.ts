@@ -9,8 +9,6 @@ import type { Task, CodeGeneration } from '@omaikit/models';
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { PromptTemplates } from './prompt-templates';
-import { CodeParser } from './code-parser';
-import { CodeWriter } from '@omaikit/analysis';
 import { createProvider } from '../ai-provider/factory';
 import { createDefaultToolRegistry } from '../tools/default-registry';
 import type { ToolContext } from '../tools/types';
@@ -43,12 +41,9 @@ export interface CoderAgentOutput extends AgentOutput {
 }
 
 export class CoderAgent extends Agent {
-  public name = 'coder';
-  public version = '1.0.0';
-
+  public name = 'Coder';
+  
   private promptTemplates: PromptTemplates;
-  private codeParser: CodeParser;
-  private codeWriter: CodeWriter;
   private provider?: AIProvider;
   private memoryStore: MemoryStore;
   private cfg: OmaikitConfig;
@@ -56,18 +51,15 @@ export class CoderAgent extends Agent {
   constructor(logger?: Logger) {
     super(logger);
     this.promptTemplates = new PromptTemplates();
-    this.codeParser = new CodeParser();
-    this.codeWriter = new CodeWriter();
     this.memoryStore = new MemoryStore();
     this.cfg = loadConfig();
   }
 
   async init(): Promise<void> {
-    this.logger.info('Initializing CoderAgent', { version: this.version });
     try {
       this.provider = createProvider();
     } catch (error) {
-      this.logger.warn('Could not initialize AI provider, using mock mode');
+      this.logger.warn('Could not initialize Coder, using mock mode');
     }
   }
 
@@ -101,8 +93,6 @@ export class CoderAgent extends Agent {
       // Validate input
       this.validateInput(input);
 
-      const fallbackLanguage = this.determineLanguage(input);
-
       // Generate prompt
       const prompt = await this.promptTemplates.generatePrompt(
         input.task,
@@ -125,42 +115,48 @@ export class CoderAgent extends Agent {
 
       // Call LLM via AIProvider (would be injected)
       // For now, return mock response
-      const llmResponse = await this.callLLM(finalPrompt, input, fallbackLanguage);
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt: finalPrompt,
-        response: llmResponse,
-        taskId: input.task.id,
-      });
+      const { response: llmResponse, toolCalls } = await this.callLLM(
+        finalPrompt,
+        input
+      );
+      const timestamp = new Date().toISOString();
+      const memoryEntries = [] as Array<{
+        timestamp: string;
+        prompt: string;
+        response: string;
+        taskId?: string;
+        metadata?: Record<string, unknown>;
+      }>;
 
-      // Parse generated code
-      const files = await this.codeParser.parse(llmResponse, {
-        taskTitle: input.task.title,
-        projectContext: input.projectContext,
-        fallbackLanguage,
-      });
-      this.logger.info('Code parsed', { fileCount: files.length });
+      for (const toolCall of toolCalls) {
+        memoryEntries.push({
+          timestamp,
+          prompt: finalPrompt,
+          response: JSON.stringify(toolCall),
+          taskId: input.task.id,
+          metadata: { type: 'tool_call', tool: toolCall.name },
+        });
+      }
 
-      const projectRoot = input.projectContext?.project?.rootPath || process.cwd();
-      const writtenPaths = await this.codeWriter.writeFiles(files, projectRoot);
+      if (llmResponse && llmResponse.trim().length > 0) {
+        memoryEntries.push({
+          timestamp,
+          prompt: finalPrompt,
+          response: llmResponse,
+          taskId: input.task.id,
+          metadata: { type: 'text_response' },
+        });
+      }
+
+      await this.memoryStore.appendManyUnique(this.name, memoryEntries);
 
       // Prepare output
-      output.result.files = files;
       output.result.metadata = {
         generatedAt: new Date().toISOString(),
-        model: 'mock-model',
+        model: this.cfg.coderModel,
       };
-      output.metadata.filesGenerated = files.length;
-      output.metadata.writtenPaths = writtenPaths;
-      output.metadata.totalLOC = files.reduce(
-        (sum, f) => sum + (f.content.split('\n').length || 0),
-        0,
-      );
-      output.metadata.syntaxErrors = 0;
-      output.metadata.lintingIssues = 0;
 
       await this.afterExecute(output);
-      await this.memoryStore.clear(this.name);
     } catch (error) {
       await this.onError(error as Error);
       output.status = 'failed';
@@ -168,13 +164,6 @@ export class CoderAgent extends Agent {
         code: 'CODER_ERROR',
         message: (error as Error).message,
       };
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt: output.result.prompt || '',
-        response: output.error.message,
-        taskId: input.task.id,
-        metadata: { status: 'failed' },
-      });
     }
 
     output.metadata.durationMs = Date.now() - startTime;
@@ -278,84 +267,26 @@ export class CoderAgent extends Agent {
       throw new Error('Task must have id and title');
     }
   }
-
-  /**
-   * Determine target programming language
-   */
-  private determineLanguage(input: CoderAgentInput): string {
-    const candidates: string[] = [];
-    const addCandidate = (value: unknown) => {
-      if (typeof value === 'string') {
-        candidates.push(value);
-      }
-    };
-
-    const analysisLanguages = input.projectContext?.analysis?.languages;
-    if (Array.isArray(analysisLanguages)) {
-      analysisLanguages.forEach((lang) => addCandidate(lang));
-    }
-
-    const metadataLanguages = input.projectContext?.metadata?.languages;
-    if (Array.isArray(metadataLanguages)) {
-      metadataLanguages.forEach((lang) => addCandidate(lang));
-    }
-
-    const techStack = input.plan?.techStack;
-    if (Array.isArray(techStack)) {
-      techStack.forEach((entry) => addCandidate(entry));
-    }
-
-    const projectType = input.plan?.projectType;
-    addCandidate(projectType);
-
-    for (const candidate of candidates) {
-      const normalized = this.normalizeLanguage(candidate);
-      if (normalized) {
-        return normalized;
-      }
-    }
-
-    return 'typescript';
-  }
-
-  private normalizeLanguage(value: string): string | null {
-    const normalized = value.toLowerCase();
-    if (normalized.includes('golang') || normalized === 'go') return 'go';
-    if (normalized.includes('typescript')) return 'typescript';
-    if (normalized.includes('javascript')) return 'javascript';
-    if (normalized.includes('python')) return 'python';
-    if (normalized.includes('rust')) return 'rust';
-    if (normalized.includes('c#') || normalized.includes('csharp')) return 'csharp';
-    if (normalized.includes('php')) return 'php';
-    return null;
-  }
-
+  
   /**
    * Call LLM to generate code
    */
   private async callLLM(
     prompt: string,
     input: CoderAgentInput,
-    fallbackLanguage: string,
-  ): Promise<string> {
-    if (process.env.VITEST !== undefined) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      return this.getMockGeneratedCode(fallbackLanguage, input.task);
-    }
-
-    if (!this.provider) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      return this.getMockGeneratedCode(fallbackLanguage, input.task);
-    }
-
+  ): Promise<{ response: string; toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> }> {
+    const toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> = [];
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
+    if(!this.provider) {
+      this.init();
+    }
 
-    if (!this.provider.generateCodex) {
+    if (!this.provider || !this.provider.generateCode) {
       throw new Error('AI provider does not support Codex responses API');
     }
 
-    const response = await this.provider.generateCodex(prompt, {
+    const response = await this.provider.generateCode(prompt, {
       model: this.cfg.coderModel,
       maxTokens: undefined,
       temperature: undefined,
@@ -364,145 +295,17 @@ export class CoderAgent extends Agent {
       toolContext,
       toolChoice: 'auto',
       maxToolCalls: 3,
+      onToolCall: (event) => toolCalls.push(event),
+      onTextResponse: (text) => {
+        this.logger.info('[Coder] Answered: \n' + text);
+      }
     });
 
-    if (
-      typeof response === 'string' &&
-      (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO'))
-    ) {
-      return this.getMockGeneratedCode(fallbackLanguage, input.task);
+    if (typeof response !== 'string') {
+      return { response: JSON.stringify(response ?? ''), toolCalls };
     }
 
-    return response;
-  }
-
-  /**
-   * Generate mock code for demonstration
-   */
-  private getMockGeneratedCode(language: string, task: Task): string {
-    const taskName = task.title.toLowerCase().replace(/\s+/g, '_');
-
-    switch (language) {
-      case 'python':
-        return `
-"""
-Generated module for: ${task.title}
-"""
-
-import logging
-from typing import Any
-
-logger = logging.getLogger(__name__)
-
-def ${taskName}() -> Any:
-    """${task.description}"""
-    try:
-        logger.info("Executing ${taskName}")
-        # Implementation goes here
-        return None
-    except Exception as e:
-        logger.error(f"Error in ${taskName}: {e}")
-        raise
-`;
-
-      case 'go':
-        return `
-package main
-
-import (
-    "fmt"
-    "log"
-)
-
-// ${task.title}
-func ${this.toPascalCase(taskName)}() error {
-    log.Println("Executing ${taskName}")
-    // Implementation goes here
-    return nil
-}
-`;
-
-      case 'rust':
-        return `
-//! Generated module for: ${task.title}
-
-use log::{info, error};
-
-/// ${task.description}
-pub async fn ${taskName}() -> Result<(), Box<dyn std::error::Error>> {
-    info!("Executing ${taskName}");
-    // Implementation goes here
-    Ok(())
-}
-`;
-
-      case 'csharp':
-        return `
-using System;
-using System.Logging;
-
-namespace Generated
-{
-    /// <summary>
-    /// ${task.title}
-    /// </summary>
-    public class ${this.toPascalCase(taskName)}
-    {
-        private static readonly ILogger Logger = LoggerFactory.CreateLogger<${this.toPascalCase(taskName)}>();
-
-        public static void Execute()
-        {
-            try
-            {
-                Logger.LogInformation("Executing ${taskName}");
-                // Implementation goes here
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error in ${taskName}");
-                throw;
-            }
-        }
-    }
-}
-`;
-
-      case 'typescript':
-      default:
-        return `
-/**
- * ${task.title}
- * 
- * ${task.description}
- */
-
-import { Logger } from './logger';
-
-const logger = new Logger('${taskName}');
-
-export async function ${taskName}(): Promise<void> {
-  try {
-    logger.info('Executing ${taskName}');
-    // Implementation goes here
-  } catch (error) {
-    logger.error('Error in ${taskName}', { error });
-    throw error;
-  }
-}
-
-export default ${taskName};
-`;
-    }
-  }
-
-  /**
-   * Convert string to PascalCase
-   */
-  private toPascalCase(str: string): string {
-    return str
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
+    return { response, toolCalls };
   }
 
   private buildReuseSection(input: CoderAgentInput): string | null {
@@ -532,22 +335,6 @@ export default ${taskName};
     }
 
     return normalized.map((item) => `- ${item}`).join('\n');
-  }
-
-  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
-    let timeoutId: NodeJS.Timeout | undefined;
-
-    const timeoutPromise = new Promise<null>((resolve) => {
-      timeoutId = setTimeout(() => resolve(null), timeoutMs);
-    });
-
-    const result = await Promise.race([promise, timeoutPromise]);
-
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-
-    return result as T | null;
   }
 
   private buildToolContext(input: CoderAgentInput): ToolContext {

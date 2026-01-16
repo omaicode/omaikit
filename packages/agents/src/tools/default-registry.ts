@@ -1,12 +1,16 @@
 import { ToolRegistry } from './registry';
-import { readToolDefinition, readToolHandler } from './read';
+import { readFileToolDefinition, readFileToolHandler } from './read-file';
 import { searchToolDefinition, searchToolHandler } from './search';
-import { editToolDefinition, editToolHandler } from './edit';
+import { editFileToolDefinition, editFileToolHandler } from './edit-file';
+import { applyPatchToolDefinition, applyPatchToolHandler } from './apply-patch';
+import { listFilesToolDefinition, listFilesToolHandler } from './list-files';
 
 export function createDefaultToolRegistry(): ToolRegistry {
   const registry = new ToolRegistry();
-  registry.register(readToolDefinition, readToolHandler);
+  registry.register(readFileToolDefinition, readFileToolHandler);
   registry.register(searchToolDefinition, searchToolHandler);
-  registry.register(editToolDefinition, editToolHandler);
+  registry.register(editFileToolDefinition, editFileToolHandler);
+  registry.register(applyPatchToolDefinition, applyPatchToolHandler);
+  registry.register(listFilesToolDefinition, listFilesToolHandler);
   return registry;
 }
