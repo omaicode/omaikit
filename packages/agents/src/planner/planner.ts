@@ -137,7 +137,7 @@ export class Planner extends Agent {
           toolRegistry,
           toolContext,
           toolChoice: 'auto',
-          maxToolCalls: 8,
+          maxToolCalls: 3,
           instructions,
         });        
         await this.memoryStore.append(this.name, {
