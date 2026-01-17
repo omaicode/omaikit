@@ -84,7 +84,7 @@ export class Planner extends Agent {
         : step1Prompt;
 
       this.logger.info(`Generating plan for: ${planInput.description.substring(0, 50)}...`);
-      this.emit('progress', { status: 'generating', message: 'Generating plan & milestones', percent: 10 });
+      this.emit('progress', { status: 'generating', message: 'Generating plan & milestones', percent: 20 });
 
       const toolRegistry = createDefaultToolRegistry();
       const toolContext = this.buildToolContext(planInput);
@@ -94,7 +94,7 @@ export class Planner extends Agent {
         toolRegistry,
         toolContext,
         toolChoice: 'auto',
-        maxToolCalls: 8,
+        maxToolCalls: 3,
       });
       await this.memoryStore.append(this.name, {
         timestamp: new Date().toISOString(),
@@ -103,60 +103,52 @@ export class Planner extends Agent {
         metadata: { step: 'plan_milestones' },
       });
 
-      this.emit('progress', { status: 'generating', message: 'Generating tasks', percent: 30 });
-      const step2Prompt = this.promptTemplates.generateTasksPrompt(step1Response);
-      const step2Response = await this.provider.generate(step2Prompt, {
-        model: this.cfg.plannerModel,
-        tools: toolRegistry.getDefinitions(),
-        toolRegistry,
-        toolContext,
-        toolChoice: 'auto',
-        maxToolCalls: 8,
-      });
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt: step2Prompt,
-        response: step2Response,
-        metadata: { step: 'tasks' },
-      });
+      const projectContext = await this.contextWriter.readContext();
+      if (!projectContext) {
+        throw new Error('Project context file not found or invalid');
+      }      
 
-      this.emit('progress', { status: 'optimizing', message: 'Optimizing plan', percent: 60 });
-      const step3Prompt = this.promptTemplates.generateOptimizePrompt(step2Response);
-      const step3Response = await this.provider.generate(step3Prompt, {
-        model: this.cfg.plannerModel,
-        tools: toolRegistry.getDefinitions(),
-        toolRegistry,
-        toolContext,
-        toolChoice: 'auto',
-        maxToolCalls: 8
-      });
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt: step3Prompt,
-        response: step3Response,
-        metadata: { step: 'optimize' },
-      });
+      const planFile = this.getLatestPlanFile();
+      if (!planFile) {
+        throw new Error('Planner did not create a plan file');
+      }     
+
+      const planFromFile = await this.planWriter.readPlan(planFile);
+      if (!planFromFile) {
+        throw new Error('Plan file not found or invalid');
+      }      
+
+      for(const m of planFromFile.milestones) {
+        const percent =
+          20 +
+          Math.floor(((planFromFile.milestones.indexOf(m) + 1) / planFromFile.milestones.length) * 80);
+        this.emit('progress', {
+          status: 'generating',
+          message: `Generating tasks for Milestone: ${m.title}`,
+          percent,
+        });        
+        const taskPrompt = this.promptTemplates.generateTasksPrompt(projectContext, planFromFile, m);
+        const taskResp = await this.provider.generate(taskPrompt, {
+          model: this.cfg.plannerModel,
+          tools: toolRegistry.getDefinitions(),
+          toolRegistry,
+          toolContext,
+          toolChoice: 'auto',
+          maxToolCalls: 8,
+        });        
+        await this.memoryStore.append(this.name, {
+          timestamp: new Date().toISOString(),
+          prompt: taskPrompt,
+          response: taskResp,
+          metadata: { step: 'tasks' },
+        });        
+      }
 
       this.emit('progress', {
         status: 'complete',
         message: 'Plan generation complete',
         percent: 100,
       });
-
-      const planFile = this.getLatestPlanFile();
-      if (!planFile) {
-        throw new Error('Planner did not create a plan file');
-      }
-
-      const projectContext = await this.contextWriter.readContext();
-      if (!projectContext) {
-        throw new Error('Project context file not found or invalid');
-      }
-
-      const planFromFile = await this.planWriter.readPlan(planFile);
-      if (!planFromFile) {
-        throw new Error('Plan file not found or invalid');
-      }
 
       const plan = this.planParser.parse(JSON.stringify(planFromFile));
       const result: AgentOutput = {
@@ -167,12 +159,6 @@ export class Planner extends Agent {
       };
 
       await this.afterExecute(result);
-      await this.memoryStore.append(this.name, {
-        timestamp: new Date().toISOString(),
-        prompt,
-        response: step3Response,
-        metadata: { step: 'final' },
-      });
       return result;
     } catch (error) {
       const err = error as Error;
@@ -194,81 +180,12 @@ export class Planner extends Agent {
     }
   }
 
-  private buildProjectContext(input: any) {
-    const languages = this.inferLanguages(input.techStack);
-    return {
-      name: input.projectName || 'omaikit-project',
-      root: input.rootPath || process.cwd(),
-      modules: [],
-      dependencyGraph: { modules: {}, edges: [] },
-      metadata: {
-        totalLOC: 0,
-        fileCount: 0,
-        languages,
-        dependencies: this.inferDependencies(input.techStack),
-      },
-      codePatterns: {
-        namingConventions: {
-          variables: 'camelCase',
-          functions: 'camelCase',
-          classes: 'PascalCase',
-          constants: 'UPPER_SNAKE_CASE',
-          files: 'kebab-case',
-        },
-        errorHandling: { pattern: 'try-catch', examples: [] },
-        structuralPattern: {
-          modulesPerFeature: 2,
-          averageModuleSize: 'medium',
-          organizationStyle: 'by-feature',
-        },
-        comments: { docstringFormat: 'jsdoc', commentCoverage: 0 },
-        testOrganization: { colocated: true, pattern: '__tests__' },
-      },
-    };
-  }
-
   private buildToolContext(input: any): ToolContext {
     return {
       rootPath: input.rootPath || input.projectRoot || process.cwd(),
       cwd: process.cwd(),
       logger: this.logger,
     };
-  }
-
-  private inferLanguages(techStack?: string[]): string[] {
-    if (!Array.isArray(techStack) || techStack.length === 0) {
-      return ['typescript'];
-    }
-
-    const normalized = techStack.map((t) => t.toLowerCase());
-    const languages = new Set<string>();
-    if (normalized.some((t) => t.includes('typescript') || t === 'ts')) languages.add('typescript');
-    if (normalized.some((t) => t.includes('javascript') || t === 'js' || t.includes('node')))
-      languages.add('javascript');
-    if (normalized.some((t) => t.includes('python') || t === 'py')) languages.add('python');
-    if (normalized.some((t) => t.includes('go') || t.includes('golang'))) languages.add('go');
-    if (normalized.some((t) => t.includes('rust'))) languages.add('rust');
-    if (normalized.some((t) => t.includes('c#') || t.includes('csharp'))) languages.add('csharp');
-    if (normalized.some((t) => t.includes('php'))) languages.add('php');
-
-    return languages.size > 0 ? Array.from(languages) : ['typescript'];
-  }
-
-  private inferDependencies(techStack?: string[]): string[] {
-    if (!Array.isArray(techStack)) {
-      return [];
-    }
-
-    const deps = new Set<string>();
-    techStack.forEach((entry) => {
-      const normalized = entry.toLowerCase();
-      if (normalized.includes('express')) deps.add('express');
-      if (normalized.includes('react')) deps.add('react');
-      if (normalized.includes('nestjs')) deps.add('@nestjs/core');
-      if (normalized.includes('prisma')) deps.add('prisma');
-    });
-
-    return Array.from(deps);
   }
 
   private getLatestPlanFile(): string | undefined {

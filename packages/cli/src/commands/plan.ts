@@ -22,6 +22,15 @@ function formatPlanId(index: number): string {
   return `P${String(index).padStart(3, '0')}`;
 }
 
+function getLatestPlanFilename(planDir: string): string | undefined {
+  const existing = getExistingPlanIndices(planDir);
+  if (!existing.length) {
+    return undefined;
+  }
+  const latest = Math.max(...existing);
+  return `${formatPlanId(latest)}.json`;
+}
+
 function getExistingPlanIndices(planDir: string): number[] {
   if (!fs.existsSync(planDir)) {
     return [];
@@ -30,26 +39,6 @@ function getExistingPlanIndices(planDir: string): number[] {
     .readdirSync(planDir)
     .map((file) => parsePlanIndex(file))
     .filter((value): value is number => value !== null);
-}
-
-function resolvePlanIndex(
-  planDir: string,
-  options?: { mode?: 'new' | 'update'; planId?: string },
-): number {
-  const existing = getExistingPlanIndices(planDir);
-  const maxExisting = existing.length ? Math.max(...existing) : 0;
-
-  if (options?.mode === 'update') {
-    if (options?.planId) {
-      const parsed = parsePlanIndex(options.planId) ?? Number.parseInt(options.planId, 10);
-      if (!Number.isNaN(parsed)) {
-        return parsed;
-      }
-    }
-    return maxExisting >= 1 ? maxExisting : 1;
-  }
-
-  return maxExisting >= 1 ? maxExisting + 1 : 1;
 }
 
 export async function planCommand(
@@ -145,30 +134,13 @@ export async function planCommand(
       fs.mkdirSync(PLAN_DIR, { recursive: true });
     }
 
-    const planIndex = resolvePlanIndex(PLAN_DIR, options);
-    const planId = formatPlanId(planIndex);
-    const archiveFilename = `plans/${planId}.json`;
+    const latestPlanFilename = getLatestPlanFilename(PLAN_DIR);
+    const latestArchiveFilename = latestPlanFilename
+      ? `plans/${latestPlanFilename}`
+      : `plans/${formatPlanId(1)}.json`;
 
-    // Save plan
-    let filepath: string;
-    if (options?.output && path.isAbsolute(options.output)) {
-      const dirPath = path.dirname(options.output);
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-      fs.writeFileSync(
-        options.output,
-        JSON.stringify({ ...planOutput, id: planId }, null, 2),
-        'utf-8',
-      );
-      filepath = options.output;
-    } else {
-      const target = options?.output || archiveFilename;
-      filepath = await writer.writePlan({ ...planOutput, id: planId }, target);
-    }
-    console.log(green(`✓ Plan saved to ${filepath}`));
-
-    const planForSummary = (await writer.readPlan(filepath)) || plan;
+    console.log(green(`✓ Plan saved to ${latestArchiveFilename}`));
+    const planForSummary = (await writer.readPlan(latestArchiveFilename)) || plan;
 
     // Display summary
     console.log('');

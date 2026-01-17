@@ -21,8 +21,25 @@ export class PromptTemplates {
     });
   }
 
-  generateTasksPrompt(planWithMilestones: string): string {
-    return readPrompt('planner.tasks', { planWithMilestones });
+  generateTasksPrompt(context: any, plan: any, milestone: any): string {
+    const languages = Array.isArray(context?.analysis?.languages)
+      ? context.analysis.languages.join(', ')
+      : 'unknown';
+
+    const summary = [
+      `Project Name: ${context?.project.name || 'Unknown project'}`,
+      `Project Description: ${context?.project?.description || 'No description provided.'}`,
+      `Project Root Path: ${context?.project?.rootPath || 'Unknown root path'}`,
+      `Languages Used: ${languages}`,
+      `Current Plan ID: ${plan?.id || 'P001'}`,
+      `Current Plan Title: ${plan?.title || 'No plan title provided.'}`,
+      `Current Plan Description: ${plan?.description || 'No plan description provided.'}`,
+      `Current Milestone ID: ${milestone.id || 'M001'}`,
+      `Current Milestone Title: ${milestone.title}`,
+      `Current Milestone Description: ${milestone.description || 'No description provided.'}`,
+    ].join('\n');
+
+    return readPrompt('planner.tasks', { summary });
   }
 
   generateOptimizePrompt(fullPlan: string): string {

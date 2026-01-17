@@ -131,7 +131,7 @@ export class ManagerAgent extends Agent {
       toolRegistry: this.toolRegistry,
       toolContext,
       toolChoice: 'auto',
-      maxToolCalls: 8,
+      maxToolCalls: 3,
     });
 
     await this.memoryStore.append(this.name, {

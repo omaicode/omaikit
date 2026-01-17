@@ -86,6 +86,7 @@ export class OpenAIProvider implements AIProvider {
       }
       // console.log(toolCalls);
       const toolOutputs = await this.processToolCalls(toolCalls, options);
+      // console.log(toolOutputs);
       input = [{ role: 'user', content: prompt }, ...toolOutputs];
     }
 

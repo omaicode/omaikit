@@ -7,6 +7,8 @@ export interface RiskFactor {
 
 export interface Task {
   id: string;
+  plan_id?: string;
+  milestone_id?: string;
   title: string;
   description: string;
   type: 'feature' | 'refactor' | 'bugfix' | 'test' | 'documentation' | 'infrastructure';

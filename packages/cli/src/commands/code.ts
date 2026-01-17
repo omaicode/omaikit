@@ -67,6 +67,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
     }
 
     const tasks = selectTasks(plan, options?.taskId);
+    
     if (tasks.length === 0) {
       const err = formatError('CODE_COMMAND_ERROR', 'No matching tasks found in plan.');
       printError(err);
@@ -147,11 +148,43 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 }
 
 function selectTasks(plan: Plan, taskId?: string): Task[] {
-  const tasks = plan.milestones.flatMap((milestone) => milestone.tasks || []);
+  const tasksDir = path.join('.omaikit', 'tasks');
+  const taskFiles = fs.existsSync(tasksDir)
+    ? fs.readdirSync(tasksDir).filter((file) => file.endsWith('.json'))
+    : [];
+
+  const allTasks: Task[] = [];
+  for (const file of taskFiles) {
+    const filePath = path.join(tasksDir, file);
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(content) as Task & {
+        plan_id?: string;
+        milestone_id?: string;
+      };
+
+      if (!parsed || typeof parsed !== 'object') continue;
+      if (!parsed.id || !parsed.plan_id || !parsed.milestone_id) continue;
+      allTasks.push(parsed as Task);
+    } catch {
+      // skip invalid JSON
+    }
+  }
+
+  const planId = plan.id;
+  const tasks = plan.milestones
+    .flatMap((milestone) =>
+      allTasks.filter(
+        (task) => task.plan_id === planId && task.milestone_id === milestone.id,
+      ),
+    )
+    .sort((a, b) => a.id.localeCompare(b.id));
+
   if (taskId) {
     const match = tasks.find((t) => t.id === taskId || t.title === taskId);
     return match ? [match] : [];
   }
+
   return tasks;
 }
 

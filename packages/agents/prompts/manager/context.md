@@ -3,7 +3,7 @@ Use tools to read key files (package.json, README, config files) and search_text
 Return ONLY a JSON object with this exact schema:
 {
   "project": { "name": string, "rootPath": string, "description"?: string },
-  "analysis": { "languages": string[], "fileCount": number, "totalLOC": number, "dependencies": string[] },
+  "analysis": { "languages": string[], "dependencies": string[] },
   "generatedAt": string
 }
 {{descriptionLine}}
