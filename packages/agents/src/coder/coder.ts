@@ -263,7 +263,7 @@ export class CoderAgent extends Agent {
       toolRegistry,
       toolContext,
       toolChoice: 'auto',
-      maxToolCalls: 3,
+      maxToolCalls: 8,
       onToolCall: (event: ToolCall) => {
         if(event.name === 'apply_patch_call') {
           toolCalls.push(event);
