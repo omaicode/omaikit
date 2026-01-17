@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@omaikit/agents",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AI agent implementations for Omaikit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
