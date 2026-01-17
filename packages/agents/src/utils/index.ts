@@ -3,3 +3,4 @@ export { TestWriter } from './test-writer';
 export { ContextWriter } from './context-writer';
 export { CacheManager } from './cache-manager';
 export { parseJsonFromText } from './json';
+export { readPrompt, readPromptList } from './prompt';

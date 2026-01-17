@@ -12,6 +12,7 @@ import * as path from 'path';
 import { loadConfig, OmaikitConfig } from '@omaikit/config';
 import { AIProvider } from '../ai-provider/provider';
 import { parseJsonFromText } from '../utils/json';
+import { readPrompt } from '../utils/prompt';
 
 export interface ManagerAgentInput extends AgentInput {
   rootPath?: string;
@@ -153,19 +154,8 @@ export class ManagerAgent extends Agent {
   }
 
   private buildContextPrompt(rootPath: string, description?: string): string {
-    return [
-      'You are the Manager agent. Analyze the current project using tools and produce a context.json payload.',
-      'Use tools to read key files (package.json, README, config files) and search_text the repo for languages, frameworks, and dependencies.',
-      'Return ONLY a JSON object with this exact schema:',
-      '{',
-      '  "project": { "name": string, "rootPath": string, "description"?: string },',
-      '  "analysis": { "languages": string[], "fileCount": number, "totalLOC": number, "dependencies": string[] },',
-      '  "generatedAt": string',
-      '}',
-      description ? `User request: ${description}` : 'User request: (none)',
-      `Project root: ${rootPath}`,
-      'If unsure, infer from files and keep values conservative. Do not include extra keys. Return raw JSON only.',
-    ].join('\n');
+    const descriptionLine = description ? `User request: ${description}` : 'User request: (none)';
+    return readPrompt('manager.context', { descriptionLine, rootPath });
   }
 
   private parseContextJson(response: string): Record<string, unknown> {

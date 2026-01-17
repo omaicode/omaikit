@@ -67,6 +67,11 @@ The agents use tool calls to inspect and modify files:
 - `edit_file`: overwrite/append/replace/insert file content
 - `apply_patch`: apply unified diffs and create/update/delete files
 
+## Prompts
+
+Agent prompts live under `packages/agents/prompts/<agent>/` as individual markdown files.
+The agents load prompts by name via `readPrompt()`.
+
 
 ## License
 

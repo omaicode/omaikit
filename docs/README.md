@@ -58,6 +58,17 @@ Tools are modeled with JSON-schema parameter definitions and handlers. The defau
 
 These are used inside prompts to read, search, and modify project files in a safe, root-scoped way.
 
+**Prompts**
+
+Agent prompts are stored as separate markdown files under:
+
+- `packages/agents/prompts/manager/`
+- `packages/agents/prompts/planner/`
+- `packages/agents/prompts/coder/`
+- `packages/agents/prompts/tester/`
+
+Each prompt is loaded by name using the `readPrompt()` utility (e.g., `planner.plan-milestones`).
+
 **Memory**
 
 Agents write JSONL memory under `.omaikit/memory/`. The memory store can append, dedupe, and read recent entries to improve prompt quality.

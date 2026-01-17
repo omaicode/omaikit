@@ -19,6 +19,11 @@ The agents package now also exposes file-based utilities previously shipped in t
 - `TestWriter` for `.omaikit/tests/`
 - `CacheManager` for `.omaikit/cache/`
 
+### Prompts
+
+Prompt templates are stored as separate markdown files under `packages/agents/prompts/<agent>/`.
+They are loaded by name via `readPrompt()` (for example, `planner.plan-milestones`).
+
 ### Basic Usage
 
 ```ts
