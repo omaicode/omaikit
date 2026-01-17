@@ -17,12 +17,27 @@ Tool usage requirements (mandatory):
 - Never claim you cannot access files without trying list_files and read on the root path.
 - After creating files successfully, do NOT include file contents in the response; only return the list of created file paths.
 - Output should reflect tool-based edits only.
+- Limit file edits to:
+  - Files explicitly required by this task, or
+  - Files discovered via search that are clearly related to this task's feature or module.
+- Do NOT modify unrelated modules, services, or routes, even if you see potential improvements.
+- Before changing an existing file, always:
+  - Search for its usages, and
+  - Ensure the change will not break other features not mentioned in this task.
 
 ## Task Details
 Title: {{taskTitle}}
 Description: {{taskDescription}}
 Type: {{taskType}}
 Estimated Effort: {{taskEffort}} hours
+
+## Task Isolation Rules
+- You are working **only on this task**: do not make changes that belong to other tasks or generic refactors.
+- Do NOT introduce new features, abstractions, or refactors that are not strictly required to satisfy this task's Acceptance Criteria.
+- Avoid modifying shared or core components unless absolutely necessary; if you must, keep the change minimal and directly tied to this task.
+- If a change could impact other features, prefer:
+  - Adding new, task-specific code paths, or
+  - Extending existing code in a backward-compatible way.
 
 ## Acceptance Criteria
 {{acceptanceCriteria}}
@@ -46,4 +61,12 @@ Estimated Effort: {{taskEffort}} hours
 5. Keep the code testable and maintainable
 
 ## Output Format
-Provide the generated code as a single response with file paths and content.
+- Do NOT include full file contents in the response.
+- After all tool-based edits are complete, respond with a summary in this format:
+
+Created/updated files:
+- path/to/file1.php
+- path/to/file2.php
+
+Notes:
+- Short bullet list explaining important design decisions or non-obvious behavior (max 5 bullets).

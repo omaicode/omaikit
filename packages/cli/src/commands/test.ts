@@ -15,7 +15,7 @@ function getLatestPlanFile(): string | undefined {
   }
   const indices = fs
     .readdirSync(planDir)
-    .map((file) => /^P-(\d+)\.json$/i.exec(file))
+    .map((file) => /^P(\d+)\.json$/i.exec(file))
     .filter((match): match is RegExpExecArray => match !== null)
     .map((match) => Number.parseInt(match[1], 10))
     .filter((value) => !Number.isNaN(value));
@@ -24,7 +24,8 @@ function getLatestPlanFile(): string | undefined {
     return undefined;
   }
   const latest = Math.max(...indices);
-  return path.join('plans', `P-${latest}.json`);
+  const planId = `P${String(latest).padStart(3, '0')}`;
+  return path.join('plans', `${planId}.json`);
 }
 
 export interface TestCommandOptions {

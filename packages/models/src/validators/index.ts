@@ -38,7 +38,7 @@ export const MilestoneSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   duration: z.number().int().positive('Duration must be positive'),
-  tasks: z.array(TaskSchema).min(1, 'Milestone must have at least one task'),
+  tasks: z.array(TaskSchema).optional().default([]),
   successCriteria: z.array(z.string()).min(1),
 });
 

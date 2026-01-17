@@ -5,66 +5,61 @@ Execution phases (strict):
 PHASE 1 – Discover and load the current plan:
 1. Use list_files to inspect the filesystem (starting from the project root in context).
 2. Use list_files on ".omaikit/plans" to identify existing plan files and determine N (same N used in Step 1 when the milestones-only plan was created).
-3. Use read_file on ".omaikit/plans/P-{N}.json" to:
+3. Use read_file on ".omaikit/plans/P{NNN}.json" to:
    - Confirm the current JSON structure.
    - Load the existing milestones (which currently have empty tasks arrays).
 4. Optionally use search_text ONLY to gather additional technical or structural context from other project files, but do NOT modify those files.
 
-PHASE 2 – Update tasks for each milestone:
+PHASE 2 – Create task files for each milestone:
 1. Design tasks so that:
    - Each milestone receives 3–8 tasks.
    - Tasks collectively cover design, implementation, testing, and documentation for that milestone.
    - Estimated effort is in hours (1–40).
    - Dependencies form an acyclic DAG (no circular references).
    - targetModule and affectedModules always reference real or plausible project paths (files/folders) based on the project structure.
-2. Add tasks under each milestone in the in-memory JSON object, following the exact task schema specified below.
-3. Use edit_file ONLY to update ".omaikit/plans/P-{N}.json" with the enriched JSON (same plan, now with tasks filled in).
-4. Do NOT create or edit any other files.
+2. For each task, create a separate JSON file in ".omaikit/tasks" using this filename format:
+   - T-{PLAN_ID}-{MILESTONE_ID}-{TASK_ID}.json
+3. Each task file must contain ONLY the task JSON payload (no wrappers).
+4. Do NOT modify ".omaikit/plans/P{NNN}.json" in this step.
 
 Tool usage requirements (mandatory):
 - Use list_files to list files or find files by glob pattern (start from the project root from context).
 - Use search_text to search content within files when you need project/domain context.
-- Use read_file to inspect exact file contents and confirm the current structure of ".omaikit/plans/P-{N}.json" BEFORE editing.
-- Use edit_file ONLY to add/update ".omaikit/plans/P-{N}.json". Do NOT edit any other files.
+- Use read_file to inspect exact file contents and confirm the current structure of ".omaikit/plans/P{NNN}.json" BEFORE editing.
+- Use edit_file ONLY to create or update files under ".omaikit/tasks".
 - Do NOT propose or finalize tasks without first using the tools as described in PHASE 1 and PHASE 2.
-- All writes must go through edit_file and target ONLY ".omaikit/plans/P-{N}.json".
+- Do NOT modify ".omaikit/plans/P{NNN}.json" in this step.
 
 
 Here is the current plan (milestones only, before adding tasks):
 {{planWithMilestones}}
 
-Update the plan by adding tasks under each milestone using this schema:
+Create tasks for each milestone using this schema:
 {
-  "milestones": [
+   "id": "T001",
+   "planId": "P001",
+   "milestoneId": "M001",
+  "title": "Task name",
+  "description": "Task description",
+  "type": "feature",
+  "estimatedEffort": 3,
+  "acceptanceCriteria": ["Acceptance criteria"],
+   "inputDependencies": ["T000"],
+   "outputDependencies": ["T002"],
+  "targetModule": "module-path",
+  "affectedModules": ["module-path"],
+  "suggestedApproach": "Brief implementation guidance",
+  "technicalNotes": "Optional technical notes",
+  "riskFactors": [
     {
-      "tasks": [
-        {
-          "id": "T1",
-          "title": "Task name",
-          "description": "Task description",
-          "type": "feature",
-          "estimatedEffort": 3,
-          "acceptanceCriteria": ["Acceptance criteria"],
-          "inputDependencies": ["T0"],
-          "outputDependencies": ["T2"],
-          "targetModule": "module-path",
-          "affectedModules": ["module-path"],
-          "suggestedApproach": "Brief implementation guidance",
-          "technicalNotes": "Optional technical notes",
-          "riskFactors": [
-            {
-              "description": "Risk description",
-              "likelihood": "low",
-              "impact": "medium",
-              "mitigation": "Mitigation steps"
-            }
-          ],
-          "status": "planned",
-          "blockers": []
-        }
-      ]
+      "description": "Risk description",
+      "likelihood": "low",
+      "impact": "medium",
+      "mitigation": "Mitigation steps"
     }
-  ]
+  ],
+  "status": "planned",
+  "blockers": []
 }
 
 Requirements:
@@ -85,5 +80,5 @@ Requirements:
 
 
 Final response format:
-- Return ONLY the full updated JSON of ".omaikit/plans/P-{N}.json" (original content plus tasks).
+- Return ONLY a brief confirmation message indicating the task files were created.
 - No markdown, no surrounding text, no comments.

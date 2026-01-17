@@ -5,7 +5,7 @@
  */
 
 import type { AgentInput, AgentOutput } from '../types';
-import type { Task, CodeGeneration } from '@omaikit/models';
+import type { Task, CodeGeneration, CodeFile } from '@omaikit/models';
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { PromptTemplates } from './prompt-templates';
@@ -13,7 +13,7 @@ import { createProvider } from '../ai-provider/factory';
 import { createDefaultToolRegistry } from '../tools/default-registry';
 import type { ToolContext } from '../tools/types';
 import { MemoryStore } from '../memory/memory-store';
-import { AIProvider } from '../ai-provider/provider';
+import { AIProvider, ToolCall } from '../ai-provider/provider';
 import { loadConfig, OmaikitConfig } from '@omaikit/config';
 
 export interface CoderAgentInput extends AgentInput {
@@ -100,57 +100,26 @@ export class CoderAgent extends Agent {
         input.plan,
       );
 
-      const recentMemory = await this.memoryStore.readRecent(this.name, 3);
-      const memoryContext = this.memoryStore.formatRecent(recentMemory);
-
-      const reuseSection = this.buildReuseSection(input);
       const finalPrompt = [
-        prompt,
-        memoryContext ? `## Recent Agent Memory\n${memoryContext}` : '',
-        reuseSection ? `## Reuse Opportunities\n${reuseSection}` : '',
+        prompt
       ]
-        .filter(Boolean)
-        .join('\n\n');
-      output.result.prompt = finalPrompt;
+      .filter(Boolean)
+      .join('\n\n');
 
-      // Call LLM via AIProvider (would be injected)
-      // For now, return mock response
-      const { response: llmResponse, toolCalls } = await this.callLLM(
+      output.result.prompt = finalPrompt;
+      const { toolCalls } = await this.callLLM(
         finalPrompt,
         input
       );
-      const timestamp = new Date().toISOString();
-      const memoryEntries = [] as Array<{
-        timestamp: string;
-        prompt: string;
-        response: string;
-        taskId?: string;
-        metadata?: Record<string, unknown>;
-      }>;
 
-      for (const toolCall of toolCalls) {
-        memoryEntries.push({
-          timestamp,
-          prompt: finalPrompt,
-          response: JSON.stringify(toolCall),
-          taskId: input.task.id,
-          metadata: { type: 'tool_call', tool: toolCall.name },
-        });
-      }
-
-      if (llmResponse && llmResponse.trim().length > 0) {
-        memoryEntries.push({
-          timestamp,
-          prompt: finalPrompt,
-          response: llmResponse,
-          taskId: input.task.id,
-          metadata: { type: 'text_response' },
-        });
-      }
-
-      await this.memoryStore.appendManyUnique(this.name, memoryEntries);
-
-      // Prepare output
+      output.result.files = toolCalls.map((call) => {
+        const args = call.arguments as Record<string, unknown>;
+        return {
+          path: args.path || 'unknown',
+          content: String(args.diff || ''), 
+        };
+      }) as CodeFile[];
+      
       output.result.metadata = {
         generatedAt: new Date().toISOString(),
         model: this.cfg.coderModel,
@@ -274,12 +243,12 @@ export class CoderAgent extends Agent {
   private async callLLM(
     prompt: string,
     input: CoderAgentInput,
-  ): Promise<{ response: string; toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> }> {
-    const toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> = [];
+  ): Promise<{ response: string; toolCalls: Array<ToolCall> }> {
+    const toolCalls: Array<ToolCall> = [];
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
     if(!this.provider) {
-      this.init();
+      await this.init();
     }
 
     if (!this.provider) {
@@ -295,15 +264,23 @@ export class CoderAgent extends Agent {
       toolContext,
       toolChoice: 'auto',
       maxToolCalls: 3,
-      onToolCall: (event) => toolCalls.push(event),
+      onToolCall: (event: ToolCall) => toolCalls.push(event),
       onTextResponse: (text) => {
-        this.logger.info('[Coder] Answered: \n' + text + '\n');
+        this.logger.info(text + '\n');
       },
     });
 
     if (typeof response !== 'string') {
       return { response: JSON.stringify(response ?? ''), toolCalls };
     }
+
+    this.memoryStore.append(this.name, {
+      timestamp: new Date().toISOString(),
+      prompt,
+      response,
+      taskId: input.task.id,
+      metadata: { type: 'llm_response' },
+    });
 
     return { response, toolCalls };
   }

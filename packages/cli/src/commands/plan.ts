@@ -11,11 +11,15 @@ import { formatError, printError } from '../utils/error-formatter';
 const PLAN_DIR = path.join('.omaikit', 'plans');
 
 function parsePlanIndex(filename: string): number | null {
-  const match = /^P-(\d+)(?:\.json)?$/i.exec(filename);
+  const match = /^P(\d+)(?:\.json)?$/i.exec(filename);
   if (!match) {
     return null;
   }
   return Number.parseInt(match[1], 10);
+}
+
+function formatPlanId(index: number): string {
+  return `P${String(index).padStart(3, '0')}`;
 }
 
 function getExistingPlanIndices(planDir: string): number[] {
@@ -33,7 +37,7 @@ function resolvePlanIndex(
   options?: { mode?: 'new' | 'update'; planId?: string },
 ): number {
   const existing = getExistingPlanIndices(planDir);
-  const maxExisting = existing.length ? Math.max(...existing) : -1;
+  const maxExisting = existing.length ? Math.max(...existing) : 0;
 
   if (options?.mode === 'update') {
     if (options?.planId) {
@@ -42,10 +46,10 @@ function resolvePlanIndex(
         return parsed;
       }
     }
-    return maxExisting >= 0 ? maxExisting : 0;
+    return maxExisting >= 1 ? maxExisting : 1;
   }
 
-  return maxExisting + 1;
+  return maxExisting >= 1 ? maxExisting + 1 : 1;
 }
 
 export async function planCommand(
@@ -142,7 +146,7 @@ export async function planCommand(
     }
 
     const planIndex = resolvePlanIndex(PLAN_DIR, options);
-    const planId = `P-${planIndex}`;
+    const planId = formatPlanId(planIndex);
     const archiveFilename = `plans/${planId}.json`;
 
     // Save plan
@@ -164,27 +168,33 @@ export async function planCommand(
     }
     console.log(green(`✓ Plan saved to ${filepath}`));
 
+    const planForSummary = (await writer.readPlan(filepath)) || plan;
+
     // Display summary
     console.log('');
     console.log(bold('📋 Plan Summary'));
     console.log(bold('═'.repeat(40)));
-    console.log(`Title: ${cyan(plan.title)}`);
-    console.log(`Milestones: ${plan.milestones.length}`);
+    console.log(`Title: ${cyan(planForSummary.title)}`);
+    console.log(`Milestones: ${planForSummary.milestones.length}`);
 
-    const totalTasks = plan.milestones.reduce((sum: number, m: any) => sum + m.tasks.length, 0);
+    const totalTasks = planForSummary.milestones.reduce(
+      (sum: number, m: any) => sum + (m.tasks?.length ?? 0),
+      0,
+    );
     console.log(`Total Tasks: ${totalTasks}`);
 
-    const totalEffort = plan.milestones.reduce(
+    const totalEffort = planForSummary.milestones.reduce(
       (sum: number, m: any) =>
-        sum + m.tasks.reduce((ts: number, t: any) => ts + (t.estimatedEffort ?? t.effort ?? 0), 0),
+        sum +
+        (m.tasks || []).reduce((ts: number, t: any) => ts + (t.estimatedEffort ?? t.effort ?? 0), 0),
       0,
     );
     console.log(`Total Effort: ${totalEffort} hours (~${Math.ceil(totalEffort / 8)} days)`);
 
     console.log('');
     console.log(bold('Milestones:'));
-    for (const milestone of plan.milestones) {
-      const milestoneEffort = milestone.tasks.reduce(
+    for (const milestone of planForSummary.milestones) {
+      const milestoneEffort = (milestone.tasks || []).reduce(
         (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),
         0,
       );
@@ -192,13 +202,13 @@ export async function planCommand(
         `  ${cyan('→')} ${milestone.title} (${milestone.duration}d, ${milestoneEffort}h)`,
       );
 
-      for (const task of milestone.tasks.slice(0, 3)) {
+      for (const task of (milestone.tasks || []).slice(0, 3)) {
         const effort = task.estimatedEffort ?? task.effort ?? 0;
         console.log(`    ${yellow('•')} ${task.title} (${effort}h)`);
       }
 
-      if (milestone.tasks.length > 3) {
-        console.log(`    ${yellow('•')} ... and ${milestone.tasks.length - 3} more`);
+      if ((milestone.tasks || []).length > 3) {
+        console.log(`    ${yellow('•')} ... and ${(milestone.tasks || []).length - 3} more`);
       }
     }
 

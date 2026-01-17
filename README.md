@@ -67,6 +67,11 @@ The agents use tool calls to inspect and modify files:
 - `edit_file`: overwrite/append/replace/insert file content
 - `apply_patch`: apply unified diffs and create/update/delete files
 
+## Planner Output
+
+Plans are stored in `.omaikit/plans/P001.json` (P### format) without embedded tasks. Tasks are stored as
+individual files in `.omaikit/tasks/` using the format `T-{PLAN_ID}-{MILESTONE_ID}-{TASK_ID}.json`.
+
 ## Prompts
 
 Agent prompts live under `packages/agents/prompts/<agent>/` as individual markdown files.

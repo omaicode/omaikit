@@ -7,7 +7,7 @@ Omaikit is a multi-agent CLI toolkit that accelerates software development by or
 The core workflow is:
 
 1. **Init** – analyze the project and write `.omaikit/context.json`.
-2. **Plan** – generate a structured plan `.omaikit/plans/P-N.json`.
+2. **Plan** – generate a structured plan `.omaikit/plans/P001.json` (P### format, milestones only).
 3. **Code** – generate code from plan tasks into the project root.
 4. **Test** – generate test suites under `.omaikit/tests/`.
 5. **Review** – (placeholder) review generated code.
@@ -84,7 +84,7 @@ Implements CLI commands and a small orchestration framework.
 **Commands**
 
 - `init`: Ensures API keys, runs ManagerAgent, writes context.
-- `plan`: Runs Planner, writes plan to `.omaikit/plans/P-N.json`, prints summary.
+- `plan`: Runs Planner, writes plan to `.omaikit/plans/P001.json`, prints summary.
 - `code`: Reads plan, invokes CoderAgent for tasks, summarizes output.
 - `test`: Reads plan, invokes TesterAgent, writes tests and summary.
 
@@ -117,7 +117,8 @@ Defines shared data structures and validation schemas.
 The CLI and agents create artifacts in `.omaikit/` at the project root:
 
 - `.omaikit/context.json` – project analysis
-- `.omaikit/plans/P-N.json` – generated plans
+- `.omaikit/plans/P001.json` – generated plans (P### format)
+- `.omaikit/tasks/` – task files per milestone
 - `.omaikit/tests/` – generated tests
 - `.omaikit/memory/` – agent memory (JSONL)
 - `.omaikit/cache/` – cache entries

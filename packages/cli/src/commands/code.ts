@@ -14,7 +14,7 @@ function getLatestPlanFile(): string | undefined {
   }
   const indices = fs
     .readdirSync(planDir)
-    .map((file) => /^P-(\d+)\.json$/i.exec(file))
+    .map((file) => /^P(\d+)\.json$/i.exec(file))
     .filter((match): match is RegExpExecArray => match !== null)
     .map((match) => Number.parseInt(match[1], 10))
     .filter((value) => !Number.isNaN(value));
@@ -23,7 +23,8 @@ function getLatestPlanFile(): string | undefined {
     return undefined;
   }
   const latest = Math.max(...indices);
-  return path.join('plans', `P-${latest}.json`);
+  const planId = `P${String(latest).padStart(3, '0')}`;
+  return path.join('plans', `${planId}.json`);
 }
 
 export interface CodeCommandOptions {
@@ -38,7 +39,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
   const coder = new CoderAgent(logger);
   const planWriter = new PlanWriter();
   const contextWriter = new ContextWriter();
-  const progress = new ProgressBar(50);
+  const progress = new ProgressBar(100);
 
   try {
     console.log(cyan('🧩 Generating code from plan...'));
@@ -78,7 +79,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
     const writtenPaths: string[] = [];
     let generatedLOC = 0;
     let filesCreated = 0;
-    const newDependencies = new Set<string>();
 
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
@@ -107,7 +107,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
       files.forEach((file) => {
         filesCreated += 1;
         generatedLOC += file.content.split('\n').length;
-        (file.dependencies || []).forEach((dep) => newDependencies.add(dep));
       });
 
       files.forEach((file) => {
@@ -133,7 +132,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
     console.log(bold('═'.repeat(40)));
     console.log(`Files Created: ${filesCreated}`);
     console.log(`Total LOC: ${generatedLOC}`);
-    console.log(`Dependencies: ${Array.from(newDependencies).length}`);
 
     console.log('');
     console.log(green('✨ Next steps:'));

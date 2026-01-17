@@ -1,4 +1,4 @@
-import { AIProvider, AIProviderOptions } from './provider';
+import { AIProvider, AIProviderOptions, ToolCall } from './provider';
 import { ToolDefinition } from '../tools/types';
 import OpenAI from 'openai';
 import { Tool } from 'openai/resources/responses/responses';
@@ -76,7 +76,6 @@ export class OpenAIProvider implements AIProvider {
         options.onTextResponse(lastContent);
       }
 
-      // console.log('Extracted tool calls:', toolCalls);
       const toolCalls = this.extractToolCalls(response);
       if (toolCalls.length === 0) {
         continue;
@@ -85,6 +84,7 @@ export class OpenAIProvider implements AIProvider {
       if (!options?.toolRegistry) {
         throw new Error('Tool calls requested but no tool registry provided');
       }
+
       const toolOutputs = await this.processToolCalls(toolCalls, options);
       input = [{ role: 'user', content: prompt }, ...toolOutputs];
     }
@@ -138,7 +138,7 @@ export class OpenAIProvider implements AIProvider {
   }
 
   private async processToolCalls(
-    toolCalls: Array<{ id: string; name: string; arguments: string; call_id: string }>,
+    toolCalls: Array<ToolCall>,
     options?: AIProviderOptions,
   ): Promise<
     Array<{
@@ -158,10 +158,9 @@ export class OpenAIProvider implements AIProvider {
       call_id: string;
       status: 'completed' | 'failed' | 'incomplete' | 'in_progress';
     }> = [];
-    console.log('Processing tool calls:', toolCalls);
+
     for (const toolCall of toolCalls) {
       let type = 'function_call_output';
-      let status: 'completed' | 'failed' | 'incomplete' | 'in_progress' = 'completed';
       let args: any = parseToolArgs(toolCall.arguments);
 
       if (toolCall.name === 'apply_patch_call') {
@@ -175,23 +174,15 @@ export class OpenAIProvider implements AIProvider {
         options.toolContext ?? {},
       );
 
-      status = toolCall.name === 'apply_patch_call'
-        ? result.ok
-          ? 'completed'
-          : 'incomplete'
-        : result.ok
-          ? 'completed'
-          : 'failed';
-
       if (options?.onToolCall) {
-        options.onToolCall({ name: toolCall.name, arguments: args, result });
+        options.onToolCall(toolCall);
       }
 
       toolOutputs.push({
         type,
         call_id: toolCall.call_id,
         output: JSON.stringify(result),
-        status,
+        status: 'completed',
       });
     }
 
@@ -200,8 +191,8 @@ export class OpenAIProvider implements AIProvider {
 
   private extractToolCalls(
     response: unknown,
-  ): Array<{ id: string; name: string; arguments: string; call_id: string }> {
-    const toolCalls: Array<{ id: string; name: string; arguments: string; call_id: string }> = [];
+  ): Array<{ id: string; name: string; arguments: Record<string, unknown> | string; call_id: string }> {
+    const toolCalls: Array<ToolCall> = [];
     const output = (response as any)?.output as Array<any> | undefined;
     if (!output) {
       return toolCalls;

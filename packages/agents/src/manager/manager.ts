@@ -38,7 +38,6 @@ export class ManagerAgent extends Agent {
   async init(): Promise<void> {
     try {
       this.provider = await createProvider();
-      this.logger.info('Manager initialized');
     } catch (error) {
       this.logger.warn('Could not initialize AI provider, manager is offline');
     }

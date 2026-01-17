@@ -1,17 +1,20 @@
 import { ToolDefinition, ToolContext } from '../tools/types';
 import { ToolRegistry } from '../tools/registry';
 
+export interface ToolCall {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown> | string;
+  call_id: string;
+}
+
 export interface AIProviderOptions {
   model?: string;
   stream?: boolean;
   maxTokens?: number;
   temperature?: number;
   onProgress?: (chunk: string) => void;
-  onToolCall?: (event: {
-    name: string;
-    arguments: Record<string, unknown>;
-    result: unknown;
-  }) => void;
+  onToolCall?: (event: ToolCall) => void;
   onTextResponse?: (text: string) => void;
   tools?: ToolDefinition[];
   toolRegistry?: ToolRegistry;

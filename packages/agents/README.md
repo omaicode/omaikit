@@ -19,6 +19,9 @@ The agents package now also exposes file-based utilities previously shipped in t
 - `TestWriter` for `.omaikit/tests/`
 - `CacheManager` for `.omaikit/cache/`
 
+Plan tasks are stored separately in `.omaikit/tasks/` using the format
+`T-{PLAN_ID}-{MILESTONE_ID}-{TASK_ID}.json`.
+
 ### Prompts
 
 Prompt templates are stored as separate markdown files under `packages/agents/prompts/<agent>/`.

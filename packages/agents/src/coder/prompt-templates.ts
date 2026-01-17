@@ -10,7 +10,7 @@ export class PromptTemplates {
    * Generate a prompt for code generation
    */
   async generatePrompt(task: Task, projectContext: any, plan: any): Promise<string> {
-    const contextSummary = this.formatContextSummary(projectContext, plan);
+    const contextSummary = this.formatContextSummary(projectContext, plan, task);
     const acceptanceCriteria = task.acceptanceCriteria.map((c) => `- ${c}`).join('\n');
 
     return readPrompt('coder.task', {
@@ -23,7 +23,7 @@ export class PromptTemplates {
     });
   }
 
-  private formatContextSummary(projectContext: any, plan: any): string {
+  private formatContextSummary(projectContext: any, plan: any, task: Task): string {
     const project = projectContext?.project ?? projectContext;
     const analysis = projectContext?.analysis ?? {};
     const name = project?.name || 'Unknown project';
@@ -32,8 +32,6 @@ export class PromptTemplates {
       ? `Description: ${project.description}`
       : 'Description: (none)';
     const languages = Array.isArray(analysis.languages) ? analysis.languages.join(', ') : 'unknown';
-    const fileCount = typeof analysis.fileCount === 'number' ? analysis.fileCount : 'unknown';
-    const totalLOC = typeof analysis.totalLOC === 'number' ? analysis.totalLOC : 'unknown';
     const dependencies = Array.isArray(analysis.dependencies)
       ? analysis.dependencies.slice(0, 12).join(', ')
       : 'unknown';
@@ -45,8 +43,21 @@ export class PromptTemplates {
       description,
       planTitle,
       `Languages: ${languages}`,
-      `Files: ${fileCount}, LOC: ${totalLOC}`,
       `Dependencies (sample): ${dependencies}`,
+      `Target Module: ${task.targetModule || 'unknown'}`,
+      `Affected Modules: ${Array.isArray(task.inputDependencies) ? task.inputDependencies.join(', ') : 'unknown'}`,
+      `Suggested Approach: ${task.suggestedApproach || 'none'}`,
+      `Technical Notes: ${task.technicalNotes || 'none'}`,
+      `Risk Factors: ${this.formatRiskFactors(task.riskFactors)}`,
     ].join('\n');
+  }
+
+  private formatRiskFactors(riskFactors: {description: string; likelihood: string; impact: string; mitigation: string}[] | undefined): string {
+    if (!riskFactors || riskFactors.length === 0) {
+      return 'None';
+    }
+    return riskFactors.map((rf, idx) => {
+      return `\n${idx + 1}. Description: ${rf.description}\n   Likelihood: ${rf.likelihood}\n   Impact: ${rf.impact}\n   Mitigation: ${rf.mitigation}`;
+    }).join('\n');
   }
 }

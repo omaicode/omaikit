@@ -5,21 +5,22 @@ import { AgentInput, AgentOutput } from '../types';
 import { createProvider } from '../ai-provider/factory';
 import { PromptTemplates } from './prompt-templates';
 import { PlanParser } from './plan-parser';
-import { PlanValidator } from './plan-validator';
-import { ClarificationHandler } from './clarification-handler';
 import { createDefaultToolRegistry } from '../tools/default-registry';
 import { MemoryStore } from '../memory/memory-store';
 import type { ToolContext } from '../tools/types';
 import { loadConfig, OmaikitConfig } from '@omaikit/config';
 import { AIProvider } from '../ai-provider/provider';
+import { ContextWriter, PlanWriter } from '../utils';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class Planner extends Agent {
   public name = 'Planner';
   
   private promptTemplates: PromptTemplates;
   private planParser: PlanParser;
-  private validator: PlanValidator;
-  private clarificationHandler: ClarificationHandler;
+  private planWriter: PlanWriter;
+  private contextWriter: ContextWriter;
   private provider?: AIProvider;
   private progressCallbacks: Array<(event: any) => void> = [];
   private memoryStore: MemoryStore;
@@ -29,8 +30,8 @@ export class Planner extends Agent {
     super(logger);
     this.promptTemplates = new PromptTemplates();
     this.planParser = new PlanParser();
-    this.validator = new PlanValidator();
-    this.clarificationHandler = new ClarificationHandler();
+    this.planWriter = new PlanWriter();
+    this.contextWriter = new ContextWriter();
     this.memoryStore = new MemoryStore();
     this.cfg = loadConfig();
   }
@@ -142,8 +143,22 @@ export class Planner extends Agent {
         percent: 100,
       });
 
-      const projectContext = this.buildProjectContext(planInput);
-      const plan = await this.planParser.parse(step3Response);
+      const planFile = this.getLatestPlanFile();
+      if (!planFile) {
+        throw new Error('Planner did not create a plan file');
+      }
+
+      const projectContext = await this.contextWriter.readContext();
+      if (!projectContext) {
+        throw new Error('Project context file not found or invalid');
+      }
+
+      const planFromFile = await this.planWriter.readPlan(planFile);
+      if (!planFromFile) {
+        throw new Error('Plan file not found or invalid');
+      }
+
+      const plan = this.planParser.parse(JSON.stringify(planFromFile));
       const result: AgentOutput = {
         data: {
           plan,
@@ -254,5 +269,27 @@ export class Planner extends Agent {
     });
 
     return Array.from(deps);
+  }
+
+  private getLatestPlanFile(): string | undefined {
+    const planDir = path.join('.omaikit', 'plans');
+    if (!fs.existsSync(planDir)) {
+      return undefined;
+    }
+
+    const indices = fs
+      .readdirSync(planDir)
+      .map((file) => /^P(\d+)\.json$/i.exec(file))
+      .filter((match): match is RegExpExecArray => match !== null)
+      .map((match) => Number.parseInt(match[1], 10))
+      .filter((value) => !Number.isNaN(value));
+
+    if (indices.length === 0) {
+      return undefined;
+    }
+
+    const latest = Math.max(...indices);
+    const planId = `P${String(latest).padStart(3, '0')}`;
+    return path.join('plans', `${planId}.json`);
   }
 }
