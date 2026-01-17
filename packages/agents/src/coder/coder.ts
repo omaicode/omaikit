@@ -119,7 +119,7 @@ export class CoderAgent extends Agent {
           content: String(args.diff || ''), 
         };
       }) as CodeFile[];
-      
+
       output.result.metadata = {
         generatedAt: new Date().toISOString(),
         model: this.cfg.coderModel,
@@ -264,7 +264,11 @@ export class CoderAgent extends Agent {
       toolContext,
       toolChoice: 'auto',
       maxToolCalls: 3,
-      onToolCall: (event: ToolCall) => toolCalls.push(event),
+      onToolCall: (event: ToolCall) => {
+        if(event.name === 'apply_patch_call') {
+          toolCalls.push(event);
+        }
+      },
       onTextResponse: (text) => {
         this.logger.info(text + '\n');
       },

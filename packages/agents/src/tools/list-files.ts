@@ -39,7 +39,13 @@ export const listFilesToolHandler: ToolHandler = (args, context) => {
 
   const files = walkFiles(absolutePath, includePattern);
   const maxResults = typeof args.maxResults === 'number' ? Math.max(args.maxResults, 1) : files.length;
-  const sliced = files.slice(0, maxResults).map((file) => path.relative(root, file));
-
+  const baseRoot = path.resolve(root);
+  const sliced = files.slice(0, maxResults).map((file) => {
+    const relativeToRoot = path.relative(baseRoot, file);
+    if (relativeToRoot && !relativeToRoot.startsWith('..') && !path.isAbsolute(relativeToRoot)) {
+      return relativeToRoot;
+    }
+    return path.relative(absolutePath, file);
+  });
   return { ok: true, data: { path: relativePath, files: sliced } };
 };
