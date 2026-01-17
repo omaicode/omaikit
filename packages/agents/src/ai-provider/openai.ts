@@ -84,7 +84,7 @@ export class OpenAIProvider implements AIProvider {
       if (!options?.toolRegistry) {
         throw new Error('Tool calls requested but no tool registry provided');
       }
-      console.log(toolCalls);
+      // console.log(toolCalls);
       const toolOutputs = await this.processToolCalls(toolCalls, options);
       input = [{ role: 'user', content: prompt }, ...toolOutputs];
     }
