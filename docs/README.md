@@ -130,5 +130,4 @@ npm test
 
 - `README.md` (repo overview)
 - `packages/agents/README.md` (agent usage)
-- `docs/offline-mode.md` (offline guidance)
 - `docs/CONTRIBUTING.md` (workflow + standards)
