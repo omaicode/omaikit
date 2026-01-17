@@ -10,6 +10,15 @@ Agent implementations for Omaikit. This package provides the core agent classes 
 - Tester (test generation)
 - Reviewer (code review)
 
+### File-Based Writers
+
+The agents package now also exposes file-based utilities previously shipped in the analysis package:
+
+- `ContextWriter` for `.omaikit/context.json`
+- `PlanWriter` for `.omaikit/plans/`
+- `TestWriter` for `.omaikit/tests/`
+- `CacheManager` for `.omaikit/cache/`
+
 ### Basic Usage
 
 ```ts

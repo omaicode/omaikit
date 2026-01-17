@@ -5,7 +5,7 @@ import { createDefaultToolRegistry } from '../tools/default-registry';
 import type { ToolContext } from '../tools/types';
 import { ToolRegistry } from '../tools/registry';
 import { createProvider } from '../ai-provider/factory';
-import { ContextWriter } from '@omaikit/analysis';
+import { ContextWriter } from '../utils/context-writer';
 import { MemoryStore } from '../memory/memory-store';
 import * as fs from 'fs';
 import * as path from 'path';

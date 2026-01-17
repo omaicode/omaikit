@@ -1,4 +1,4 @@
-# Offline Mode & Cache Fallback (Analysis)
+# Offline Mode & Cache Fallback
 
 ## Offline Definition
 

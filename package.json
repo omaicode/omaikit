@@ -6,7 +6,6 @@
   "workspaces": [
     "packages/models",
     "packages/config",
-    "packages/analysis",
     "packages/agents",
     "packages/cli"
   ],

@@ -29,7 +29,6 @@
   "dependencies": {
     "@omaikit/models": "*",
     "@omaikit/config": "*",
-    "@omaikit/analysis": "*",
     "@omaikit/agents": "*"
   },
   "devDependencies": {

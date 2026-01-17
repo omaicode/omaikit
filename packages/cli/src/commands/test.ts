@@ -1,7 +1,7 @@
 import type { Plan, Task, TestFile } from '@omaikit/models';
 import type { TesterAgentInput } from '@omaikit/agents';
 import { TesterAgent, Logger } from '@omaikit/agents';
-import { PlanWriter, TestWriter, ContextWriter } from '@omaikit/analysis';
+import { PlanWriter, TestWriter, ContextWriter } from '@omaikit/agents';
 import * as fs from 'fs';
 import * as path from 'path';
 import { bold, cyan, green, yellow } from '../utils/colors';

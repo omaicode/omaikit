@@ -44,9 +44,6 @@
       "path": "packages/config"
     },
     {
-      "path": "packages/analysis"
-    },
-    {
       "path": "packages/agents"
     },
     {

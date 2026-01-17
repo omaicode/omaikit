@@ -49,8 +49,7 @@ omaikit review
 
 ```
 packages/
-  agents/   # Agent implementations
-  analysis/ # Codebase analysis
+  agents/   # Agent implementations and file-based writers
   cli/      # CLI entry point
   config/   # Configuration and env handling
   models/   # Shared data models

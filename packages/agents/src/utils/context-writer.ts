@@ -36,6 +36,19 @@ const LANGUAGE_MAP: Record<string, string> = {
   '.rs': 'rust',
   '.cs': 'csharp',
   '.java': 'java',
+  '.cpp': 'cpp',
+  '.c': 'c',
+  '.rb': 'ruby',
+  '.php': 'php',
+  '.swift': 'swift',
+  '.kt': 'kotlin',
+  '.kts': 'kotlin',
+  '.dart': 'dart',
+  '.hs': 'haskell',
+  '.lua': 'lua',
+  '.sh': 'shell',
+  '.zsh': 'shell',
+  '.bash': 'shell',
 };
 
 export class ContextWriter {
