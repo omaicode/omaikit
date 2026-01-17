@@ -6,12 +6,12 @@ interface ContextSummary {
     name: string;
     rootPath: string;
     description?: string;
+    goals?: string[];
   };
   analysis: {
     languages: string[];
-    fileCount: number;
-    totalLOC: number;
     dependencies: string[];
+    frameworks?: string[];
   };
   generatedAt: string;
 }
@@ -108,9 +108,8 @@ export class ContextWriter {
       },
       analysis: {
         languages: stats.languages,
-        fileCount: stats.fileCount,
-        totalLOC: stats.totalLOC,
         dependencies: this.readDependencies(rootPath),
+        frameworks: [], // Placeholder for future framework detection
       },
       generatedAt: new Date().toISOString(),
     };

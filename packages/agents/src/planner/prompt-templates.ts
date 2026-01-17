@@ -37,6 +37,7 @@ export class PromptTemplates {
       `Current Milestone ID: ${milestone.id || 'M001'}`,
       `Current Milestone Title: ${milestone.title}`,
       `Current Milestone Description: ${milestone.description || 'No description provided.'}`,
+      `Current Milestone Estimated Effort: ${milestone.duration || 'Not specified'} days`,
     ].join('\n');
 
     return readPrompt('planner.tasks', { summary });
@@ -80,5 +81,9 @@ export class PromptTemplates {
 
   generateRepairPrompt(rawResponse: string): string {
     return readPrompt('planner.repair', { rawResponse });
+  }
+
+  getInstructions(): string {
+    return readPrompt('planner.instructions');
   }
 }

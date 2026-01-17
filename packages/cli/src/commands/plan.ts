@@ -1,5 +1,5 @@
 import { PlanInput } from '@omaikit/models';
-import { Planner } from '@omaikit/agents';
+import { getTasks, Planner } from '@omaikit/agents';
 import { Logger } from '@omaikit/agents';
 import { PlanWriter, ContextWriter } from '@omaikit/agents';
 import * as fs from 'fs';
@@ -149,22 +149,19 @@ export async function planCommand(
     console.log(`Title: ${cyan(planForSummary.title)}`);
     console.log(`Milestones: ${planForSummary.milestones.length}`);
 
-    const totalTasks = planForSummary.milestones.reduce(
-      (sum: number, m: any) => sum + (m.tasks?.length ?? 0),
-      0,
-    );
+    const tasks = getTasks(planForSummary);
+    const totalTasks = tasks.length;
     console.log(`Total Tasks: ${totalTasks}`);
 
-    const totalEffort = planForSummary.milestones.reduce(
+    const totalEffort = tasks.reduce(
       (sum: number, m: any) =>
-        sum +
-        (m.tasks || []).reduce((ts: number, t: any) => ts + (t.estimatedEffort ?? t.effort ?? 0), 0),
+        sum + (m.estimatedEffort ?? m.effort ?? 0),
       0,
     );
+    
     console.log(`Total Effort: ${totalEffort} hours (~${Math.ceil(totalEffort / 8)} days)`);
-
-    console.log('');
     console.log(bold('Milestones:'));
+
     for (const milestone of planForSummary.milestones) {
       const milestoneEffort = (milestone.tasks || []).reduce(
         (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),

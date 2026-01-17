@@ -69,6 +69,8 @@ export class Planner extends Agent {
       if (!planInput.description || planInput.description.trim().length === 0) {
         throw new Error('Description is required');
       }
+      // Intructions prompt
+      const instructions = this.promptTemplates.getInstructions();
 
       // Generate prompts from input (step-by-step)
       const step1Prompt = this.promptTemplates.generatePlanMilestonesPrompt(
@@ -95,6 +97,7 @@ export class Planner extends Agent {
         toolContext,
         toolChoice: 'auto',
         maxToolCalls: 3,
+        instructions,
       });
       await this.memoryStore.append(this.name, {
         timestamp: new Date().toISOString(),
@@ -135,6 +138,7 @@ export class Planner extends Agent {
           toolContext,
           toolChoice: 'auto',
           maxToolCalls: 8,
+          instructions,
         });        
         await this.memoryStore.append(this.name, {
           timestamp: new Date().toISOString(),

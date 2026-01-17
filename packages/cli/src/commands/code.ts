@@ -1,4 +1,3 @@
-import type { Plan, Task } from '@omaikit/models';
 import { CoderAgent, Logger } from '@omaikit/agents';
 import { PlanWriter, ContextWriter } from '@omaikit/agents';
 import * as fs from 'fs';
@@ -6,6 +5,7 @@ import * as path from 'path';
 import { bold, cyan, green, yellow } from '../utils/colors';
 import { ProgressBar } from '../utils/progress';
 import { formatError, printError } from '../utils/error-formatter';
+import { getTasks } from '@omaikit/agents';
 
 function getLatestPlanFile(): string | undefined {
   const planDir = path.join('.omaikit', 'plans');
@@ -66,7 +66,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
       process.exit(1);
     }
 
-    const tasks = selectTasks(plan, options?.taskId);
+    const tasks = getTasks(plan, options?.taskId);
     
     if (tasks.length === 0) {
       const err = formatError('CODE_COMMAND_ERROR', 'No matching tasks found in plan.');
@@ -78,6 +78,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 
     const projectRoot = context.project?.rootPath || process.cwd();
     const writtenPaths: string[] = [];
+    let previousResponseId = undefined;
     let generatedLOC = 0;
     let filesCreated = 0;
 
@@ -92,9 +93,12 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
         plan,
         projectContext: context,
         force: options?.force,
+        previousResponseId
       };
 
       const result = await coder.execute(input as any);
+      previousResponseId = result.metadata.previousResponseId;
+
       if (result.status === 'failed' || result.error) {
         const err = formatError(
           result.error?.code || 'CODER_ERROR',
@@ -103,7 +107,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
         printError(err);
         process.exit(1);
       }
-
+      
       const files = result.result.files || [];
       files.forEach((file) => {
         filesCreated += 1;
@@ -145,47 +149,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
     logger.error(err.message);
     process.exit(1);
   }
-}
-
-function selectTasks(plan: Plan, taskId?: string): Task[] {
-  const tasksDir = path.join('.omaikit', 'tasks');
-  const taskFiles = fs.existsSync(tasksDir)
-    ? fs.readdirSync(tasksDir).filter((file) => file.endsWith('.json'))
-    : [];
-
-  const allTasks: Task[] = [];
-  for (const file of taskFiles) {
-    const filePath = path.join(tasksDir, file);
-    try {
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const parsed = JSON.parse(content) as Task & {
-        plan_id?: string;
-        milestone_id?: string;
-      };
-
-      if (!parsed || typeof parsed !== 'object') continue;
-      if (!parsed.id || !parsed.plan_id || !parsed.milestone_id) continue;
-      allTasks.push(parsed as Task);
-    } catch {
-      // skip invalid JSON
-    }
-  }
-
-  const planId = plan.id;
-  const tasks = plan.milestones
-    .flatMap((milestone) =>
-      allTasks.filter(
-        (task) => task.plan_id === planId && task.milestone_id === milestone.id,
-      ),
-    )
-    .sort((a, b) => a.id.localeCompare(b.id));
-
-  if (taskId) {
-    const match = tasks.find((t) => t.id === taskId || t.title === taskId);
-    return match ? [match] : [];
-  }
-
-  return tasks;
 }
 
 export default codeCommand;

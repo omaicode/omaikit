@@ -21,6 +21,7 @@ export interface CoderAgentInput extends AgentInput {
   projectContext: any;
   plan: any;
   force?: boolean;
+  previousResponseId?: string;
 }
 
 export interface CoderAgentOutput extends AgentOutput {
@@ -37,6 +38,7 @@ export interface CoderAgentOutput extends AgentOutput {
       output: number;
       total: number;
     };
+    previousResponseId?: string;
   };
 }
 
@@ -88,30 +90,20 @@ export class CoderAgent extends Agent {
     };
 
     try {
+      if (!this.provider) {
+        await this.init();
+      }
+
       await this.beforeExecute(input);
 
       // Validate input
       this.validateInput(input);
 
       // Generate prompt
-      const prompt = await this.promptTemplates.generatePrompt(
-        input.task,
-        input.projectContext,
-        input.plan,
-      );
+      const prompt = await this.promptTemplates.generatePrompt(input.task);
+      const { previousResponseId, toolCalls } = await this.callLLM(prompt, input);
 
-      const finalPrompt = [
-        prompt
-      ]
-      .filter(Boolean)
-      .join('\n\n');
-
-      output.result.prompt = finalPrompt;
-      const { toolCalls } = await this.callLLM(
-        finalPrompt,
-        input
-      );
-
+      output.result.prompt = prompt;
       output.result.files = toolCalls.map((call) => {
         const args = call.arguments as Record<string, unknown>;
         return {
@@ -124,6 +116,8 @@ export class CoderAgent extends Agent {
         generatedAt: new Date().toISOString(),
         model: this.cfg.coderModel,
       };
+
+      output.metadata.previousResponseId = previousResponseId;
 
       await this.afterExecute(output);
     } catch (error) {
@@ -243,19 +237,19 @@ export class CoderAgent extends Agent {
   private async callLLM(
     prompt: string,
     input: CoderAgentInput,
-  ): Promise<{ response: string; toolCalls: Array<ToolCall> }> {
+  ): Promise<{ previousResponseId?: string; response: string; toolCalls: Array<ToolCall> }> {
+    let previousResponseId = input.previousResponseId;
     const toolCalls: Array<ToolCall> = [];
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
-    if(!this.provider) {
-      await this.init();
-    }
 
     if (!this.provider) {
       throw new Error('AI provider does not support Codex responses API');
     }
 
+    const instructions = this.promptTemplates.getInstructions(input.projectContext, input.plan);
     const response = await this.provider.generate(prompt, {
+      previousResponseId,
       model: this.cfg.coderModel,
       maxTokens: undefined,
       temperature: undefined,
@@ -263,7 +257,8 @@ export class CoderAgent extends Agent {
       toolRegistry,
       toolContext,
       toolChoice: 'auto',
-      maxToolCalls: 8,
+      maxToolCalls: 1,
+      instructions,
       onToolCall: (event: ToolCall) => {
         if(event.name === 'apply_patch_call') {
           toolCalls.push(event);
@@ -272,11 +267,10 @@ export class CoderAgent extends Agent {
       onTextResponse: (text) => {
         this.logger.info(text + '\n');
       },
+      onResponse: async (resp) => {
+        previousResponseId = resp.id;
+      }
     });
-
-    if (typeof response !== 'string') {
-      return { response: JSON.stringify(response ?? ''), toolCalls };
-    }
 
     this.memoryStore.append(this.name, {
       timestamp: new Date().toISOString(),
@@ -286,36 +280,7 @@ export class CoderAgent extends Agent {
       metadata: { type: 'llm_response' },
     });
 
-    return { response, toolCalls };
-  }
-
-  private buildReuseSection(input: CoderAgentInput): string | null {
-    const rawSources = [
-      input.plan?.reuseOpportunities,
-      input.projectContext?.reuseOpportunities,
-      input.projectContext?.analysis?.reuseOpportunities,
-      input.projectContext?.analysis?.reuseSuggestions,
-    ];
-
-    const items = rawSources.flatMap((value) => (Array.isArray(value) ? value : []));
-    const normalized = items
-      .map((item) => {
-        if (typeof item === 'string') return item.trim();
-        if (item && typeof item === 'object') {
-          const description = (item as any).description || (item as any).summary;
-          const moduleName = (item as any).module || (item as any).moduleName;
-          if (description) return String(description).trim();
-          if (moduleName) return `Consider reusing module: ${String(moduleName).trim()}`;
-        }
-        return '';
-      })
-      .filter((item) => item.length > 0);
-
-    if (normalized.length === 0) {
-      return null;
-    }
-
-    return normalized.map((item) => `- ${item}`).join('\n');
+    return { previousResponseId, response, toolCalls };
   }
 
   private buildToolContext(input: CoderAgentInput): ToolContext {

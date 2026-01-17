@@ -1,5 +1,6 @@
 import { ToolDefinition, ToolContext } from '../tools/types';
 import { ToolRegistry } from '../tools/registry';
+import OpenAI from 'openai';
 
 export interface ToolCall {
   id: string;
@@ -16,11 +17,14 @@ export interface AIProviderOptions {
   onProgress?: (chunk: string) => void;
   onToolCall?: (event: ToolCall) => void;
   onTextResponse?: (text: string) => void;
+  onResponse?: (response: OpenAI.Responses.Response) => Promise<void>;
   tools?: ToolDefinition[];
   toolRegistry?: ToolRegistry;
   toolContext?: ToolContext;
   toolChoice?: 'auto' | 'none' | { name: string };
   maxToolCalls?: number;
+  instructions?: string;
+  previousResponseId?: string;
 }
 
 export interface AIProvider {

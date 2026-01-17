@@ -38,12 +38,13 @@ export class OpenAIProvider implements AIProvider {
 
     const tools = this.resolveTools(options);
     const maxToolCalls = options?.maxToolCalls ?? 3;
-    let previousResponseId: string | null = null;
+
+    let response: OpenAI.Responses.Response | undefined = undefined;
+    let previousResponseId: string | undefined = options?.previousResponseId;
     let input: any = [{ role: 'user', content: prompt }];
-    let lastContent = '';
 
     for (let i = 0; i <= maxToolCalls; i += 1) {
-      const response: OpenAI.Responses.Response = await this.client.responses.create({
+      response = await this.client.responses.create({
         model,
         input,
         max_output_tokens: maxTokens,
@@ -52,45 +53,37 @@ export class OpenAIProvider implements AIProvider {
           tools.length > 0 ? (this.formatToolsForResponses(tools, model) as unknown as Tool[]) : undefined,
         tool_choice: normalizeToolChoice(options?.toolChoice),
         previous_response_id: previousResponseId || undefined,
-      });
+        instructions: options?.instructions || undefined,
+      });   
 
       previousResponseId = response.id;
-      const outputText = (response as any).output_text as string | undefined;
-      if (outputText && outputText.length > 0) {
-        lastContent = outputText;
-      } else {
-        const output = (response as any).output as
-          | Array<{ content?: Array<{ type?: string; text?: string }>; type?: string }>
-          | undefined;
-        const collected = (output || [])
-          .flatMap((item) => item.content || [])
-          .filter((item) => item.type === 'output_text' || item.type === 'text')
-          .map((item) => item.text || '')
-          .join('');
-        if (collected) {
-          lastContent = collected;
-        }
-      }
+      const output = response.output;
       
-      if(lastContent && options?.onTextResponse) {
-        options.onTextResponse(lastContent);
+      if(options?.onTextResponse) {
+        output.filter((item) => item.type === 'message').forEach((item) => {
+          const content = item?.content.find(x => x.type == 'output_text')?.text || ' ';
+          options.onTextResponse?.(content);
+        });
       }
 
       const toolCalls = this.extractToolCalls(response);
-      if (toolCalls.length === 0) {
-        continue;
-      }
-
-      if (!options?.toolRegistry) {
+      // console.log('Tool Calls:', toolCalls);
+      if (toolCalls.length > 0 && !options?.toolRegistry) {
         throw new Error('Tool calls requested but no tool registry provided');
       }
-      // console.log(toolCalls);
-      const toolOutputs = await this.processToolCalls(toolCalls, options);
-      // console.log(toolOutputs);
-      input = [{ role: 'user', content: prompt }, ...toolOutputs];
+
+      if(toolCalls.length > 0) {
+        const toolOutputs = await this.processToolCalls(toolCalls, options);
+        // console.log('Tool Outputs:', toolOutputs);
+        input = [...toolOutputs];
+      }
     }
 
-    return lastContent;
+    if (response && options?.onResponse) {
+      await options.onResponse(response);
+    }          
+
+    return response ? response.output_text : '';
   }
 
   private formatToolsForResponses(tools: ToolDefinition[], model: string): Array<ResponseTool> {
