@@ -1,5 +1,6 @@
 import type { Task } from '@omaikit/models';
 import { TestPatterns } from './test-patterns';
+import { readPrompt } from '../utils/prompt';
 
 export class TestPromptTemplates {
   private patterns = new TestPatterns();
@@ -14,28 +15,19 @@ export class TestPromptTemplates {
     const patterns = this.patterns.getPatterns(language, framework);
     const projectName = projectContext?.name || projectContext?.project?.name || 'the project';
 
-    return [
-      `You are a test engineer generating ${framework} tests for ${projectName}.`,
-      '',
-      `Task: ${task.title}`,
-      `Description: ${task.description || 'No description provided.'}`,
-      '',
-      'Requirements:',
-      ...task.acceptanceCriteria.map((criteria) => `- ${criteria}`),
-      '',
-      'Generate comprehensive unit, integration, and edge case tests.',
-      'Return tests as code blocks. Include a file header in each block like:',
-      '  // File: tests/<name>.test.ts',
-      '',
-      'Patterns:',
-      ...patterns.map(
-        (pattern) => `- ${pattern.name}: ${pattern.description}\n  Example: ${pattern.example}`,
-      ),
-      '',
-      `Target language: ${language}`,
-      `Test framework: ${framework}`,
-      '',
-      'Ensure tests include error handling, clear assertions, and descriptive names.',
-    ].join('\n');
+    const acceptanceCriteria = task.acceptanceCriteria.map((criteria) => `- ${criteria}`).join('\n');
+    const patternLines = patterns
+      .map((pattern) => `- ${pattern.name}: ${pattern.description}\n  Example: ${pattern.example}`)
+      .join('\n');
+
+    return readPrompt('tester.prompt', {
+      framework,
+      projectName,
+      taskTitle: task.title,
+      taskDescription: task.description || 'No description provided.',
+      acceptanceCriteria,
+      patterns: patternLines,
+      language,
+    });
   }
 }

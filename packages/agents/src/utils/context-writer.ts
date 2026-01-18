@@ -6,12 +6,12 @@ interface ContextSummary {
     name: string;
     rootPath: string;
     description?: string;
+    goals?: string[];
   };
   analysis: {
     languages: string[];
-    fileCount: number;
-    totalLOC: number;
     dependencies: string[];
+    frameworks?: string[];
   };
   generatedAt: string;
 }
@@ -36,6 +36,19 @@ const LANGUAGE_MAP: Record<string, string> = {
   '.rs': 'rust',
   '.cs': 'csharp',
   '.java': 'java',
+  '.cpp': 'cpp',
+  '.c': 'c',
+  '.rb': 'ruby',
+  '.php': 'php',
+  '.swift': 'swift',
+  '.kt': 'kotlin',
+  '.kts': 'kotlin',
+  '.dart': 'dart',
+  '.hs': 'haskell',
+  '.lua': 'lua',
+  '.sh': 'shell',
+  '.zsh': 'shell',
+  '.bash': 'shell',
 };
 
 export class ContextWriter {
@@ -95,9 +108,8 @@ export class ContextWriter {
       },
       analysis: {
         languages: stats.languages,
-        fileCount: stats.fileCount,
-        totalLOC: stats.totalLOC,
         dependencies: this.readDependencies(rootPath),
+        frameworks: [], // Placeholder for future framework detection
       },
       generatedAt: new Date().toISOString(),
     };

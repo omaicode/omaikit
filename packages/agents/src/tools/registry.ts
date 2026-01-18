@@ -33,7 +33,7 @@ export class ToolRegistry {
     try {
       return await handler(args, context);
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       const message = (error as Error).message || String(error);
       return { ok: false, error: { message, code: 'TOOL_EXEC_ERROR' } };
     }

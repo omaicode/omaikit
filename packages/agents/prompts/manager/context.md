@@ -1,0 +1,2 @@
+{{descriptionLine}}
+Project root: {{rootPath}}

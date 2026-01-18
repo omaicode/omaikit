@@ -1,6 +1,6 @@
 export interface CodeFile {
   path: string;
-  language: string;
+  language?: string;
   content: string;
   dependencies?: string[];
 }

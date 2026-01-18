@@ -14,7 +14,7 @@ const VERSION = '0.1.0';
 interface CLIArgs {
   command?: string;
   description?: string;
-  projectType?: string;
+  projectDescription?: string;
   techStack?: string[];
   output?: string;
   planFile?: string;
@@ -35,8 +35,8 @@ function parseArgs(args: string[]): CLIArgs {
       result.help = true;
     } else if (arg === '--version' || arg === '-v') {
       result.version = true;
-    } else if (arg === '--project-type' || arg === '-p') {
-      result.projectType = args[++i];
+    } else if (arg === '--project-description' || arg === '-p') {
+      result.projectDescription = args[++i];
     } else if (arg === '--tech-stack' || arg === '-t') {
       result.techStack = args[++i]?.split(',').map((s) => s.trim()) ?? [];
     } else if (arg === '--output' || arg === '-o') {
@@ -77,7 +77,7 @@ function printHelp(): void {
   console.log('  review <path>       Review code quality');
   console.log('');
   console.log(bold('Options:'));
-  console.log('  -p, --project-type  Project type (e.g., web, api, cli)');
+  console.log('  -p, --project-description  Project description (e.g., web app, API service)');
   console.log('  -t, --tech-stack    Comma-separated tech stack (e.g., typescript,node,express)');
   console.log('  -o, --output        Output directory for generated files');
   console.log('      --plan          Plan file path for code generation');
@@ -90,7 +90,7 @@ function printHelp(): void {
   console.log(bold('Examples:'));
   console.log('  omaikit init');
   console.log('  omaikit plan "Build a REST API"');
-  console.log('  omaikit plan "Web app" --project-type web --tech-stack react,typescript');
+  console.log('  omaikit plan "Web app" --project-description "web app" --tech-stack react,typescript');
   console.log('  omaikit plan "CLI tool" --output ./my-plan.json');
   console.log('  omaikit code P-0.json');
 }
@@ -126,7 +126,7 @@ async function main(): Promise<void> {
           process.exit(1);
         }
         await planCommand(args.description, {
-          projectType: args.projectType,
+          projectDescription: args.projectDescription,
           techStack: args.techStack,
           output: args.output,
         });

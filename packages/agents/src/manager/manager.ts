@@ -5,13 +5,14 @@ import { createDefaultToolRegistry } from '../tools/default-registry';
 import type { ToolContext } from '../tools/types';
 import { ToolRegistry } from '../tools/registry';
 import { createProvider } from '../ai-provider/factory';
-import { ContextWriter } from '@omaikit/analysis';
+import { ContextWriter } from '../utils/context-writer';
 import { MemoryStore } from '../memory/memory-store';
 import * as fs from 'fs';
 import * as path from 'path';
 import { loadConfig, OmaikitConfig } from '@omaikit/config';
 import { AIProvider } from '../ai-provider/provider';
 import { parseJsonFromText } from '../utils/json';
+import { readPrompt } from '../utils/prompt';
 
 export interface ManagerAgentInput extends AgentInput {
   rootPath?: string;
@@ -37,7 +38,6 @@ export class ManagerAgent extends Agent {
   async init(): Promise<void> {
     try {
       this.provider = await createProvider();
-      this.logger.info('Manager initialized');
     } catch (error) {
       this.logger.warn('Could not initialize AI provider, manager is offline');
     }
@@ -60,6 +60,7 @@ export class ManagerAgent extends Agent {
 
     if (action === 'init-context') {
       const rootPath = input.rootPath || process.cwd();
+      
       if (this.isTestEnv()) {
         const fallbackPath = await this.writeContextWithScanner(rootPath, input.description);
         return {
@@ -67,6 +68,7 @@ export class ManagerAgent extends Agent {
           data: { contextPath: fallbackPath },
         };
       }
+
       await this.init();
       if (!this.provider) {
         return {
@@ -77,7 +79,6 @@ export class ManagerAgent extends Agent {
 
       const context = await this.generateContext(rootPath, input.description);
       const filePath = await this.writeContextFile(rootPath, context);
-      await this.memoryStore.clear(this.name);
       return {
         status: 'success',
         data: { contextPath: filePath, context },
@@ -118,12 +119,8 @@ export class ManagerAgent extends Agent {
     }
 
     const toolContext = this.getToolContext(rootPath);
-    const basePrompt = this.buildContextPrompt(rootPath, description);
-    const recentMemory = await this.memoryStore.readRecent(this.name, 3);
-    const memoryContext = this.memoryStore.formatRecent(recentMemory);
-    const prompt = memoryContext
-      ? `${basePrompt}\n\n## Recent Agent Memory\n${memoryContext}`
-      : basePrompt;
+    const prompt = this.buildContextPrompt(rootPath, description);
+    const instructions = readPrompt('manager.instructions');
 
     const response = await this.provider.generate(prompt, {
       model: this.cfg.managerModel,
@@ -131,41 +128,16 @@ export class ManagerAgent extends Agent {
       toolRegistry: this.toolRegistry,
       toolContext,
       toolChoice: 'auto',
-      maxToolCalls: 8,
+      maxToolCalls: 3,
+      instructions,
     });
-
-    await this.memoryStore.append(this.name, {
-      timestamp: new Date().toISOString(),
-      prompt,
-      response: typeof response === 'string' ? response : String(response),
-      metadata: { rootPath },
-    });
-
-    if (typeof response !== 'string') {
-      throw new Error('AI provider returned non-text response');
-    }
-
-    if (response.startsWith('OPENAI_ECHO') || response.startsWith('ANTHROPIC_ECHO')) {
-      throw new Error('AI provider not configured');
-    }
 
     return this.parseContextJson(response);
   }
 
   private buildContextPrompt(rootPath: string, description?: string): string {
-    return [
-      'You are the Manager agent. Analyze the current project using tools and produce a context.json payload.',
-      'Use tools to read key files (package.json, README, config files) and search_text the repo for languages, frameworks, and dependencies.',
-      'Return ONLY a JSON object with this exact schema:',
-      '{',
-      '  "project": { "name": string, "rootPath": string, "description"?: string },',
-      '  "analysis": { "languages": string[], "fileCount": number, "totalLOC": number, "dependencies": string[] },',
-      '  "generatedAt": string',
-      '}',
-      description ? `User request: ${description}` : 'User request: (none)',
-      `Project root: ${rootPath}`,
-      'If unsure, infer from files and keep values conservative. Do not include extra keys. Return raw JSON only.',
-    ].join('\n');
+    const descriptionLine = description ? `Client request: ${description}` : 'Client request: (none)';
+    return readPrompt('manager.context', { descriptionLine, rootPath });
   }
 
   private parseContextJson(response: string): Record<string, unknown> {

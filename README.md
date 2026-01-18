@@ -49,8 +49,7 @@ omaikit review
 
 ```
 packages/
-  agents/   # Agent implementations
-  analysis/ # Codebase analysis
+  agents/   # Agent implementations and file-based writers
   cli/      # CLI entry point
   config/   # Configuration and env handling
   models/   # Shared data models
@@ -67,6 +66,16 @@ The agents use tool calls to inspect and modify files:
 - `read_file`: read file content by line range
 - `edit_file`: overwrite/append/replace/insert file content
 - `apply_patch`: apply unified diffs and create/update/delete files
+
+## Planner Output
+
+Plans are stored in `.omaikit/plans/P001.json` (P### format) without embedded tasks. Tasks are stored as
+individual files in `.omaikit/tasks/` using the format `T-{PLAN_ID}-{MILESTONE_ID}-{TASK_ID}.json`.
+
+## Prompts
+
+Agent prompts live under `packages/agents/prompts/<agent>/` as individual markdown files.
+The agents load prompts by name via `readPrompt()`.
 
 
 ## License

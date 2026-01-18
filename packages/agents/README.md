@@ -10,6 +10,23 @@ Agent implementations for Omaikit. This package provides the core agent classes 
 - Tester (test generation)
 - Reviewer (code review)
 
+### File-Based Writers
+
+The agents package now also exposes file-based utilities previously shipped in the analysis package:
+
+- `ContextWriter` for `.omaikit/context.json`
+- `PlanWriter` for `.omaikit/plans/`
+- `TestWriter` for `.omaikit/tests/`
+- `CacheManager` for `.omaikit/cache/`
+
+Plan tasks are stored separately in `.omaikit/tasks/` using the format
+`T-{PLAN_ID}-{MILESTONE_ID}-{TASK_ID}.json`.
+
+### Prompts
+
+Prompt templates are stored as separate markdown files under `packages/agents/prompts/<agent>/`.
+They are loaded by name via `readPrompt()` (for example, `planner.plan-milestones`).
+
 ### Basic Usage
 
 ```ts

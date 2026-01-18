@@ -5,7 +5,7 @@
  */
 
 import type { AgentInput, AgentOutput } from '../types';
-import type { Task, CodeGeneration } from '@omaikit/models';
+import type { Task, CodeGeneration, CodeFile } from '@omaikit/models';
 import { Agent } from '../agent';
 import { Logger } from '../logger';
 import { PromptTemplates } from './prompt-templates';
@@ -13,7 +13,7 @@ import { createProvider } from '../ai-provider/factory';
 import { createDefaultToolRegistry } from '../tools/default-registry';
 import type { ToolContext } from '../tools/types';
 import { MemoryStore } from '../memory/memory-store';
-import { AIProvider } from '../ai-provider/provider';
+import { AIProvider, ToolCall } from '../ai-provider/provider';
 import { loadConfig, OmaikitConfig } from '@omaikit/config';
 
 export interface CoderAgentInput extends AgentInput {
@@ -21,6 +21,7 @@ export interface CoderAgentInput extends AgentInput {
   projectContext: any;
   plan: any;
   force?: boolean;
+  previousResponseId?: string;
 }
 
 export interface CoderAgentOutput extends AgentOutput {
@@ -37,6 +38,8 @@ export interface CoderAgentOutput extends AgentOutput {
       output: number;
       total: number;
     };
+    previousResponseId?: string;
+    toolOutputs?: Array<any>;
   };
 }
 
@@ -88,73 +91,35 @@ export class CoderAgent extends Agent {
     };
 
     try {
+      if (!this.provider) {
+        await this.init();
+      }
+
       await this.beforeExecute(input);
 
       // Validate input
       this.validateInput(input);
 
       // Generate prompt
-      const prompt = await this.promptTemplates.generatePrompt(
-        input.task,
-        input.projectContext,
-        input.plan,
-      );
+      const prompt = await this.promptTemplates.generatePrompt(input.task);
+      const { previousResponseId, toolCalls, toolOutputs } = await this.callLLM(prompt, input);
 
-      const recentMemory = await this.memoryStore.readRecent(this.name, 3);
-      const memoryContext = this.memoryStore.formatRecent(recentMemory);
+      output.result.prompt = prompt;
+      output.result.files = toolCalls.filter((call) => call.type === 'apply_patch_call').map((call) => {
+        const args = call.operation as Record<string, unknown>;
+        return {
+          path: args.path || 'unknown',
+          content: String(args.diff || ''), 
+        };
+      }) as CodeFile[];
 
-      const reuseSection = this.buildReuseSection(input);
-      const finalPrompt = [
-        prompt,
-        memoryContext ? `## Recent Agent Memory\n${memoryContext}` : '',
-        reuseSection ? `## Reuse Opportunities\n${reuseSection}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n\n');
-      output.result.prompt = finalPrompt;
-
-      // Call LLM via AIProvider (would be injected)
-      // For now, return mock response
-      const { response: llmResponse, toolCalls } = await this.callLLM(
-        finalPrompt,
-        input
-      );
-      const timestamp = new Date().toISOString();
-      const memoryEntries = [] as Array<{
-        timestamp: string;
-        prompt: string;
-        response: string;
-        taskId?: string;
-        metadata?: Record<string, unknown>;
-      }>;
-
-      for (const toolCall of toolCalls) {
-        memoryEntries.push({
-          timestamp,
-          prompt: finalPrompt,
-          response: JSON.stringify(toolCall),
-          taskId: input.task.id,
-          metadata: { type: 'tool_call', tool: toolCall.name },
-        });
-      }
-
-      if (llmResponse && llmResponse.trim().length > 0) {
-        memoryEntries.push({
-          timestamp,
-          prompt: finalPrompt,
-          response: llmResponse,
-          taskId: input.task.id,
-          metadata: { type: 'text_response' },
-        });
-      }
-
-      await this.memoryStore.appendManyUnique(this.name, memoryEntries);
-
-      // Prepare output
       output.result.metadata = {
         generatedAt: new Date().toISOString(),
         model: this.cfg.coderModel,
       };
+
+      output.metadata.previousResponseId = previousResponseId;
+      output.metadata.toolOutputs = toolOutputs;
 
       await this.afterExecute(output);
     } catch (error) {
@@ -267,26 +232,27 @@ export class CoderAgent extends Agent {
       throw new Error('Task must have id and title');
     }
   }
-  
+
   /**
    * Call LLM to generate code
    */
   private async callLLM(
     prompt: string,
     input: CoderAgentInput,
-  ): Promise<{ response: string; toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> }> {
-    const toolCalls: Array<{ name: string; arguments: Record<string, unknown>; result: unknown }> = [];
+  ): Promise<{ previousResponseId?: string; response: string; toolCalls: Array<ToolCall>; toolOutputs: Array<any> }> {
+    let previousResponseId = input.previousResponseId;
+    const toolCalls: Array<ToolCall> = [];
+    const toolOutputs: Array<any> = input.toolOutputs || [];
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
-    if(!this.provider) {
-      this.init();
-    }
 
-    if (!this.provider || !this.provider.generateCode) {
+    if (!this.provider) {
       throw new Error('AI provider does not support Codex responses API');
     }
 
-    const response = await this.provider.generateCode(prompt, {
+    const instructions = this.promptTemplates.getInstructions(input.projectContext, input.plan);
+    const response = await this.provider.generate(prompt, {
+      previousResponseId,
       model: this.cfg.coderModel,
       maxTokens: undefined,
       temperature: undefined,
@@ -294,47 +260,32 @@ export class CoderAgent extends Agent {
       toolRegistry,
       toolContext,
       toolChoice: 'auto',
-      maxToolCalls: 3,
-      onToolCall: (event) => toolCalls.push(event),
+      maxToolCalls: 1,
+      instructions,
+      toolOutputs,
+      onToolCall: (event: ToolCall) => {
+        toolCalls.push(event);
+      },
+      onToolOutput: (event: any) => {
+        toolOutputs.push(event);
+      },
       onTextResponse: (text) => {
-        this.logger.info('[Coder] Answered: \n' + text);
+        this.logger.info(text + '\n');
+      },
+      onResponse: async (resp) => {
+        previousResponseId = resp.id;
       }
     });
 
-    if (typeof response !== 'string') {
-      return { response: JSON.stringify(response ?? ''), toolCalls };
-    }
+    this.memoryStore.append(this.name, {
+      timestamp: new Date().toISOString(),
+      prompt,
+      response,
+      taskId: input.task.id,
+      metadata: { type: 'llm_response' },
+    });
 
-    return { response, toolCalls };
-  }
-
-  private buildReuseSection(input: CoderAgentInput): string | null {
-    const rawSources = [
-      input.plan?.reuseOpportunities,
-      input.projectContext?.reuseOpportunities,
-      input.projectContext?.analysis?.reuseOpportunities,
-      input.projectContext?.analysis?.reuseSuggestions,
-    ];
-
-    const items = rawSources.flatMap((value) => (Array.isArray(value) ? value : []));
-    const normalized = items
-      .map((item) => {
-        if (typeof item === 'string') return item.trim();
-        if (item && typeof item === 'object') {
-          const description = (item as any).description || (item as any).summary;
-          const moduleName = (item as any).module || (item as any).moduleName;
-          if (description) return String(description).trim();
-          if (moduleName) return `Consider reusing module: ${String(moduleName).trim()}`;
-        }
-        return '';
-      })
-      .filter((item) => item.length > 0);
-
-    if (normalized.length === 0) {
-      return null;
-    }
-
-    return normalized.map((item) => `- ${item}`).join('\n');
+    return { previousResponseId, response, toolCalls, toolOutputs };
   }
 
   private buildToolContext(input: CoderAgentInput): ToolContext {

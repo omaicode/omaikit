@@ -1,7 +1,7 @@
 import { PlanInput } from '@omaikit/models';
-import { Planner } from '@omaikit/agents';
+import { getTasks, Planner } from '@omaikit/agents';
 import { Logger } from '@omaikit/agents';
-import { PlanWriter, ContextWriter } from '@omaikit/analysis';
+import { PlanWriter, ContextWriter } from '@omaikit/agents';
 import * as fs from 'fs';
 import * as path from 'path';
 import { cyan, bold, green, yellow } from '../utils/colors';
@@ -11,11 +11,24 @@ import { formatError, printError } from '../utils/error-formatter';
 const PLAN_DIR = path.join('.omaikit', 'plans');
 
 function parsePlanIndex(filename: string): number | null {
-  const match = /^P-(\d+)(?:\.json)?$/i.exec(filename);
+  const match = /^P(\d+)(?:\.json)?$/i.exec(filename);
   if (!match) {
     return null;
   }
   return Number.parseInt(match[1], 10);
+}
+
+function formatPlanId(index: number): string {
+  return `P${String(index).padStart(3, '0')}`;
+}
+
+function getLatestPlanFilename(planDir: string): string | undefined {
+  const existing = getExistingPlanIndices(planDir);
+  if (!existing.length) {
+    return undefined;
+  }
+  const latest = Math.max(...existing);
+  return `${formatPlanId(latest)}.json`;
 }
 
 function getExistingPlanIndices(planDir: string): number[] {
@@ -28,30 +41,10 @@ function getExistingPlanIndices(planDir: string): number[] {
     .filter((value): value is number => value !== null);
 }
 
-function resolvePlanIndex(
-  planDir: string,
-  options?: { mode?: 'new' | 'update'; planId?: string },
-): number {
-  const existing = getExistingPlanIndices(planDir);
-  const maxExisting = existing.length ? Math.max(...existing) : -1;
-
-  if (options?.mode === 'update') {
-    if (options?.planId) {
-      const parsed = parsePlanIndex(options.planId) ?? Number.parseInt(options.planId, 10);
-      if (!Number.isNaN(parsed)) {
-        return parsed;
-      }
-    }
-    return maxExisting >= 0 ? maxExisting : 0;
-  }
-
-  return maxExisting + 1;
-}
-
 export async function planCommand(
   description: string,
   options?: {
-    projectType?: string;
+    projectDescription?: string;
     techStack?: string[];
     output?: string;
     mode?: 'new' | 'update';
@@ -62,7 +55,7 @@ export async function planCommand(
   const planner = new Planner(logger);
   const writer = new PlanWriter();
   const contextWriter = new ContextWriter();
-  const progress = new ProgressBar(50);
+  const progress = new ProgressBar(100);
 
   try {
     console.log(cyan('🎯 Generating project plan...'));
@@ -81,26 +74,29 @@ export async function planCommand(
       process.exit(1);
     }
 
+    // Get projectDescription & techStack from context if not provided
+    const projectDescription = options?.projectDescription || context.project.description || '';
+    const techStack = options?.techStack || context.analysis.languages || [];
     const input: PlanInput = {
       description,
-      projectType: options?.projectType as any,
-      techStack: options?.techStack,
+      projectDescription,
+      techStack,
     };
 
     // Setup progress tracking
-    planner.onProgress((event: any) => {
-      if (event.status === 'parsing') {
-        progress.update(33);
-        console.log(yellow('  ⏳ Parsing response...'));
-      } else if (event.status === 'validating') {
-        progress.update(66);
-        console.log(yellow('  ✓ Validating plan...'));
+    planner.onProgress((event: { status: string; message?: string, percent: number }) => {
+      if (event.status === 'summarizing') {
+        progress.update(event.percent);
+        console.log(yellow(`  ⏳ ${event.message || 'Parsing response...'}`));
+      } else if (event.status === 'optimizing') {
+        progress.update(event.percent);
+        console.log(yellow(`  ✓ ${event.message || 'Optimizing plan...'}`));
       } else if (event.status === 'complete') {
-        progress.update(100);
-        console.log(green('  ✓ Plan generated'));
+        progress.update(event.percent);
+        console.log(green(`  ✓ ${event.message || 'Plan generation complete'}`));
       } else if (event.status === 'generating') {
-        console.log(cyan('  → Receiving plan from AI...'));
-        progress.update(10);
+        progress.update(event.percent);
+        console.log(cyan(`  ⏳ ${event.message || 'Generating plan...'}`));
       }
     });
 
@@ -138,51 +134,36 @@ export async function planCommand(
       fs.mkdirSync(PLAN_DIR, { recursive: true });
     }
 
-    const planIndex = resolvePlanIndex(PLAN_DIR, options);
-    const planId = `P-${planIndex}`;
-    const archiveFilename = `plans/${planId}.json`;
+    const latestPlanFilename = getLatestPlanFilename(PLAN_DIR);
+    const latestArchiveFilename = latestPlanFilename
+      ? `plans/${latestPlanFilename}`
+      : `plans/${formatPlanId(1)}.json`;
 
-    // Save plan
-    console.log('');
-    let filepath: string;
-    if (options?.output && path.isAbsolute(options.output)) {
-      const dirPath = path.dirname(options.output);
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-      fs.writeFileSync(
-        options.output,
-        JSON.stringify({ ...planOutput, id: planId }, null, 2),
-        'utf-8',
-      );
-      filepath = options.output;
-    } else {
-      const target = options?.output || archiveFilename;
-      filepath = await writer.writePlan({ ...planOutput, id: planId }, target);
-    }
-    console.log(green(`✓ Plan saved to ${filepath}`));
+    console.log(green(`✓ Plan saved to ${latestArchiveFilename}`));
+    const planForSummary = (await writer.readPlan(latestArchiveFilename)) || plan;
 
     // Display summary
     console.log('');
     console.log(bold('📋 Plan Summary'));
     console.log(bold('═'.repeat(40)));
-    console.log(`Title: ${cyan(plan.title)}`);
-    console.log(`Milestones: ${plan.milestones.length}`);
+    console.log(`Title: ${cyan(planForSummary.title)}`);
+    console.log(`Milestones: ${planForSummary.milestones.length}`);
 
-    const totalTasks = plan.milestones.reduce((sum: number, m: any) => sum + m.tasks.length, 0);
+    const tasks = getTasks(planForSummary);
+    const totalTasks = tasks.length;
     console.log(`Total Tasks: ${totalTasks}`);
 
-    const totalEffort = plan.milestones.reduce(
+    const totalEffort = tasks.reduce(
       (sum: number, m: any) =>
-        sum + m.tasks.reduce((ts: number, t: any) => ts + (t.estimatedEffort ?? t.effort ?? 0), 0),
+        sum + (m.estimatedEffort ?? m.effort ?? 0),
       0,
     );
+    
     console.log(`Total Effort: ${totalEffort} hours (~${Math.ceil(totalEffort / 8)} days)`);
-
-    console.log('');
     console.log(bold('Milestones:'));
-    for (const milestone of plan.milestones) {
-      const milestoneEffort = milestone.tasks.reduce(
+
+    for (const milestone of planForSummary.milestones) {
+      const milestoneEffort = (milestone.tasks || []).reduce(
         (sum: number, t: any) => sum + (t.estimatedEffort ?? t.effort ?? 0),
         0,
       );
@@ -190,13 +171,13 @@ export async function planCommand(
         `  ${cyan('→')} ${milestone.title} (${milestone.duration}d, ${milestoneEffort}h)`,
       );
 
-      for (const task of milestone.tasks.slice(0, 3)) {
+      for (const task of (milestone.tasks || []).slice(0, 3)) {
         const effort = task.estimatedEffort ?? task.effort ?? 0;
         console.log(`    ${yellow('•')} ${task.title} (${effort}h)`);
       }
 
-      if (milestone.tasks.length > 3) {
-        console.log(`    ${yellow('•')} ... and ${milestone.tasks.length - 3} more`);
+      if ((milestone.tasks || []).length > 3) {
+        console.log(`    ${yellow('•')} ... and ${(milestone.tasks || []).length - 3} more`);
       }
     }
 

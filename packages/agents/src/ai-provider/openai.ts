@@ -1,4 +1,4 @@
-import { AIProvider, AIProviderOptions } from './provider';
+import { AIProvider, AIProviderOptions, ToolCall } from './provider';
 import { ToolDefinition } from '../tools/types';
 import OpenAI from 'openai';
 import { Tool } from 'openai/resources/responses/responses';
@@ -25,110 +25,12 @@ export class OpenAIProvider implements AIProvider {
     }
   }
 
-  async generate(prompt: string, options?: AIProviderOptions): Promise<string> {
+  async generate(prompt: string, options?: AIProviderOptions): Promise<any> {
     if (!this.client) {
-      // Fallback echo mode when client not available
-      if (!this.apiKey) return `OPENAI_ECHO:\n${prompt}`;
-      // Try to initialize if not done yet
       await this.init();
-      if (!this.client) return `OPENAI_ECHO:\n${prompt}`;
-    }
-
-    try {
-      const model = (options && (options as any).model) || 'gpt-5-mini';
-      const maxTokens = options?.maxTokens || undefined;
-      const temperature = options?.temperature || undefined;
-
-      const tools = this.resolveTools(options);
-      if (tools.length > 0) {
-        if (!options?.toolRegistry) {
-          throw new Error('Tool calls requested but no tool registry provided');
-        }
-
-        const messages: any[] = [{ role: 'user', content: prompt }];
-        const maxToolCalls = options.maxToolCalls ?? 3;
-        let lastContent = '';
-
-        for (let i = 0; i <= maxToolCalls; i += 1) {
-          const response = await this.client.chat.completions.create({
-            model,
-            max_completion_tokens: maxTokens,
-            temperature,
-            messages,
-            tools: tools.map((tool) => ({
-              type: 'function',
-              function: {
-                name: tool.name,
-                description: tool.description,
-                parameters: tool.parameters,
-              },
-            })),
-            tool_choice: normalizeToolChoice(options.toolChoice),
-          });
-
-          const message = response.choices[0]?.message;
-          if (!message) {
-            return lastContent;
-          }
-
-          if (message.content) {
-            lastContent = message.content;
-          }
-
-          if (!message.tool_calls || message.tool_calls.length === 0) {
-            return message.content || lastContent;
-          }
-
-          messages.push(message);
-
-          for (const toolCall of message.tool_calls) {
-            const toolName = toolCall.function?.name;
-            const rawArgs = toolCall.function?.arguments || '{}';
-            if (!toolName) {
-              continue;
-            }
-            const args = parseToolArgs(rawArgs);
-            const result = await options.toolRegistry.call(
-              toolName,
-              args,
-              options.toolContext ?? {},
-            );
-            if (options?.onToolCall) {
-              options.onToolCall({ name: toolName, arguments: args, result });
-            }
-            messages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
-            });
-          }
-        }
-
-        return lastContent;
-      }
-
-      const message = await this.client.chat.completions.create({
-        model,
-        max_completion_tokens: maxTokens,
-        temperature,
-        messages: [{ role: 'user', content: prompt }],
-      });
-
-      const text = message.choices[0]?.message?.content || '';
-      if (options?.onProgress) options.onProgress(text);
-      return text;
-    } catch (error) {
-      const err = error as any;
-      const message = err?.message || String(error);
-      throw new Error(`OpenAI API error: ${message}`);
-    }
-  }
-
-  async generateCode(prompt: string, options?: AIProviderOptions): Promise<any> {
-    if (!this.client) {
-      if (!this.apiKey) return `OPENAI_ECHO:\n${prompt}`;
-      await this.init();
-      if (!this.client) return `OPENAI_ECHO:\n${prompt}`;
+      if (!this.client) {
+        throw new Error('OpenAI API key not provided');
+      };
     }
 
     const model = (options && (options as any).model) || 'gpt-5-mini';
@@ -137,109 +39,82 @@ export class OpenAIProvider implements AIProvider {
 
     const tools = this.resolveTools(options);
     const maxToolCalls = options?.maxToolCalls ?? 3;
-    let previousResponseId: string | null = null;
-    let input: any = [{ role: 'user', content: prompt }];
-    let lastContent = '';
 
-    for (let i = 0; i <= maxToolCalls; i += 1) {
-      const response: OpenAI.Responses.Response = await this.client.responses.create({
+    let response: OpenAI.Responses.Response | undefined = undefined;
+    let previousResponseId: string | undefined = options?.previousResponseId;
+    let input: any = [{ role: 'user', content: prompt }];
+
+    for(const toolOutput of options?.toolOutputs || []) {
+      input.push(toolOutput);
+    }
+
+    for (let i = 0; i <= maxToolCalls; i++) {
+      response = await this.client.responses.create({
         model,
         input,
         max_output_tokens: maxTokens,
         temperature,
         tools:
-          tools.length > 0 ? (this.formatToolsForResponses(tools) as unknown as Tool[]) : undefined,
+          tools.length > 0
+            ? (this.formatToolsForResponses(tools, model) as unknown as Tool[])
+            : undefined,
         tool_choice: normalizeToolChoice(options?.toolChoice),
         previous_response_id: previousResponseId || undefined,
+        instructions: options?.instructions || undefined,
       });
 
-      previousResponseId = response.id;
-      const outputText = (response as any).output_text as string | undefined;
-      if (outputText && outputText.length > 0) {
-        lastContent = outputText;
-      } else {
-        const output = (response as any).output as
-          | Array<{ content?: Array<{ type?: string; text?: string }>; type?: string }>
-          | undefined;
-        const collected = (output || [])
-          .flatMap((item) => item.content || [])
-          .filter((item) => item.type === 'output_text' || item.type === 'text')
-          .map((item) => item.text || '')
-          .join('');
-        if (collected) {
-          lastContent = collected;
-        }
-      }
-      
-      if(lastContent && options?.onTextResponse) {
-        options.onTextResponse(lastContent);
+      const output = response.output;
+
+      if (options?.onTextResponse) {
+        output
+          .filter((item) => item.type === 'message')
+          .forEach((item) => {
+            const content = item?.content.find((x) => x.type == 'output_text')?.text || ' ';
+            options.onTextResponse?.(content);
+          });
       }
 
-      // console.log('Extracted tool calls:', toolCalls);
       const toolCalls = this.extractToolCalls(response);
-      if (toolCalls.length === 0) {
-        continue;
-      }
-
-      if (!options?.toolRegistry) {
+      if (toolCalls.length > 0 && !options?.toolRegistry) {
         throw new Error('Tool calls requested but no tool registry provided');
       }
 
-      const toolOutputs = [] as Array<{
-        type: string;
-        output: string;
-        call_id: string;
-        status: 'completed' | 'incomplete' | 'in_progress';
-      }>;
-
-      for (const toolCall of toolCalls) {
-        let type = 'function_call_output';
-        let args: any = parseToolArgs(toolCall.arguments);
-
-        if (toolCall.name === 'apply_patch_call') {
-          type = 'apply_patch_call_output';
-          args = toolCall.arguments;
-        }
-
-        const result = await options.toolRegistry.call(
-          toolCall.name,
-          args,
-          options.toolContext ?? {},
-        );
-
-        if (options?.onToolCall) {
-          options.onToolCall({ name: toolCall.name, arguments: args, result });
-        }
-
-        toolOutputs.push({
-          type,
-          call_id: toolCall.call_id,
-          output: JSON.stringify(result),
-          status: result.ok ? 'completed' : 'incomplete',
-        });
-        // console.log('Tool called:', toolCall.name, args, result);
+      if (toolCalls.length > 0) {
+        const toolOutputs = await this.processToolCalls(toolCalls, options, previousResponseId !== undefined);
+        input = toolOutputs;
       }
-      input = [{ role: 'user', content: prompt }, ...toolOutputs];
+
+      previousResponseId = response.id;
     }
 
-    return lastContent;
+    if (response && options?.onResponse) {
+      await options.onResponse(response);
+    }
+
+    return response ? response.output_text : '';
   }
 
-  private formatToolsForResponses(tools: ToolDefinition[]): Array<ResponseTool> {
-    return tools.map((tool) => {
-      if (tool.type && ['web_search', 'apply_patch'].includes(tool.type)) {
-        const type = tool.type as 'web_search' | 'apply_patch';
-        return { type };
-      }
+  private formatToolsForResponses(tools: ToolDefinition[], model: string): Array<ResponseTool> {
+    return tools
+      .map((tool): ResponseTool | null => {
+        if (tool.type && ['web_search', 'apply_patch'].includes(tool.type)) {
+          // Check if model is contain `-mini` and then ignore tool, as mini models do not support some tools
+          if (model.includes('-mini')) {
+            return null;
+          }
+          const type = tool.type as 'web_search' | 'apply_patch';
+          return { type };
+        }
 
-      return {
-        type: 'function',
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-        strict: false,
-      };
-    });
+        return {
+          type: 'function' as const,
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters,
+          strict: false,
+        };
+      })
+      .filter((t): t is ResponseTool => t !== null);
   }
 
   async complete(prompt: string): Promise<string> {
@@ -264,35 +139,67 @@ export class OpenAIProvider implements AIProvider {
     return [];
   }
 
-  private extractToolCalls(
-    response: unknown,
-  ): Array<{ id: string; name: string; arguments: string; call_id: string }> {
-    const toolCalls: Array<{ id: string; name: string; arguments: string; call_id: string }> = [];
-    const output = (response as any)?.output as Array<any> | undefined;
+  private async processToolCalls(
+    toolCalls: Array<ToolCall>,
+    options?: AIProviderOptions,
+    _hasPreviousResponseId?: boolean,
+  ): Promise<Array<any>> {
+    if (!options?.toolRegistry) {
+      throw new Error('Tool calls requested but no tool registry provided');
+    }
+
+    const arr: Array<any> = [];
+    for (const toolCall of toolCalls) {
+      if (options?.onToolCall) {
+        options.onToolCall(toolCall);
+      }           
+
+      // if (_hasPreviousResponseId) arr.push(toolCall);
+      let type = 'function_call_output';
+      let args: any = parseToolArgs(toolCall.arguments);
+
+      if (toolCall.type === 'apply_patch_call') {
+        type = 'apply_patch_call_output';
+        args = toolCall.operation;
+      }
+
+      const result = await options.toolRegistry.call(
+        toolCall.name || toolCall.type,
+        args,
+        options.toolContext ?? {},
+      );
+
+      const output = {
+        type,
+        call_id: toolCall.call_id,
+        output: JSON.stringify(result),
+        status: 'completed',
+      };
+
+      if (options?.onToolOutput) {
+        options.onToolOutput(output);
+      }      
+      
+      arr.push(output);      
+    }
+ 
+
+    return arr;
+  }
+
+  private extractToolCalls(response: OpenAI.Responses.Response): Array<ToolCall> {
+    const toolCalls: Array<ToolCall> = [];
+    const output = response.output;
+
     if (!output) {
       return toolCalls;
     }
 
     for (const item of output) {
-      switch (item?.type) {
-        case 'function_call':
-          toolCalls.push({
-            id: item.id || `tool_${toolCalls.length + 1}`,
-            name: item.name,
-            arguments: item.arguments || '{}',
-            call_id: item.call_id || `call_${toolCalls.length + 1}`,
-          });
-          break;
-        case 'apply_patch_call':
-          toolCalls.push({
-            id: item.id || `tool_${toolCalls.length + 1}`,
-            name: 'apply_patch_call',
-            arguments: item.operation || {},
-            call_id: item.call_id || `call_${toolCalls.length + 1}`,
-          });
-          break;
-        default:
-          break;
+      if (item?.type === 'function_call') {
+        toolCalls.push(item as ToolCall);
+      } else if ((item as any)?.type === 'apply_patch_call') {
+        toolCalls.push(item as ToolCall);
       }
     }
 

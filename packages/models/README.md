@@ -16,7 +16,7 @@ Shared data models and validators for Omaikit. These types define plans, tasks, 
 import type { Plan } from '@omaikit/models';
 
 const plan: Plan = {
-  id: 'P-0',
+  id: 'P001',
   title: 'Example',
   description: 'Demo plan',
   milestones: [],

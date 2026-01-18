@@ -64,7 +64,8 @@ export function walkFiles(rootPath: string, includePattern?: RegExp): string[] {
       } else if (entry.isFile()) {
         const filePath = path.join(current, entry.name);
         const relative = path.relative(rootPath, filePath);
-        if (!includePattern || includePattern.test(relative)) {
+        const normalizedRelative = relative.replace(/\\/g, '/');
+        if (!includePattern || includePattern.test(normalizedRelative)) {
           results.push(filePath);
         }
       }
@@ -75,9 +76,46 @@ export function walkFiles(rootPath: string, includePattern?: RegExp): string[] {
 }
 
 export function globToRegex(glob: string): RegExp {
-  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-  const regex = escaped.replace(/\*\*/g, '.*').replace(/\*/g, '[^/\\\\]*').replace(/\?/g, '.');
+  const normalizedGlob = glob.replace(/\\/g, '/');
+  let regex = '';
+  let i = 0;
+
+  while (i < normalizedGlob.length) {
+    const char = normalizedGlob[i];
+
+    if (char === '/') {
+      regex += '/';
+      i += 1;
+      continue;
+    }
+
+    if (char === '*') {
+      const isDouble = glob[i + 1] === '*';
+      if (isDouble) {
+        regex += '.*';
+        i += 2;
+        continue;
+      }
+      regex += '[^/\\\\]*';
+      i += 1;
+      continue;
+    }
+
+    if (char === '?') {
+      regex += '[^/\\\\]';
+      i += 1;
+      continue;
+    }
+
+    regex += escapeRegexChar(char);
+    i += 1;
+  }
+
   return new RegExp(`^${regex}$`, 'i');
+}
+
+function escapeRegexChar(value: string): string {
+  return value.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
 }
 
 function normalizePath(input: string): string {

@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@omaikit/cli",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "CLI interface for Omaikit - multi-agent development toolkit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +29,6 @@
   "dependencies": {
     "@omaikit/models": "*",
     "@omaikit/config": "*",
-    "@omaikit/analysis": "*",
     "@omaikit/agents": "*"
   },
   "devDependencies": {

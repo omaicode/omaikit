@@ -27,7 +27,7 @@ export class PlanParser {
     }
 
     return {
-      id: raw.id || 'P-' + Date.now(),
+      id: raw.id || 'P001',
       title: String(raw.title).trim(),
       description: String(raw.description).trim(),
       clarifications: Array.isArray(raw.clarifications)
@@ -36,45 +36,47 @@ export class PlanParser {
           ? raw.clarifyingQuestions.filter((c: any) => typeof c === 'string')
           : [],
       milestones: raw.milestones.map((m: any, idx: number) => ({
-        id: m.id || `M${idx + 1}`,
+        id: m.id || `M${String(idx + 1).padStart(3, '0')}`,
         title: m.title || `Milestone ${idx + 1}`,
         description: m.description || '',
         duration: this.parseDuration(m.duration),
         successCriteria: Array.isArray(m.successCriteria)
           ? m.successCriteria.filter((c: any) => typeof c === 'string')
           : [],
-        tasks: (m.tasks || []).map((t: any, tidx: number) => ({
-          id: t.id || `T${idx + 1}-${tidx + 1}`,
-          title: t.title || `Task ${tidx + 1}`,
-          description: t.description || '',
-          type: this.parseType(t.type, t.title),
-          estimatedEffort: this.parseEffort(t.estimatedEffort ?? t.effort),
-          acceptanceCriteria: Array.isArray(t.acceptanceCriteria)
-            ? t.acceptanceCriteria.filter((c: any) => typeof c === 'string')
-            : [],
-          inputDependencies: Array.isArray(t.inputDependencies)
-            ? t.inputDependencies.filter((d: any) => typeof d === 'string')
-            : Array.isArray(t.dependencies)
-              ? t.dependencies.filter((d: any) => typeof d === 'string')
-              : [],
-          outputDependencies: Array.isArray(t.outputDependencies)
-            ? t.outputDependencies.filter((d: any) => typeof d === 'string')
-            : [],
-          targetModule: typeof t.targetModule === 'string' ? t.targetModule : undefined,
-          affectedModules: Array.isArray(t.affectedModules)
-            ? t.affectedModules.filter((m: any) => typeof m === 'string')
-            : Array.isArray(t.tags)
-              ? t.tags.filter((m: any) => typeof m === 'string')
-              : [],
-          suggestedApproach:
-            typeof t.suggestedApproach === 'string' ? t.suggestedApproach : undefined,
-          technicalNotes: typeof t.technicalNotes === 'string' ? t.technicalNotes : undefined,
-          riskFactors: Array.isArray(t.riskFactors) ? t.riskFactors : undefined,
-          status: this.parseStatus(t.status),
-          blockers: Array.isArray(t.blockers)
-            ? t.blockers.filter((b: any) => typeof b === 'string')
-            : undefined,
-        })),
+        tasks: Array.isArray(m.tasks)
+          ? m.tasks.map((t: any, tidx: number) => ({
+              id: t.id || `T${String(tidx + 1).padStart(3, '0')}`,
+              title: t.title || `Task ${String(tidx + 1).padStart(3, '0')}`,
+              description: t.description || '',
+              type: this.parseType(t.type, t.title),
+              estimatedEffort: this.parseEffort(t.estimatedEffort ?? t.effort),
+              acceptanceCriteria: Array.isArray(t.acceptanceCriteria)
+                ? t.acceptanceCriteria.filter((c: any) => typeof c === 'string')
+                : [],
+              inputDependencies: Array.isArray(t.inputDependencies)
+                ? t.inputDependencies.filter((d: any) => typeof d === 'string')
+                : Array.isArray(t.dependencies)
+                  ? t.dependencies.filter((d: any) => typeof d === 'string')
+                  : [],
+              outputDependencies: Array.isArray(t.outputDependencies)
+                ? t.outputDependencies.filter((d: any) => typeof d === 'string')
+                : [],
+              targetModule: typeof t.targetModule === 'string' ? t.targetModule : undefined,
+              affectedModules: Array.isArray(t.affectedModules)
+                ? t.affectedModules.filter((m: any) => typeof m === 'string')
+                : Array.isArray(t.tags)
+                  ? t.tags.filter((m: any) => typeof m === 'string')
+                  : [],
+              suggestedApproach:
+                typeof t.suggestedApproach === 'string' ? t.suggestedApproach : undefined,
+              technicalNotes: typeof t.technicalNotes === 'string' ? t.technicalNotes : undefined,
+              riskFactors: Array.isArray(t.riskFactors) ? t.riskFactors : undefined,
+              status: this.parseStatus(t.status),
+              blockers: Array.isArray(t.blockers)
+                ? t.blockers.filter((b: any) => typeof b === 'string')
+                : undefined,
+            }))
+          : [],
       })),
     };
   }

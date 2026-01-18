@@ -1,11 +1,11 @@
-import type { Plan, Task } from '@omaikit/models';
 import { CoderAgent, Logger } from '@omaikit/agents';
-import { PlanWriter, ContextWriter } from '@omaikit/analysis';
+import { PlanWriter, ContextWriter } from '@omaikit/agents';
 import * as fs from 'fs';
 import * as path from 'path';
 import { bold, cyan, green, yellow } from '../utils/colors';
 import { ProgressBar } from '../utils/progress';
 import { formatError, printError } from '../utils/error-formatter';
+import { getTasks } from '@omaikit/agents';
 
 function getLatestPlanFile(): string | undefined {
   const planDir = path.join('.omaikit', 'plans');
@@ -14,7 +14,7 @@ function getLatestPlanFile(): string | undefined {
   }
   const indices = fs
     .readdirSync(planDir)
-    .map((file) => /^P-(\d+)\.json$/i.exec(file))
+    .map((file) => /^P(\d+)\.json$/i.exec(file))
     .filter((match): match is RegExpExecArray => match !== null)
     .map((match) => Number.parseInt(match[1], 10))
     .filter((value) => !Number.isNaN(value));
@@ -23,7 +23,8 @@ function getLatestPlanFile(): string | undefined {
     return undefined;
   }
   const latest = Math.max(...indices);
-  return path.join('plans', `P-${latest}.json`);
+  const planId = `P${String(latest).padStart(3, '0')}`;
+  return path.join('plans', `${planId}.json`);
 }
 
 export interface CodeCommandOptions {
@@ -38,7 +39,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
   const coder = new CoderAgent(logger);
   const planWriter = new PlanWriter();
   const contextWriter = new ContextWriter();
-  const progress = new ProgressBar(50);
+  const progress = new ProgressBar(100);
 
   try {
     console.log(cyan('🧩 Generating code from plan...'));
@@ -65,7 +66,8 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
       process.exit(1);
     }
 
-    const tasks = selectTasks(plan, options?.taskId);
+    const tasks = getTasks(plan, options?.taskId);
+    
     if (tasks.length === 0) {
       const err = formatError('CODE_COMMAND_ERROR', 'No matching tasks found in plan.');
       printError(err);
@@ -76,9 +78,10 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 
     const projectRoot = context.project?.rootPath || process.cwd();
     const writtenPaths: string[] = [];
+    let toolOutputs: Array<any> = [];
+    let previousResponseId = undefined;
     let generatedLOC = 0;
     let filesCreated = 0;
-    const newDependencies = new Set<string>();
 
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
@@ -91,9 +94,14 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
         plan,
         projectContext: context,
         force: options?.force,
+        previousResponseId,
+        toolOutputs,
       };
 
       const result = await coder.execute(input as any);
+      previousResponseId = result.metadata.previousResponseId;
+      toolOutputs = result.metadata.toolOutputs || [];
+      
       if (result.status === 'failed' || result.error) {
         const err = formatError(
           result.error?.code || 'CODER_ERROR',
@@ -102,12 +110,11 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
         printError(err);
         process.exit(1);
       }
-
+      
       const files = result.result.files || [];
       files.forEach((file) => {
         filesCreated += 1;
         generatedLOC += file.content.split('\n').length;
-        (file.dependencies || []).forEach((dep) => newDependencies.add(dep));
       });
 
       files.forEach((file) => {
@@ -133,7 +140,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
     console.log(bold('═'.repeat(40)));
     console.log(`Files Created: ${filesCreated}`);
     console.log(`Total LOC: ${generatedLOC}`);
-    console.log(`Dependencies: ${Array.from(newDependencies).length}`);
 
     console.log('');
     console.log(green('✨ Next steps:'));
@@ -146,15 +152,6 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
     logger.error(err.message);
     process.exit(1);
   }
-}
-
-function selectTasks(plan: Plan, taskId?: string): Task[] {
-  const tasks = plan.milestones.flatMap((milestone) => milestone.tasks || []);
-  if (taskId) {
-    const match = tasks.find((t) => t.id === taskId || t.title === taskId);
-    return match ? [match] : [];
-  }
-  return tasks;
 }
 
 export default codeCommand;

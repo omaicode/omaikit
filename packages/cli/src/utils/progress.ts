@@ -21,7 +21,7 @@ export class ProgressBar {
     const filled = Math.round((this.current / this.total) * this.width);
     const bar = '█'.repeat(filled) + '░'.repeat(this.width - filled);
     const pct = percentage.toFixed(1);
-    process.stdout.write(`\r[${bar}] ${pct}%`);
+    process.stdout.write(`\r\x1b[K[${bar}] ${pct}%`);
   }
 
   complete(): void {

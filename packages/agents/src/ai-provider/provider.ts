@@ -1,5 +1,16 @@
 import { ToolDefinition, ToolContext } from '../tools/types';
 import { ToolRegistry } from '../tools/registry';
+import OpenAI from 'openai';
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  arguments?: Record<string, unknown> | string;
+  operation?: Record<string, unknown>;
+  call_id: string;
+  status: string;
+  type: string
+}
 
 export interface AIProviderOptions {
   model?: string;
@@ -7,23 +18,23 @@ export interface AIProviderOptions {
   maxTokens?: number;
   temperature?: number;
   onProgress?: (chunk: string) => void;
-  onToolCall?: (event: {
-    name: string;
-    arguments: Record<string, unknown>;
-    result: unknown;
-  }) => void;
+  onToolCall?: (event: ToolCall) => void;
+  onToolOutput?: (event: any) => void;
   onTextResponse?: (text: string) => void;
+  onResponse?: (response: OpenAI.Responses.Response) => Promise<void>;
   tools?: ToolDefinition[];
   toolRegistry?: ToolRegistry;
   toolContext?: ToolContext;
   toolChoice?: 'auto' | 'none' | { name: string };
   maxToolCalls?: number;
+  instructions?: string;
+  previousResponseId?: string;
+  toolOutputs?: Array<any>;
 }
 
 export interface AIProvider {
   init?(config?: Record<string, unknown>): Promise<void> | void;
   generate(prompt: string, options?: AIProviderOptions): Promise<string>;
-  generateCode?(prompt: string, options?: AIProviderOptions): Promise<any>;
   close?(): Promise<void> | void;
   complete?(prompt: string): Promise<string>;
   onProgress?(callback: (chunk: string) => void): void;
