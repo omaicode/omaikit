@@ -5,8 +5,11 @@ import OpenAI from 'openai';
 export interface ToolCall {
   id: string;
   name: string;
-  arguments: Record<string, unknown> | string;
+  arguments?: Record<string, unknown> | string;
+  operation?: Record<string, unknown>;
   call_id: string;
+  status: string;
+  type: string
 }
 
 export interface AIProviderOptions {
@@ -16,6 +19,7 @@ export interface AIProviderOptions {
   temperature?: number;
   onProgress?: (chunk: string) => void;
   onToolCall?: (event: ToolCall) => void;
+  onToolOutput?: (event: any) => void;
   onTextResponse?: (text: string) => void;
   onResponse?: (response: OpenAI.Responses.Response) => Promise<void>;
   tools?: ToolDefinition[];
@@ -25,6 +29,7 @@ export interface AIProviderOptions {
   maxToolCalls?: number;
   instructions?: string;
   previousResponseId?: string;
+  toolOutputs?: Array<any>;
 }
 
 export interface AIProvider {

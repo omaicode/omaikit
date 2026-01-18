@@ -39,6 +39,7 @@ export interface CoderAgentOutput extends AgentOutput {
       total: number;
     };
     previousResponseId?: string;
+    toolOutputs?: Array<any>;
   };
 }
 
@@ -101,11 +102,11 @@ export class CoderAgent extends Agent {
 
       // Generate prompt
       const prompt = await this.promptTemplates.generatePrompt(input.task);
-      const { previousResponseId, toolCalls } = await this.callLLM(prompt, input);
+      const { previousResponseId, toolCalls, toolOutputs } = await this.callLLM(prompt, input);
 
       output.result.prompt = prompt;
-      output.result.files = toolCalls.map((call) => {
-        const args = call.arguments as Record<string, unknown>;
+      output.result.files = toolCalls.filter((call) => call.type === 'apply_patch_call').map((call) => {
+        const args = call.operation as Record<string, unknown>;
         return {
           path: args.path || 'unknown',
           content: String(args.diff || ''), 
@@ -118,6 +119,7 @@ export class CoderAgent extends Agent {
       };
 
       output.metadata.previousResponseId = previousResponseId;
+      output.metadata.toolOutputs = toolOutputs;
 
       await this.afterExecute(output);
     } catch (error) {
@@ -237,9 +239,10 @@ export class CoderAgent extends Agent {
   private async callLLM(
     prompt: string,
     input: CoderAgentInput,
-  ): Promise<{ previousResponseId?: string; response: string; toolCalls: Array<ToolCall> }> {
+  ): Promise<{ previousResponseId?: string; response: string; toolCalls: Array<ToolCall>; toolOutputs: Array<any> }> {
     let previousResponseId = input.previousResponseId;
     const toolCalls: Array<ToolCall> = [];
+    const toolOutputs: Array<any> = input.toolOutputs || [];
     const toolRegistry = createDefaultToolRegistry();
     const toolContext = this.buildToolContext(input);
 
@@ -259,10 +262,12 @@ export class CoderAgent extends Agent {
       toolChoice: 'auto',
       maxToolCalls: 1,
       instructions,
+      toolOutputs,
       onToolCall: (event: ToolCall) => {
-        if(event.name === 'apply_patch_call') {
-          toolCalls.push(event);
-        }
+        toolCalls.push(event);
+      },
+      onToolOutput: (event: any) => {
+        toolOutputs.push(event);
       },
       onTextResponse: (text) => {
         this.logger.info(text + '\n');
@@ -280,7 +285,7 @@ export class CoderAgent extends Agent {
       metadata: { type: 'llm_response' },
     });
 
-    return { previousResponseId, response, toolCalls };
+    return { previousResponseId, response, toolCalls, toolOutputs };
   }
 
   private buildToolContext(input: CoderAgentInput): ToolContext {

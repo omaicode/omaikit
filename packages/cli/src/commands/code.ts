@@ -78,6 +78,7 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
 
     const projectRoot = context.project?.rootPath || process.cwd();
     const writtenPaths: string[] = [];
+    let toolOutputs: Array<any> = [];
     let previousResponseId = undefined;
     let generatedLOC = 0;
     let filesCreated = 0;
@@ -93,12 +94,14 @@ export async function codeCommand(options?: CodeCommandOptions): Promise<void> {
         plan,
         projectContext: context,
         force: options?.force,
-        previousResponseId
+        previousResponseId,
+        toolOutputs,
       };
 
       const result = await coder.execute(input as any);
       previousResponseId = result.metadata.previousResponseId;
-
+      toolOutputs = result.metadata.toolOutputs || [];
+      
       if (result.status === 'failed' || result.error) {
         const err = formatError(
           result.error?.code || 'CODER_ERROR',
