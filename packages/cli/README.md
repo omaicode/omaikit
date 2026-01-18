@@ -5,7 +5,7 @@ Command-line interface for Omaikit. This package orchestrates planning, code gen
 ### Features
 
 - `omaikit init` to generate `.omaikit/context.json`
-- `omaikit plan` to create structured plans
+- `omaikit plan` to create structured plans into `.omaikit/plans/` and `.omaikit/tasks/`
 - `omaikit code` to generate code into the project root
 - `omaikit test` to generate tests into `.omaikit/tests`
 
@@ -13,8 +13,9 @@ Command-line interface for Omaikit. This package orchestrates planning, code gen
 
 ```bash
 npm install -g @omaikit/cli
-omaikit init "Add auth to my API"
-omaikit plan "Add JWT auth"
+cd my-project
+omaikit init "Build a REST API with Express and MongoDB"
+omaikit plan "Create a user authentication system"
 omaikit code
 omaikit test
 ```
@@ -25,9 +26,8 @@ omaikit test
 - Tests: `.omaikit/tests/`
 - Generated code: project root
 
-### Development
+### Configuration
 
-```bash
-npm run build --workspaces
-npm run test
-```
+The CLI uses OPENAI_API_KEY from environment variables for API access. Ensure you have it set before running commands.
+
+It'll ask for the OPENAI_API_KEY configuration during `omaikit init`.
