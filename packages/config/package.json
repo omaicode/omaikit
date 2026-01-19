@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@omaikit/config",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Configuration management for Omaikit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
