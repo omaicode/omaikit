@@ -1,8 +1,8 @@
 <div align="center">
   <a href="https://omaicode.com">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://omaicode.com/storage/app/media/images/omaicode_logo.png">
-      <img alt="Omaikit logo" src="https://omaicode.com/storage/app/media/images/omaicode_logo.png" height="64">
+      <source media="(prefers-color-scheme: dark)" srcset="https://omaicode.com/storage/app/media/images/omaicode_icon.png">
+      <img alt="Omaikit logo" src="https://omaicode.com/storage/app/media/images/omaicode_icon.png" height="64">
     </picture>
   </a>
   <h1>Omaikit</h1>
